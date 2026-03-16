@@ -1,0 +1,35 @@
+Workspace root: c:\Users\jeysa\Downloads\kai-main\kai-main
+Generated: 2025-09-24
+
+File structure tree:
+- app.py
+- config.py
+- debug_check.py
+- deepseek_client.py
+- docker-compose.yml
+- Dockerfile
+- google_sheets.py
+- lang_detect.py
+- merge_sop.py
+- README.md
+- requirements.txt
+- sop_doc_loader.py
+- templates.py
+- tickets.py
+- .env
+- data/
+  - sop/
+    - Kommu Internal Support SOP (2).docx
+- rag/
+  - build_index.py
+  - rag.py
+  - rebuild_index_combined.py
+  - sop_data.json
+  - sop_parser.py
+- tools/
+  - test_bot.py
+  - update_sop.py
+
+Command to reproduce locally (PowerShell):
+
+cmd /c tree /F "c:\Users\jeysa\Downloads\kai-main\kai-main" > tree.txt

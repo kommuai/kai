@@ -1,0 +1,270 @@
+[
+  {
+    "question": "What is the difference between KA1 vs KA2?",
+    "answer": "KommuAssist1 KommuAssist2 Processor Qualcomm 821 Flagship RK3588 chip 7.5x More neural processing power, 15x more power efficient Camera 2 consumer grade cameras. 3 automotive grade cameras. With wider perception angle ready for better cut-in detections and more reliable detection. Neural processing capability Currently Limited Can house larger AI models for at least the next 3 years Heat dissipation Active cooling with a fan Noiseless passive cooling with aluminum unibody Functionality Basic Adaptive Cruise Control and Lane Keep Assist Intelligent Cruise Control & Intelligent Steer Control The vehicle knows to slow down for curves, speed bumps, traffic lights etc. Steer assist helps steer away from double parked cars, assisting in laneless situations more reliably. Functionality will keep increasing based on the new software updates. Technical Remote Support Not available Available Software updates No more updates available Continuous update. Features planned: suggestion based navigation, better vehicle cut-in detection, more vehicle support etc"
+  },
+  {
+    "question": "How much is KommuAssist1s/KA1s/KA1?",
+    "answer": "KommuAssist1s is not being sold anymore and it is replaced by its successor the KommuAssist2. Check it out at: https://kommu.ai/store/"
+  },
+  {
+    "question": "What is the price for KA2/KommuAssist2/KommuAssist?",
+    "answer": "Same price for all car models. Retail price: RM4499 but we sell at RM4090 because we have decided to absorb the newly introduced SST by the Malaysian Government, Preorder: RM3699 within 22nd Oct 2025 to 22nd Nov 2025, Trade in preorder: RM3299. We also offer a rent-to-own program from as low as RM125/month (36m) starting 22nd Nov 2025. Installation fees are already included. Check it out at: https://kommu.ai/store/"
+  },
+  {
+    "question": "What is rent-to-own? What are the terms?",
+    "answer": "Kommu’s Rent-to-own plan is a 3-year rental tenure where the device remains Kommu’s property. Upon the expiry of the 3-year rental period, Customer shall continue to use the Product without rental payment to Kommu, and ownership of the Product will be transferred to the Customer. Installation happens after credit checks and payment of an Initial Deposit equal to 12 months of the Monthly Rental Fee (MRF). A 10-day cooling-off period applies before installation; after expiry of the 3-year term, rental payments stop and Product warranty ends. The deposit is applied to the final 12 months of the 36-month term, not applicaple to early or missed payments, and—once installed—is non-refundable. Payments are via auto-debit of credit card only; if a payment fails, Kommu may retry charges, report to credit agencies, and pursue collections."
+  },
+  {
+    "question": "Do you have a warranty? How long is the warranty period?",
+    "answer": "KommuAssist comes with a 1-year warranty for one-off purchases, or a 3-year warranty under the rent-to-own plan. The warranty covers hardware manufacturing defects and software-related issues, but does not extend to human-caused damage (e.g., knocks, drops, improper handling & usage, car accidents) or third-party/external events such as natural disasters (typhoons, floods, lightning, etc.). Proof of purchase is required, and diagnostics will determine eligibility of warranty claim."
+  },
+  {
+    "question": "What can KommuAssist do, how does KommuAssist work?",
+    "answer": "KommuAssist is an assistance system that helps you drive your car when you deem it safe to do so. It can control your vehicle’s gas, brakes and steering when you engage the system. The functionality and capability is updated from time to time. Notable use cases will be highway assist and traffic jam assist. Here is the video format of what KommuAssist can do. https://www.youtube.com/watch?v=sjAl7ycy7FA&t=142s&ab_channel=Kommu"
+  },
+  {
+    "question": "Can I install it myself?",
+    "answer": "Yes, installation is purely plug and play. It is like installing a dashcam. Here is a generic video on how to install. https://www.youtube.com/watch?v=2EpnMwpINpE&t=95s&ab_channel=Kommu"
+  },
+  {
+    "question": "What is the difference between KommuAssist and the original's car ACC & Lane Keep?",
+    "answer": "KommuAssist provides a more intelligent steering and speed control as opposed to the original ADAS because it learns from millions of minutes of human driving. For example, it will slow down humanely during a turn and avoid double parked cars on side walks. The differences cannot be put in words but it will be clear with a test drive. Book a test drive now."
+  },
+  {
+    "question": "What is the maximum speed it can function?",
+    "answer": "KommuAssist usually follows the original stock’s ACC’s max speed. That means if your car’s maximum is 150km/h, it can be used up to 150km/h. A special case is given to only Perodua vehicles where the max set speed has been bumped up to 140km/h."
+  },
+  {
+    "question": "Will installing KommuAssist void the warranty of the vehicle?",
+    "answer": "KommuAssist’s installation does not involve cutting the wires to the existing system nor it involves flashing the computers within the vehicle. It is just like installing a dashcam. This technically does not violate the warranty policy, but you should check with your owner’s manual to confirm. Rest assure ALL of our existing users till date have no warranty issues with their vehicle."
+  },
+  {
+    "question": "Is this approved by JPJ or by the Ministry of Transport MOT? Is this legal?",
+    "answer": "Please check with your local authorities if you are not within Malaysia. JPJ or Ministry of Transport Malaysia does not have any regulatory framework on aftermarket ADAS. So that means we are technically not regulated and being used in a grey area. However, we are one of the committee members of Jawatankuasa Autonomous Vehicle that comprises JPJ, MARii, MiROS and MOT and is adhering to the guidelines set within the committee on the testing framework."
+  },
+  {
+    "question": "Can I trade in my old KommuAssist 1/1s? How much is the trade in?",
+    "answer": "Yes, we offer a trade-in program for upgrading from KommuAssist 1/1s to Kommu Assist2. You can select the trade-in option during checkout at https://kommu.ai/ka2/, and we recommend reviewing the terms and conditions of the program at https://kommu.ai/trade-in/."
+  },
+  {
+    "question": "Does Kommu cover my insurance claim if I get into a road accident?",
+    "answer": "For insurance coverage related to accidents, please contact your insurance provider directly, as Kommu does not handle insurance claims or accident-related coverage."
+  },
+  {
+    "question": "Do I need a sim card? What is the function of the sim card?",
+    "answer": "Although it is not necessary for the device to have a SIM card to function, it will be useful for current functions such as logs upload, automatic software update and remote technical support. In the future, internet access will be needed for advanced features such as suggestion based navigation."
+  },
+  {
+    "question": "Can I use a hotspot to connect my device to the internet instead of using the SIM card?",
+    "answer": "Yes, you can go to settings on the mobile app, connect the device to any WiFi available."
+  },
+  {
+    "question": "Can KommuAssist send me to the location I key in?",
+    "answer": "KommuAssist does not support turn by turn navigation yet, it will be a feature available that we will be working on once we are satisfied with the reliability of the fundamental features. Installation & Appointment (MCP integration with Calendar)"
+  },
+  {
+    "question": "How to install KommuAssist on my own?",
+    "answer": "Here is a generic video on how to install. https://www.youtube.com/watch?v=2EpnMwpINpE&t=95s&ab_channel=Kommu"
+  },
+  {
+    "question": "Do you do installation outside of KL?",
+    "answer": "We have an installer in Bukit Mertajam Penang and Johor Bahru, the installation at these two locations will have a RM150 charge for installation. If you confirm you want to perform the installations at Bukit Mertajam or Johor Bahru, please let us know the location of your preference, and request for a live agent."
+  },
+  {
+    "question": "I want to install KommuAssist.",
+    "answer": "If you haven’t already, please pay first on our website at kommu.ai, and then schedule an appointment. If you have done so, please let us know what we can help you with?"
+  },
+  {
+    "question": "Can I come to the office now? What are Kommu's operating hours? Are you open now? Can I come at …?",
+    "answer": "Kommu operates from Monday to Friday, 10 AM to 6 PM. On Saturdays, we are available strictly by appointment only. For installations or device drop-offs, let me know the date and time of your planned visit. I will check if someone is available to receive you. If not, we’ll reschedule and confirm it on our calendar."
+  },
+  {
+    "question": "Where is the office? What is the address of the office?",
+    "answer": "Use Waze to drive to Kommu Sdn Bhd, Block C Jalan PJU 10/2a, Petaling Jaya, Selangor: https://waze.com/ul/hw284py3w4 C/105B, Block C, Jalan PJU 10/2a, Damansara Damai, 47830 Petaling Jaya, Selangor"
+  },
+  {
+    "question": "I have arrived at the location, where is the office?",
+    "answer": "If you have already found a parking space, you can proceed to our office on the second floor beside the entrance to Warung Geprek."
+  },
+  {
+    "question": "How long does the installation procedure take?",
+    "answer": "The installation procedure takes 30 minutes, 15 minutes installation and 15 minutes of briefing."
+  },
+  {
+    "question": "What kind of test drive vehicle do you have? Can I test drive on my own vehicle?",
+    "answer": "You can test drive on our own test drive vehicle. Depending on what vehicle, it could be a Proton S70 or Perodua Myvi. For better experience, we can also test it on your own vehicle. Just let us know which option you prefer."
+  },
+  {
+    "question": "How can I make a test drive appointment?",
+    "answer": "Here is the link: https://calendly.com/kommuassist/test-drive"
+  },
+  {
+    "question": "Collaboration, partnership, employment, internship, sponsorship, distributorship?",
+    "answer": "This chat is used for sales and warranty support only. Please send an email to support@kommu.ai for other enquiries."
+  },
+  {
+    "question": "Return policy. Not satisfied with the device?",
+    "answer": "Right now we don’t have any return policy, that means once a purchase is made, we will not be able to refund. Please make sure you have made up your mind before making the purchase."
+  },
+  {
+    "question": "What if I change cars, can I transfer my KommuAssist set to another vehicle?",
+    "answer": "If your second vehicle is supported, the transfer is possible. But please do check if the connector is the same. If not, you may need to buy a new connector from us to work with your other vehicle. If you just want another set of connectors for your vehicle. You can visit our website and purchase just the second set of connectors. Hardware"
+  },
+  {
+    "question": "May I know what’s the difference between KommuAssist 2 and Comma 3X in terms of hardware performance and any reason why this processor is selected?",
+    "answer": "We can't source qualcomm. We have a supplier for rockchip. Rockchip RK3588 is much more powerful than Qualcomm Snapsdragon 845 it can house more powerful models relative to C3X's snapdragon 845 and more efficient than the 845. Long story short, cheaper, more efficient, more powerful, easier to source. Supported Disability Person"
+  },
+  {
+    "question": "If I’m paralyzed/OKU/, will I still be able to use Kommu Assist?",
+    "answer": "If you have JPJ approval and the necessary assistance to drive, we are able to support you. Vehicle Support"
+  },
+  {
+    "question": "What is the list of supported vehicles?",
+    "answer": "Here's our list of supported cars: https://kommu.ai/support/. If you don’t find your vehicle listed in the website, let us know if your car comes with an existing lane keep assist system and adaptive cruise control. We will support the vehicle based on demand."
+  },
+  {
+    "question": "I drive a Toyota (not Vios or Veloz). Is it supported?",
+    "answer": "Can your car’s ACC work below 45km/h? - If yes, it’s supported. - If not, it’s supported but without the stop & go function."
+  },
+  {
+    "question": "I drive a continental car.",
+    "answer": "Unfortunately, we can’t support your car because it is running Flexray signals (european cars) and not CAN bus signals (eastern cars), KommuAssist is only built for CAN bus vehicles due to controllability."
+  },
+  {
+    "question": "My car has no ACC or LKA.",
+    "answer": "Unfortunately, we can’t support your car due to the lack of Adaptive Cruise Control (ACC) and Lane Keep Assist (LKA) signals required to integrate with KommuAssist."
+  },
+  {
+    "question": "My car has both ACC and LKA. Is it supported?",
+    "answer": "If you have confirmed that your car is not listed in https://kommu.ai/support/ and not a continental vehicle. Let us know, we will have a technical support team check the support for you. In the meantime, send us a photo of your steering wheel and please join our Facebook Kommunity group."
+  },
+  {
+    "question": "Benefits of being a beta tester?",
+    "answer": "All eligible beta testers can enjoy a RM300 off the initial purchase."
+  },
+  {
+    "question": "How to become a beta tester?",
+    "answer": "If you own a vehicle that we haven’t supported and would like to have it supported. You can perform a pre-order on our website with the special discount coupon taken from us after confirming the beta status. We will perform the support together with you, a money back guarantee will be given to you if the support isn’t successful. Please let us know what car brand, variant and year. And then request for a live agent. KA1 Hardware/Software Issues & Warranty"
+  },
+  {
+    "question": "I want to repair or replace a part.",
+    "answer": "No problem. Let me check if your part is still under warranty. Please send me your dongle ID."
+  },
+  {
+    "question": "There is an LED blinking when the car is off. Would it drain the battery?",
+    "answer": "At 0.2 W, your car could idle 2–4 months on a healthy car battery in theory."
+  },
+  {
+    "question": "My device shows an error / Device cannot turn on.",
+    "answer": "If your device is KommuAssist1/1s, please check if the blue LED is blinking behind the device? - If there is no blinking blue LED at all, we’ll check your warranty. Please provide us with your dongle ID. You can get your dongle ID by going to device settings. - If the green LED is blinking, try rebooting the device while the car engine is off."
+  },
+  {
+    "question": "Dongle ID is …",
+    "answer": "Thank you for the dongle ID. This is an automated generated message. A technical support will assist you with further actions during working hours."
+  },
+  {
+    "question": "It says “Getting Ready” and won’t enter the camera view.",
+    "answer": "The device needs GPS to start. Please go to an open-sky area or connect to a hotspot."
+  },
+  {
+    "question": "My device overheats.",
+    "answer": "The KommuAssist device is designed to automatically pause operation if its internal temperature exceeds 60 degrees CPU temperature to prevent internal damage. To cool it down, ensure your car's air conditioning is turned on and directed towards the device for a period. You can also try increasing the device's internal fan speed through its settings if available. If you anticipate parking your car outdoors under direct sunlight for an extended duration, it is strongly recommended to unplug the KommuAssist device from the OBD port and store it in a cool, shaded location like the dashboard drawer to prevent excessive heat exposure."
+  },
+  {
+    "question": "My windscreen is heavily tinted, will it affect the drive?",
+    "answer": "Yes, certain types of window tints, especially those with metallic components, can interfere with GPS signals but this should not affect driving."
+  },
+  {
+    "question": "My camera isn’t working.",
+    "answer": "Please try rebooting the device. If a problem persists, this device requires a diagnostic from our HQ. Please let us know what your dongle ID is for us to check your warranty status."
+  },
+  {
+    "question": "Calibration is invalid.",
+    "answer": "Make sure your device is centered with 50% sky and 50% road in view when the camera view turns on, then go to settings > device > reset calibration."
+  },
+  {
+    "question": "I want to request a feature or report a bug.",
+    "answer": "Thank you! You can submit your bug or feedback directly to the tech team through this link: https://discord.com/channels/1088366813823377460/1088385921826684969"
+  },
+  {
+    "question": "Can I turn off driver monitoring?",
+    "answer": "The driver monitoring system is there to make sure you are paying attention while you are driving. It cannot be turned off."
+  },
+  {
+    "question": "The fan is noisy or not working.",
+    "answer": "If it’s high-pitched or stuck, we'll replace the fan if it is under warranty. If yes, please provide your dongle ID for us to check for the warranty status. - If it’s just noisy, go to settings > personalised > reduce fan % to 10."
+  },
+  {
+    "question": "My screen has dead pixels / Screen is broken.",
+    "answer": "Such an issue is typically covered under warranty. You would need to send the device back to Kommu for professional diagnosis and repair. To check if your warranty coverage is still active. Please let us know your dongle ID."
+  },
+  {
+    "question": "It says “Controls waiting to start.”",
+    "answer": "This error occurs when the device cannot correctly identify your car model. Please screenshot settings > software > fingerprint and send it here. Make sure it matches the correct format (case-insensitive, but spacing matters)."
+  },
+  {
+    "question": "Controls mismatched warning appeared.",
+    "answer": "That usually happens if the device momentarily loses connection. Please resit all the connections, if problem persists, we may recommend changing the connector. If you want to check if your device is still covered under warranty, please let us know your dongle ID."
+  },
+  {
+    "question": "CAN error message appeared.",
+    "answer": "If it’s a Toyota and only happens when the engine turns off, that’s normal. - If not, check the connector. If needed, we can replace it under warranty. Please let us know your dongle ID."
+  },
+  {
+    "question": "How to get the dongle ID?",
+    "answer": "On your KommuAssist device, go to settings -> device."
+  },
+  {
+    "question": "I can’t retrieve drive logs in the Kommu app.",
+    "answer": "Please connect the device to the internet and wait a while for logs to upload. If a problem persists, we will escalate it to the app team."
+  },
+  {
+    "question": "The app says “Device has been claimed.”",
+    "answer": "Please go to settings > device and send me the Dongle ID. We will have our app team check what the problem is."
+  },
+  {
+    "question": "Can I install a custom fork for example sunnypilot, frogpilot or official openpilot?",
+    "answer": "KommuAssist is designed to work specifically with our official software and hardware. Installing other forks or third-party modifications is not supported and may affect functionality, safety, or warranty coverage. If you are a developer, feel free to download but only at your own risk. Do note that, because the hardware platform is completely different, the other fork doesn’t work out of the box with KommuAssist2."
+  },
+  {
+    "question": "My device needs a part replaced. What’s the cost?",
+    "answer": "Let us know what your dongle ID is for the tech team to check if your part is under warranty. Here are some example prices: - Controller Board: RM270 - Motherboard: RM250 - Kommu Power: RM50 - Vehicle Connector: RM150 - Kommu Relay: RM50 - Fan: RM30 - Mount: RM25 - Screen: RM150 - Front Case: RM80 - Back Case: RM120 - Electrostatic sticker: RM5 (RM8 shipping applies for local delivery, we will have a technical team assist you if it’s an international shipment) - You can make a payment to: 514208667737 Maybank Kommu Sdn Bhd Please send slip for reference"
+  },
+  {
+    "question": "Can you install the part for me?",
+    "answer": "Yes, we charge a workmanship fee for re-installation (e.g., RM75 for reinstallation of the whole system). I’ll arrange the appointment once payment is confirmed."
+  },
+  {
+    "question": "The device is draining my car battery. Any solutions?",
+    "answer": "Set power-off timer to minimum 10 minutes in device settings. - Disconnect the device when parked for extended periods."
+  },
+  {
+    "question": "Do I need a SIM card or a memory card?",
+    "answer": "No SIM required unless continuous internet is needed. - No memory card slot; device has built-in 64GB storage."
+  },
+  {
+    "question": "What if my warranty’s already over??",
+    "answer": "If your warranty has expired and you experience a hardware issue, you can still send the device to us for inspection. If any parts need to be replaced, you will be charged for the cost of those replacement parts."
+  },
+  {
+    "question": "What should I send for warranty service?",
+    "answer": "Only send the faulty item (no wiring or accessories). - Label as “warranty return” and declare value as “300 MYR” to avoid customs tax on return items."
+  },
+  {
+    "question": "My device uploads are missing or not recording drives. Why?",
+    "answer": "Ensure Wi-Fi or hotspot connection is stable. - Check device is not in standby and server maintenance isn't ongoing. - If you have made sure the above is done, please send us your dongle ID for checking."
+  },
+  {
+    "question": "How do I perform a software update on my KommuAssist device, especially if it's not updating automatically or if I need a forced update?",
+    "answer": "Ensure your device is connected to Wi-Fi (Settings -> Connect Wifi). - Turn off your car engine. - Go to Settings -> Software -> Check for updates. Once \"last update check\" shows \"now\", the latest software has been downloaded. Reboot the device. Verify the software version."
+  },
+  {
+    "question": "My KommuAssist device is stuck on an older software version and won't update to the latest?",
+    "answer": "This can happen if the software update process encounters corruption. You should perform a forced update by following the steps: Ensure your device is connected to Wi-Fi and the car ignition is off during the process. Go to Settings -> Software -> Branch. Type “pre-release” and let it reboot."
+  },
+  {
+    "question": "Can I have a Shipment Address?",
+    "answer": "Shipment Address: Name : Wong Kean Wei Contact no : 0149676780 Address: 77, Jalan SA1, Seri Aman Heights, 47000 Sungai Buloh, Selangor No. Event Action 1 EU wants to repair/replace/buy new parts 1. Check KA Inventory to see if this item is still within the warranty period. 2. If still under warranty, proceed to Installation & Appointments. If not, suggest a price under Price List & Shipment Fees, ask for payment & proof of transaction and then proceed to Installation & Appointments or shipment of device. Supported Car List Q A Which Perodua cars are supported ? Myvi (2022–2025 AV), Ativa (2019–2025 AV), Alza (2022–2025 AV) Which Proton cars are supported ? S70 (2024–2025 Flagship, FSX), X50 (2019–2024 Flagship), X50 FL (2025 Premium, Flagship), X70 (2024–2025 Premium, Premium X), X90 (2023–2025 Premium, Flagship) Which Honda cars are supported? City (2021–2023 V-Sensing, RS Hybrid), City FL (2024–2025 RS hybrid), Civic FE (2022–2025 All), Accord (2023–2025 All), HRV (2023–2025 All), CRV (2023–2025 All) Which Toyota cars are supported? Vios (2023–2025 G), Veloz (2022–2025 AT), Cross (2022–2025 V, Hybrid), Altis TSS2.0 (2019–2025 G, Hybrid), Camry (2018–2023 V, Hybrid), Harrier TSS2.0 (2022–2023), Alphard TSS2.0 (2019–2023), Innova Zenix (2024) Which BYD cars are supported? Dolphin (2023–2025 All), Atto 3 (2023–2025 All), M6 (2023–2025 Extended), Seal (2024–2025 All), Sealion 7 (2024–2025 All) Which Lexus cars are supported? ES (2019–2024 All), NX (2020–2024 All), UX (2020–2024 All), RX (2020–2024 All) Which cars are supported overall? KommuAssist currently supports the following brands and models: Perodua: Myvi (2022–2025 AV), Ativa (2019–2025 AV), Alza (2022–2025 AV); Proton: S70, X50, X70, X90; Honda: City, Civic, Accord, HRV, CRV; Toyota: Vios, Veloz, Cross, Altis, Camry, Harrier, Alphard, Innova Zenix; BYD: Dolphin, Atto 3, M6, Seal, Sealion 7; Lexus: ES, NX, UX, RX."
+  }
+]

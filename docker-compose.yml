@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  kai:
+    build: .
+    container_name: kommu_chatbot
+    restart: unless-stopped
+    ports:
+      - "6090:8000"   
+    env_file: .env
+    volumes:
+      - ./data:/data
+      - ./media:/app/media
+      - ./logs:/app/logs
+    environment:
+      - TZ=Asia/Kuala_Lumpur
+      - SESSION_DB_PATH=/data/sessions.db
+      - DB_PATH=/data/sessions.db
+
