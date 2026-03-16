@@ -22,8 +22,8 @@ Designed to handle customer and internal support queries with **speed, accuracy,
 
 ```bash
 # Clone
-git clone https://github.com/Jetsaw/Kai_Kommu_ChatBot.git
-cd Kai_Kommu_ChatBot
+git clone https://github.com/kommuai/kai.git
+cd kai
 
 # (Recommended) Python 3.10–3.12
 python -m venv .venv
@@ -42,12 +42,10 @@ Create a `.env` file:
 
 ```bash
 # Minimal required (examples)
-OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
-GOOGLE_SHEETS_CREDENTIALS_JSON=./secrets/google_service_account.json
-WARRANTY_SHEET_ID=your_warranty_google_sheet_id
+DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxx
 SOP_DOC_URL=https://docs.google.com/document/d/xxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=xxxxxxxxxxxxxxxxxxxxxxxx
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxx
+WARRANTY_CSV_URL=https://docs.google.com/spreadsheets/d/e/.../pub?gid=0&single=true&output=csv
+EXTRA_WARRANTY_CSV_URL=https://docs.google.com/spreadsheets/d/e/.../pub?gid=0&single=true&output=csv
 ```
 
 Or hardcode in `config.py`.
@@ -71,21 +69,9 @@ curl http://127.0.0.1:6090/
 
 Exposed endpoints (in Docker):
 
-- `http://127.0.0.1:6090/webhook`  
-- `http://127.0.0.1:6090/fallback`  
-- `http://127.0.0.1:6090/status_callback`  
-- `http://127.0.0.1:6090/debug/state`  
-- `http://127.0.0.1:6090/debug/check`  
-
----
-
-## 🔧 Twilio WhatsApp Webhooks (Production)
-
-| Twilio Field       | URL                               |
-|--------------------|-----------------------------------|
-| Webhook            | `https://api.kommu.ai/webhook`    |
-| Fallback URL       | `https://api.kommu.ai/fallback`   |
-| Status Callback    | `https://api.kommu.ai/status_callback` |
+- `http://127.0.0.1:6090/agent/message`
+- `http://127.0.0.1:6090/admin/refresh-sop`
+- `http://127.0.0.1:6090/admin/reset_memory`
 
 ---
 
@@ -110,17 +96,19 @@ Expected output:
 ### B) Runtime checks (HTTP)
 
 ```bash
-# Lightweight OK/NOT OK
-curl http://127.0.0.1:6090/debug/check
+# Trigger SOP + warranty refresh manually
+curl -X POST http://127.0.0.1:6090/admin/refresh-sop
 
-# Inspect pinned language, sessions, cache
-curl http://127.0.0.1:6090/debug/state
+# Reset one conversation memory
+curl -X POST "http://127.0.0.1:6090/admin/reset_memory?user_id=+6000000000"
 ```
 
-### C) Test webhook manually
+### C) Test message route manually
 
 ```bash
-curl -X POST http://127.0.0.1:6090/webhook   -H "Content-Type: application/json"   -d '{"from":"+6000000000","text":"Hi, what cars are supported?"}'
+curl -X POST http://127.0.0.1:6090/agent/message \
+  -H "Content-Type: application/json" \
+  -d '{"phone_number":"+6000000000","content":"Hi, what cars are supported?"}'
 ```
 
 ---
@@ -146,12 +134,11 @@ tail -n 200 /home/deployment-user/kai-refresh.log
 
 ##  How the Chatbot Works (High-Level)
 
-The diagram below illustrates the **end-to-end workflow** of the Kai Kommu ChatBot. It begins when a user sends a message via WhatsApp. The message flows through Twilio into the FastAPI webhook, where session management, language detection, and intent routing take place. Depending on the intent, the bot either performs a Google Sheets lookup (for warranty/stock), queries the RAG index (for SOP/FAQs), or falls back to templates (for small talk or unsupported cases). A response is then composed with internationalization (i18n) support, passed through safety filters, sent back to the user via Twilio, and logged for future analysis. Debug endpoints allow health and state checks during runtime.
+The diagram below illustrates the **end-to-end workflow** of the Kai Kommu ChatBot. A chat message enters the FastAPI `agent/message` route, where session management, language detection, and intent routing take place. Depending on the intent, the bot either performs a Google Sheets lookup (for warranty/stock), queries the RAG index (for SOP/FAQs), or falls back to a general response. A response is composed with i18n handling and returned to the caller.
 
 ```mermaid
 flowchart TD
-    A[User sends WhatsApp message: Hi] --> B[Twilio Webhook]
-    B --> C[FastAPI webhook]
+    A[User sends message] --> C[FastAPI /agent/message]
     C --> D{Session Guard Check}
     D -->|Yes: frozen| E[Return Agent Handoff]
     D -->|No| F[Detect Language EN/BM]
@@ -162,17 +149,8 @@ flowchart TD
     H --> K[Compose Response with Templates + i18n]
     I --> K
     J --> K
-    K --> L[Apply Safety Filters]
-    L --> M[Send via Twilio API]
-    M --> N[Log Query/Answer]
+    K --> N[Log Query/Answer]
     N --> O[Process Complete]
-
-    subgraph Debug Endpoints
-        P[GET /debug/state]
-        Q[GET /debug/check]
-    end
-    C --> P
-    C --> Q
 
 
    
@@ -204,5 +182,5 @@ flowchart TD
 - `curl 127.0.0.1:8000` fails → ensure `uvicorn app:app` is running.  
 - In Docker, use **6090** not 8000.  
 - SOP outdated → run `python debug_check.py`.  
-- Always “live agent” → unfreeze via `/debug/state`.  
+- Always “live agent” → call `/admin/reset_memory?user_id=<phone_number>`.  
 - Wrong language → check pinned language.  

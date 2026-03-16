@@ -1,6 +1,6 @@
 # debug_check.py  — Kai health/debug tool
-import os, sys, io, csv, re, json
-import requests, faiss, pickle
+import os, io, csv, re
+import requests, faiss
 from pathlib import Path
 from colorama import init, Fore, Style
 from dotenv import load_dotenv
@@ -10,10 +10,8 @@ load_dotenv()
 from config import (
     PORT, TZ_REGION, OFFICE_START, OFFICE_END,
     DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL,
-    TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_NUMBER,
-    CS_RECIPIENTS, AGENT_NUMBERS,
     SOP_DOC_URL, WARRANTY_CSV_URL,
-    RAG_DIR, FAISS_DIR, ADMIN_TOKEN
+    RAG_DIR, FAISS_DIR
 )
 
 # NEW: optional second warranty sheet (CSV)
@@ -92,16 +90,21 @@ def main():
         except Exception as e:
             warn(f"DeepSeek test failed: {e}")
 
-    # ---------- Twilio ----------
-    header("Twilio")
-    ok(f"Account SID         : {mask(TWILIO_ACCOUNT_SID)}")
-    ok(f"Auth Token          : {mask(TWILIO_AUTH_TOKEN)}")
-    ok(f"From Number         : {TWILIO_WHATSAPP_NUMBER}")
+    # ---------- Chat channel env ----------
+    header("Channel env (optional)")
+    twilio_sid = os.getenv("TWILIO_ACCOUNT_SID", "")
+    twilio_token = os.getenv("TWILIO_AUTH_TOKEN", "")
+    twilio_from = os.getenv("TWILIO_WHATSAPP_NUMBER", "")
+    cs = [x.strip() for x in os.getenv("CS_RECIPIENTS", "").split(",") if x.strip()]
+    agents = [x.strip() for x in os.getenv("AGENT_NUMBERS", "").split(",") if x.strip()]
+    ok(f"TWILIO_ACCOUNT_SID  : {mask(twilio_sid) or 'not set'}")
+    ok(f"TWILIO_AUTH_TOKEN   : {mask(twilio_token) or 'not set'}")
+    ok(f"TWILIO_WHATSAPP_NUM : {twilio_from or 'not set'}")
     p = r"^whatsapp:\+\d{6,15}$"
-    cs_ok = all(re.match(p, n or "") for n in CS_RECIPIENTS)
-    ag_ok = all(re.match(p, n or "") for n in AGENT_NUMBERS)
-    ok(f"CS_RECIPIENTS       : {len(CS_RECIPIENTS)} ({'ok' if cs_ok else 'format issue'})")
-    ok(f"AGENT_NUMBERS       : {len(AGENT_NUMBERS)} ({'ok' if ag_ok else 'format issue'})")
+    cs_ok = all(re.match(p, n or "") for n in cs)
+    ag_ok = all(re.match(p, n or "") for n in agents)
+    ok(f"CS_RECIPIENTS       : {len(cs)} ({'ok' if cs_ok else 'format issue'})")
+    ok(f"AGENT_NUMBERS       : {len(agents)} ({'ok' if ag_ok else 'format issue'})")
 
     # ---------- SOP Doc ----------
     header("SOP (Published Google Doc)")
@@ -168,12 +171,11 @@ def main():
         ok(f"GET /               : {r.status_code}")
     except Exception as e:
         warn(f"GET / failed        : {e}")
-    if ADMIN_TOKEN:
-        try:
-            r = requests.post(f"http://127.0.0.1:{PORT}/admin/refresh_sheets?token={ADMIN_TOKEN}", timeout=6)
-            ok(f"POST /admin/refresh : {r.status_code}")
-        except Exception as e:
-            warn(f"/admin/refresh err  : {e}")
+    try:
+        r = requests.post(f"http://127.0.0.1:{PORT}/admin/refresh-sop", timeout=8)
+        ok(f"POST /admin/refresh-sop : {r.status_code}")
+    except Exception as e:
+        warn(f"/admin/refresh-sop err  : {e}")
 
     print(Style.BRIGHT + "\nDebug complete.\n" + Style.RESET_ALL)
 

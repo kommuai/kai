@@ -1,20 +1,17 @@
 # ----------------- Imports -----------------
-from fastapi import FastAPI, Request, Query, Header, HTTPException
-from fastapi.responses import PlainTextResponse, JSONResponse
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from datetime import datetime
-import pytz, re, os, json, traceback, logging, sqlite3
+import pytz, re, os, json, logging
 from logging.handlers import RotatingFileHandler
-import requests
 from deep_translator import GoogleTranslator
 from fastapi_utils.tasks import repeat_every
 
 # ---- Kommu Internal Modules ----
 from config import (
-    TZ_REGION, OFFICE_START, OFFICE_END, PORT,
-    SOP_DOC_URL, WARRANTY_CSV_URL,
-    RAG_DIR, SOP_JSON_PATH, ADMIN_TOKEN,
-    MIN_SUPPORTED_YEAR, MEMORY_DEPTH
+    TZ_REGION, OFFICE_START, OFFICE_END,
+    RAG_DIR, SOP_JSON_PATH, MEMORY_DEPTH
 )
 from lang_detect import is_malay
 from deepseek_client import chat_completion
@@ -25,11 +22,11 @@ from google_sheets import (
     fetch_warranty_all, warranty_lookup_by_dongle, warranty_text_from_row
 )
 from session_state import (
-    get_session, save_session, set_lang, freeze, update_reply_state,
-    log_qna, init_db, set_last_intent, get_last_intent,
+    get_session, save_session, set_lang, freeze,
+    init_db, set_last_intent,
     add_message_to_history, get_history, reset_memory
 )
-from media_handler import handle_incoming_media, init_media_log
+from media_handler import init_media_log
 
 # ----------------- Logging -----------------
 os.makedirs("logs", exist_ok=True)
@@ -81,9 +78,6 @@ def after_hours_suffix(lang="EN"):
 def norm(text: str) -> str:
     return re.sub(r"\s+", " ", (text or "").lower()).strip()
 
-def has_any(words, text: str) -> bool:
-    return any(re.search(rf"\b{w}\b", text) for w in words)
-
 def add_footer(conversation_id, answer: str, lang: str) -> str:
     footer = ""
     if len(get_history(conversation_id)) >= 7:
@@ -134,17 +128,6 @@ def run_rag_dual(user_text: str, lang_hint: str = "EN", user_id: str | None = No
 
     # SOP RAG
     context = rag_sop.build_context(user_text, topk=4) if rag_sop else ""
-    if context.strip():
-        prompt = f"{history_text}\nUser: {user_text}\n\nContext:\n{context}\n\n{lang_instruction}"
-        llm = chat_completion(sys_prompt, prompt)
-        if llm:
-            try:
-                if lang_hint == "BM":
-                    llm = GoogleTranslator(source="auto", target="ms").translate(llm)
-            except Exception as e:
-                log.warning(f"[Translate] BM translation failed: {e}")
-            return llm.strip()
-
     if context.strip():
         prompt = f"{history_text}\nUser: {user_text}\n\nContext:\n{context}\n\n{lang_instruction}"
         llm = chat_completion(sys_prompt, prompt)
@@ -229,39 +212,6 @@ async def admin_reset_memory(request: Request):
 def refresh_sop_endpoint():
     return refresh_sop_and_warranty()
 
-def list_sessions():
-    conn = sqlite3.connect("sessions.db")
-    cur = conn.cursor()
-    cur.execute("SELECT user_id, data FROM sessions")
-    rows = []
-    for user_id, data in cur.fetchall():
-        try:
-            sess = json.loads(data)
-            hist = sess.get("history", [])
-            last = hist[-1]["text"] if hist else ""
-            rows.append({
-                "user_id": user_id,
-                "lastMessage": last,
-                "frozen": sess.get("frozen", False),
-                "lang": sess.get("lang", "EN")
-            })
-        except Exception:
-            pass
-    conn.close()
-    return rows
-
-def get_chat_history(user_id: str):
-    conn = sqlite3.connect("sessions.db")
-    cur = conn.cursor()
-    cur.execute("SELECT data FROM sessions WHERE user_id=?", (user_id,))
-    row = cur.fetchone()
-    conn.close()
-    if not row:
-        return []
-    sess = json.loads(row[0])
-    hist = sess.get("history", [])
-    return [{"sender": h.get("role", "bot"), "content": h.get("text", "")} for h in hist]
-
 # ----------------- N8N (Main Entry) -----------------
 
 @app.post("/agent/message")
@@ -289,9 +239,6 @@ async def agent_message(request: Request):
     set_lang(conversation_id, lang)
     aft = not is_office_hours()
     add_message_to_history(conversation_id, "user", text)
-    print(lang)
-    print(conversation_id)
-    print(sess)
 
 
     if text == DROPOFF and not sess.get("frozen") and not sess.get("handover"):
@@ -400,18 +347,6 @@ async def agent_message(request: Request):
         return {
             "type": "reply",
             "message": add_footer(conversation_id, answer, lang),
-            "next_state": "bot",
-        }
-
-
-        msg_out = ("I can help with pricing, installation, office hours, warranty, and test drives."
-                if lang=="EN" else
-                "Saya boleh bantu dengan harga, pemasangan, waktu pejabat, waranti, dan pandu uji.")
-        
-        add_message_to_history(conversation_id, "bot", msg_out)
-        return {
-            "type": "reply",
-            "message": add_footer(conversation_id, msg_out, lang),
             "next_state": "bot",
         }
 
