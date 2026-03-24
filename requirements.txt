@@ -16,6 +16,12 @@ sentence-transformers>=2.2.2
 
 # Integrations
 openai>=1.30.0
+haystack-ai>=2.4.0
+qdrant-client>=1.10.0
+flashrank>=0.2.10
+langfuse>=2.40.0
+google-auth>=2.35.0
+google-api-python-client>=2.151.0
 
 # Document parsing / scraping
 fastapi-utils==0.7.0

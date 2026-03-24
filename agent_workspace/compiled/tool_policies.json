@@ -1,0 +1,68 @@
+{
+  "order_status": {
+    "required_entities": [
+      "order_id"
+    ],
+    "tool_name": "order_status_lookup"
+  },
+  "shipment_tracking": {
+    "required_entities": [
+      "tracking_id"
+    ],
+    "tool_name": "shipment_tracking_lookup"
+  },
+  "payment_verification": {
+    "required_entities": [
+      "payment_ref"
+    ],
+    "tool_name": "payment_verification_lookup"
+  },
+  "reference_data": {
+    "data": [
+      {
+        "name": "ka1_parts_prices_ringgits",
+        "fields": {
+          "controller_board": "300",
+          "motherboard": "400",
+          "kommu_power": "50",
+          "vehicle_connector": "150",
+          "relay": "50",
+          "fan": "30",
+          "mount": "30",
+          "screen": "150",
+          "front_case": "200",
+          "back_case": "200",
+          "shipping_local": "8"
+        }
+      },
+      {
+        "name": "bank",
+        "fields": {
+          "name": "Kommu Sdn Bhd",
+          "bank": "Maybank",
+          "account": "514208667737"
+        }
+      },
+      {
+        "name": "shipment_address",
+        "fields": {
+          "name": "Wong Kean Wei",
+          "phone": "0149676780",
+          "address": "Emhub, Kota Damansara",
+          "# SECTION 4": "TROUBLESHOOTING"
+        }
+      }
+    ],
+    "dynamic": [
+      {
+        "name": "batch_status",
+        "fields": {
+          "batch": "4",
+          "status": "assembling",
+          "eta": "April 2026",
+          "<!-- sop-sync": "end -->"
+        }
+      }
+    ]
+  }
+}

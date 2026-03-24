@@ -1,0 +1,51 @@
+{
+  "troubleshooting": [
+    {
+      "intent_id": "device_not_on",
+      "steps": [
+        "Acknowledge issue and restate problem.",
+        "Ask for key identifiers if missing.",
+        "Provide canonical troubleshooting actions.",
+        "Escalate when unresolved."
+      ]
+    },
+    {
+      "intent_id": "gps_issue",
+      "steps": [
+        "Acknowledge issue and restate problem.",
+        "Ask for key identifiers if missing.",
+        "Provide canonical troubleshooting actions.",
+        "Escalate when unresolved."
+      ]
+    },
+    {
+      "intent_id": "ka2_error_1003_logs_missing",
+      "steps": [
+        "Acknowledge issue and restate problem.",
+        "Ask for key identifiers if missing.",
+        "Provide canonical troubleshooting actions.",
+        "Escalate when unresolved."
+      ]
+    }
+  ],
+  "clarifying": [],
+  "escalation": [
+    {
+      "trigger": "low_confidence_or_unsafe",
+      "action": "handover_human",
+      "notes": "Preserve chatwoot handover semantics."
+    }
+  ],
+  "custom": [
+    {
+      "workflow_id": "repair_flow",
+      "steps": [
+        "check warranty status",
+        "if under warranty -> arrange service",
+        "if not under warranty -> quote repair price",
+        "collect payment",
+        "arrange repair/install appointment"
+      ]
+    }
+  ]
+}

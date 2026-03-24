@@ -1,0 +1,694 @@
+[
+  {
+    "intent_id": "product_overview",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "what is kommuassist",
+      "what does it do",
+      "what is kommu",
+      "tell me about your product",
+      "what do you sell",
+      "what is adas aftermarket"
+    ],
+    "canonical_answer": "KommuAssist is an advanced driving assistance system (ADAS) that can control gas, brake and steering. It is mainly used for highway driving and traffic jam assist. It is an aftermarket device that you install in your existing car to get self-driving-like capabilities on supported roads.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 1,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "software_stack",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "what software does it run",
+      "openpilot",
+      "bukapilot",
+      "open source",
+      "what code"
+    ],
+    "canonical_answer": "KommuAssist runs bukapilot, a fork of openpilot. You can read the open source software here: https://github.com/kommuai/bukapilot/tree/release",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 2,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "ka2_modes",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "driving distance",
+      "distance settings",
+      "ka2 mode",
+      "chill mode",
+      "aggressive mode",
+      "normal mode",
+      "following distance"
+    ],
+    "canonical_answer": "KA2 has 3 driving modes:\n- Chill (3 bars): relaxed driving, may not reach set speed, larger following distance\n- Normal (2 bars): balanced driving style\n- Aggressive (1 bar): closer following distance, will not stop at traffic lights or speed bumps",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 3,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "ka1_vs_ka2",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "difference between ka1 and ka2",
+      "compare ka1 ka2",
+      "should i buy ka1 or ka2",
+      "ka2 upgrade from ka1",
+      "ka1 vs ka2",
+      "which model should i get",
+      "ka1 or ka2 better"
+    ],
+    "canonical_answer": "KA2 is a major upgrade over KA1:\n- Processor: RK3588 (KA2) vs Snapdragon 821 (KA1)\n- Cameras: 3 automotive-grade cameras (KA2) vs 2 consumer cameras (KA1)\n- Cooling: passive cooling (KA2) vs fan cooling (KA1)\n- More powerful AI processing and continuous software updates\nIf you want smoother long-term performance and faster updates, KA2 is recommended.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 4,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "pricing",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "price",
+      "pricing",
+      "how much",
+      "cost",
+      "berapa harga",
+      "what is the price",
+      "how much does it cost"
+    ],
+    "canonical_answer": "KommuAssist KA2 is RM4,999 (cash) or RM175/month + RM1,999 deposit under our Rent to Own (RTO) plan.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 5,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "install_booking",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "can i install now",
+      "book installation",
+      "installation appointment",
+      "when can i come for install",
+      "how to install",
+      "schedule install",
+      "booking",
+      "walk in install",
+      "i want to install",
+      "just bought can i come"
+    ],
+    "canonical_answer": "Installation is by appointment after checkout. You will receive an appointment link in your email once payment has been made. The on-site process takes about 30 minutes (15 min installation + 15 min briefing on how to use the device).",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 6,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "office_info",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "where is kommu office",
+      "office location",
+      "can i walk in",
+      "hq address",
+      "where are you located",
+      "address",
+      "how to get there",
+      "directions",
+      "office hours",
+      "opening hours"
+    ],
+    "canonical_answer": "Kommu HQ: EmHub, Block B-03-31, Kota Damansara, 47810 Petaling Jaya, Selangor.\nWaze: https://waze.com/ul/hw281zr717\nGoogle Maps: https://maps.app.goo.gl/wbUA1fUzTxRxUiVK6\nFor entrance access: https://emhub.smartserva.com/visitor_pass.php?v=0212G1XZ78P0I5T8AUHJAWWYYEFASM\nVideo guide: https://youtu.be/63PJBqvxvsY\nHours: Mon-Fri 10AM-6PM, Sat by appointment only.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 7,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "installation_time",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "how long install",
+      "installation duration",
+      "install takes how many minutes",
+      "how long does installation take"
+    ],
+    "canonical_answer": "About 30 minutes total \u2014 15 minutes for hardware installation and 15 minutes for briefing on how to use KommuAssist.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 8,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "warranty",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "warranty period",
+      "how long warranty",
+      "warranty coverage",
+      "what does warranty cover",
+      "warranty claim",
+      "is it under warranty",
+      "device warranty"
+    ],
+    "canonical_answer": "Warranty is 1 year for cash purchases, 3 years for RTO (Rent to Own). It covers manufacturing defects but excludes physical damage or misuse. If you want to check a specific device's warranty status, share your dongle ID and we can look it up.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 9,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "shipping",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "when will it ship",
+      "delivery schedule",
+      "shipping date",
+      "courier timing",
+      "when do you ship",
+      "delivery time"
+    ],
+    "canonical_answer": "We ship on Wednesdays and Fridays when stock is available. If batch assembly affects timing, we'll provide the latest ETA.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 10,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "sim_usage",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "sim card",
+      "need sim",
+      "data plan",
+      "mobile data",
+      "does it need internet"
+    ],
+    "canonical_answer": "A SIM card is optional but recommended. Internet connectivity enables: driving log uploads, over-the-air software updates, and remote support from our team.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 11,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "hotspot",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "can use wifi",
+      "hotspot connection",
+      "phone hotspot",
+      "wifi connection",
+      "connect to phone"
+    ],
+    "canonical_answer": "Yes, KommuAssist can connect to your phone's WiFi hotspot through the companion app for internet connectivity.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 12,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "max_speed",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "maximum speed",
+      "speed limit",
+      "how fast can it go",
+      "top speed",
+      "speed cap"
+    ],
+    "canonical_answer": "KommuAssist follows the car's factory ACC speed limit. For Perodua vehicles, the maximum is typically 140 km/h.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 13,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "legality",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "is it legal",
+      "legal in malaysia",
+      "allowed on road",
+      "regulation",
+      "road legal"
+    ],
+    "canonical_answer": "ADAS aftermarket devices are not specifically regulated in Malaysia. KommuAssist operates in a grey area but is aligned with the national autonomous vehicle (AV) committee's direction.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 14,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "test_drive",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "can i try",
+      "test drive",
+      "demo",
+      "try before buy",
+      "test it first"
+    ],
+    "canonical_answer": "Yes, test drives are available. You can try it on our Kommu vehicle or bring your own supported car to our office.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 15,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "return_policy",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "refund policy",
+      "can i refund",
+      "return and refund",
+      "cancellation refund",
+      "money back",
+      "can i return it"
+    ],
+    "canonical_answer": "No refunds are available after purchase. Please reach out if you have specific concerns \u2014 we're happy to help troubleshoot or clarify before you buy.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 16,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "transfer_device",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "can i transfer",
+      "move to another car",
+      "transfer device",
+      "switch cars",
+      "use on different car"
+    ],
+    "canonical_answer": "You can transfer the device to another car if that car is also supported and uses the same connector type.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 17,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "unsupported_vehicle",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "car not supported",
+      "unsupported car",
+      "no support for my car",
+      "compatibility failed",
+      "my car cannot use"
+    ],
+    "canonical_answer": "A car needs factory ACC (Adaptive Cruise Control) and LKA (Lane Keep Assist) to be supported. It must also use CAN bus (not FlexRay). If the car is supportable but not yet on our list, we may be able to add support \u2014 we'd just need to borrow the car for a few hours.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 18,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "beta_program",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "borrow my car",
+      "support my vehicle model",
+      "can i lend my car",
+      "vehicle development program",
+      "car lending program",
+      "support new car"
+    ],
+    "canonical_answer": "If your car is supportable but not yet supported, you can lend it to us for development. In return, you get an RM300 discount. Our live agent will coordinate the schedule and technical checks.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 19,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "rto_details",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "rent to own details",
+      "rto plan",
+      "monthly payment plan",
+      "deposit and monthly",
+      "installment plan",
+      "hire purchase"
+    ],
+    "canonical_answer": "Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed. RTO includes a 3-year warranty. Contact us for the latest exact terms.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 20,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "reset_procedure",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "how to reset device",
+      "reboot ka2",
+      "restart kommuassist",
+      "hard reset steps",
+      "device restart",
+      "power cycle"
+    ],
+    "canonical_answer": "To reset: power off the device, wait 20-30 seconds, then power it back on. Make sure you have stable power input and internet (hotspot) connected afterward. If the issue persists after reset, share your error code or symptom and we'll investigate.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 21,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "batch_delivery_tracking",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "batch status",
+      "what batch am i in",
+      "delivery batch tracking",
+      "eta for my batch",
+      "when is my device coming",
+      "order eta"
+    ],
+    "canonical_answer": "Batch timelines depend on stock availability, assembly progress, and installation slot scheduling. Share your order details and we can check the latest ETA.\n\n\n# SECTION 2: WORKFLOWS (INTERNAL)",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 22,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "no_logs",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "no driving logs",
+      "logs not uploading",
+      "missing logs",
+      "log upload failed"
+    ],
+    "canonical_answer": "Check your internet connection first. Logs require an active data connection (SIM or hotspot). If the connection is fine, the server may be temporarily down \u2014 try again later.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 23,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "overheating",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "device is hot",
+      "overheating warning",
+      "temperature too high",
+      "device overheats"
+    ],
+    "canonical_answer": "Internal temperatures up to 70\u00b0C are normal during operation. If you see a persistent overheat warning, ensure the device is not in direct sunlight and check that ventilation around it is not blocked.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 24,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "led_status",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "led color meaning",
+      "what do the lights mean",
+      "led indicator",
+      "light colors",
+      "status light"
+    ],
+    "canonical_answer": "LED status colors:\n- Purple: device starting up\n- Yellow: idle / standby\n- Blue: ready to engage\n- Green: actively engaged (driving assist on)\n- Orange: warning condition\n- Red: error \u2014 check device",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 25,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "device_not_on",
+    "route_type": "troubleshooting_intent",
+    "aliases": [
+      "device cannot turn on",
+      "no power on ka2",
+      "black screen device",
+      "ka2 not booting",
+      "device won't start",
+      "no led at all"
+    ],
+    "canonical_answer": "Check that the power connector is securely seated and that the car ignition is on. Look for any LED activity. If there is absolutely no LED response after confirmed power input, it may indicate a board-level power issue \u2014 we'll need to arrange service. Share your dongle ID so we can check your warranty.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.62,
+    "metadata": {
+      "source": "master_faq",
+      "index": 26,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "gps_issue",
+    "route_type": "troubleshooting_intent",
+    "aliases": [
+      "gps not working",
+      "no gps signal",
+      "gps problem",
+      "location not found",
+      "gps fix"
+    ],
+    "canonical_answer": "GPS needs clear sky view to get a fix. Try driving to an open area. If you're using the device indoors or in a covered parking structure, GPS won't lock on. A phone hotspot connection can help with assisted GPS.\n\n# SECTION 5: DYNAMIC",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.62,
+    "metadata": {
+      "source": "master_faq",
+      "index": 27,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "ka2_error_1003_logs_missing",
+    "route_type": "troubleshooting_intent",
+    "aliases": [
+      "KA2 error 1003 logs missing",
+      "error 1003"
+    ],
+    "canonical_answer": "Resolved by reboot and firmware update. Power cycle the device and ensure it's connected to internet to pull the latest firmware.\n\n<!-- provenance: conv=111 msg=2 agent=9 product=KA2 -->",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.62,
+    "metadata": {
+      "source": "master_faq",
+      "index": 28,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  }
+]

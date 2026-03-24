@@ -23,14 +23,18 @@ from rag.rag import RAGEngine
 from rag.rebuild_index_combined import rebuild as rebuild_rag
 from session_state import (
     add_message_to_history,
+    extract_and_store_facts,
     freeze,
     get_history,
+    get_memory_facts,
     get_session,
+    get_session_summary,
     init_db,
     reset_memory,
     save_session,
     set_lang,
     set_last_intent,
+    update_session_summary,
 )
 log = logging.getLogger("kai")
 
@@ -106,15 +110,27 @@ class KaiService:
         sys_prompt = build_rag_system_prompt(dropoff_token=DROPOFF, testdrive_token=TESTDRIVE)
         lang_instruction = "Jawab dalam BM dengan nada mesra." if lang_hint == "BM" else "Answer politely in English."
         history_text = ""
+        summary_text = ""
+        facts_text = ""
         if user_id:
             history = get_history(user_id)
             if history:
                 limited = history[-MEMORY_DEPTH:]
                 history_text = "\n".join([f"{h['role']}: {h['text']}" for h in limited])
+            summary_text = get_session_summary(user_id)
+            facts = get_memory_facts(user_id)
+            if facts:
+                fact_lines = [f"- {f['fact_type']}:{f['fact_key']}={f['fact_value']}" for f in facts[:20]]
+                facts_text = "\n".join(fact_lines)
 
         context = self.rag_sop.build_context(user_text, topk=4) if self.rag_sop else ""
         if context.strip():
-            prompt = f"{history_text}\nUser: {user_text}\n\nContext:\n{context}\n\n{lang_instruction}"
+            prompt = (
+                f"Session summary:\n{summary_text}\n\n"
+                f"Long-term facts:\n{facts_text}\n\n"
+                f"Recent turns:\n{history_text}\n\n"
+                f"User: {user_text}\n\nContext:\n{context}\n\n{lang_instruction}"
+            )
             llm = chat_completion(sys_prompt, prompt)
             if llm:
                 try:
@@ -179,6 +195,8 @@ class KaiService:
         set_lang(conversation_id, lang)
         aft = not self.is_office_hours()
         add_message_to_history(conversation_id, "user", text)
+        update_session_summary(conversation_id, "user", text)
+        extract_and_store_facts(conversation_id, text, source="user")
 
         if text == DROPOFF and not sess.get("frozen") and not sess.get("handover"):
             sess["frozen"] = True
@@ -227,6 +245,8 @@ class KaiService:
                     if lang == "EN"
                     else f"Status waranti: {warranty_text_from_row(row)}"
                 )
+                update_session_summary(conversation_id, "bot", msg_out)
+                extract_and_store_facts(conversation_id, msg_out, source="bot")
                 return {"type": "reply", "message": self.add_footer(conversation_id, msg_out, lang), "next_state": "bot"}
 
         if self.detect_car_support_query(text):
@@ -244,12 +264,16 @@ class KaiService:
                             else f"Maaf, model tahun {year_in_text} tidak disokong. KommuAssist hanya menyokong varian {start}–{end} sahaja."
                         )
                         add_message_to_history(conversation_id, "bot", msg_out)
+                        update_session_summary(conversation_id, "bot", msg_out)
+                        extract_and_store_facts(conversation_id, msg_out, source="bot")
                         return {
                             "type": "reply",
                             "message": self.add_footer(conversation_id, msg_out, lang),
                             "next_state": "bot",
                         }
                 add_message_to_history(conversation_id, "bot", answer)
+                update_session_summary(conversation_id, "bot", answer)
+                extract_and_store_facts(conversation_id, answer, source="bot")
                 return {"type": "reply", "message": self.add_footer(conversation_id, answer, lang), "next_state": "bot"}
             msg_out = (
                 "I'm not sure about that car. Does it have Adaptive Cruise Control (ACC) and Lane Keep Assist (LKA)?"
@@ -258,11 +282,15 @@ class KaiService:
             )
             set_last_intent(conversation_id, "car_unknown")
             add_message_to_history(conversation_id, "bot", msg_out)
+            update_session_summary(conversation_id, "bot", msg_out)
+            extract_and_store_facts(conversation_id, msg_out, source="bot")
             return {"type": "reply", "message": self.add_footer(conversation_id, msg_out, lang), "next_state": "bot"}
 
         answer = self.run_rag_dual(text, lang_hint=lang, user_id=conversation_id)
         if answer:
             add_message_to_history(conversation_id, "bot", answer)
+            update_session_summary(conversation_id, "bot", answer)
+            extract_and_store_facts(conversation_id, answer, source="bot")
             return {"type": "reply", "message": self.add_footer(conversation_id, answer, lang), "next_state": "bot"}
         return {"type": "reply", "message": "Retry please", "next_state": "bot"}
 

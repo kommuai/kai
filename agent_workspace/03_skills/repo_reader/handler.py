@@ -14,13 +14,38 @@ class RepoReaderSkill:
     version = "0.2.0"
     api_base = "https://api.github.com"
     allowed_org = "kommuai"
+    _strong_terms = {
+        "github",
+        "repo",
+        "repository",
+        "readme",
+        "commit",
+        "branch",
+        "pr",
+        "pull request",
+        "source code",
+        "codebase",
+        "file",
+        "files",
+    }
+    _org_terms = {"kommuai", "bukapilot"}
 
     def can_handle(self, request: CapabilityRequest, context_meta: dict) -> float:
         txt = request.text.lower()
-        # Make repo lookup the default first-pass skill for general company knowledge.
-        if any(k in txt for k in ["repo", "code", "function", "file", "commit", "github", "kommuai"]):
+        # Only route to repo lookup when the user clearly asks repo/GitHub context.
+        if "github.com/" in txt:
             return 0.99
-        return 0.92
+
+        has_repo_intent = any(term in txt for term in self._strong_terms)
+        has_org_hint = any(term in txt for term in self._org_terms)
+
+        if has_repo_intent and has_org_hint:
+            return 0.98
+        if has_repo_intent:
+            return 0.90
+        if has_org_hint and any(k in txt for k in ("what is", "what's", "tell me about")):
+            return 0.55
+        return 0.0
 
     def _headers(self) -> dict:
         token = os.getenv("KAI_GITHUB_TOKEN", "").strip()

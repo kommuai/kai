@@ -1,15 +1,37 @@
-# Routing Modes
+# Routing Runtime (Haystack + Chatwoot Parity)
 
-Kai supports route modes controlled by `KAI_ROUTE_MODE`:
+Kai runs a deterministic support pipeline under `support_runtime/` with strict Chatwoot parity pre-routing:
 
-- `hybrid` (default): after `pre_router`, `RouterEngine` tries workspace skills; if none succeed, `main_conversation` runs (warranty / RAG tail).
-- `agent_first`: same skill ordering as `hybrid` today; reserved for future stricter agent preference.
-- `stable_only`: legacy env value; mapped to `hybrid`.
+1. `pre_router` handover/frozen checks
+2. canonical intent router (rules + intent match)
+3. confidence gate
+4. path selection:
+   - direct canonical answer
+   - retrieve + rerank + grounded compose
+   - tool policy branch
+   - human escalation
+5. answer validator + guardrails checks
 
-`stable_only` is no longer a separate runtime mode (removed from `RouteMode` enum).
+## Decision Outcomes
+
+Each turn produces one of:
+
+- `direct_answer`
+- `clarifying_question`
+- `tool_use`
+- `escalate_human`
+
+## Integrations
+
+- Haystack pipeline orchestration (with graceful fallback when optional deps are unavailable)
+- Qdrant hybrid retrieval (env-gated)
+- Provider-backed reranking (env-gated backend selection)
+- Tracing spans and safety gates (env-gated)
 
 ## Endpoints
 
-- `POST /agent/message` — same handler as v2 message path; includes `trace_id`, `route_mode`, `capability_used`, `latency_ms` (and `fallback_reason` when applicable).
-- `POST /v2/agent/message` — identical behavior; optional shadow logging compares against full `handle_agent_message` when `KAI_SHADOW_MODE` is enabled.
-- `POST /v2/agent/query` — machine-facing A2A (auth required).
+- `POST /agent/message` and `POST /v2/agent/message`:
+  - still return trace fields (`trace_id`, `capability_used`, `latency_ms`)
+  - now include runtime decision metadata (`decision`, `confidence`, `source_ids`, `tool_needed`, `escalate_needed`) when available
+- `POST /v2/agent/query`:
+  - uses the same support runtime execution path (service auth required)

@@ -12,7 +12,7 @@ from core.faq_markdown import (
     replace_sop_sync_region,
     render_qas_markdown,
 )
-from sop_doc_loader import fetch_sop_doc_text, parse_qas_from_text
+from sop_doc_loader import fetch_sop_doc_text, fetch_sop_sync_region_from_google_doc, parse_qas_from_text
 
 log = logging.getLogger("kai.sop_ingest")
 
@@ -32,19 +32,27 @@ def ingest_sop_qas() -> list[dict]:
         text = "# Kommu FAQ\n\n" + ensure_sop_sync_markers("")
 
     doc_qas: list[dict] = []
+    doc_sync_region = ""
     if SOP_DOC_URL:
         try:
-            raw = fetch_sop_doc_text()
-            if raw:
-                doc_qas = parse_qas_from_text(raw) or []
+            # Preferred source-of-truth path: read exact sync region from Google Docs API.
+            doc_sync_region = fetch_sop_sync_region_from_google_doc()
+            if not doc_sync_region:
+                raw = fetch_sop_doc_text()
+                if raw:
+                    doc_qas = parse_qas_from_text(raw) or []
         except Exception as exc:  # noqa: BLE001
             log.warning("SOP doc fetch failed: %s", exc)
 
-    if doc_qas:
+    if doc_sync_region or doc_qas:
         text = ensure_sop_sync_markers(text)
-        text = replace_sop_sync_region(text, render_qas_markdown(doc_qas))
+        replacement = doc_sync_region if doc_sync_region else render_qas_markdown(doc_qas)
+        text = replace_sop_sync_region(text, replacement)
         path.write_text(text, encoding="utf-8")
-        log.info("Updated sop-sync region in %s (%s QAs from doc)", path, len(doc_qas))
+        if doc_sync_region:
+            log.info("Updated sop-sync region in %s from Google Docs marker region", path)
+        else:
+            log.info("Updated sop-sync region in %s (%s QAs from doc)", path, len(doc_qas))
 
     qas = parse_faq_markdown(path.read_text(encoding="utf-8")) if path.is_file() else []
 

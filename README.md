@@ -7,12 +7,12 @@ Designed to handle customer and internal support queries with **speed, accuracy,
 
 ##  Features
 
-- **RAG (Retrieval-Augmented Generation):** FAQ markdown (`agent_workspace/02_knowledge/faq/master_faq.md`) indexed with FAISS; optional Google Doc sync overwrites only the `<!-- sop-sync:* -->` region  
+- **Router-first Haystack runtime:** Canonical FAQ/workflow data compiled from `agent_workspace/02_knowledge/faq/master_faq.md` into `agent_workspace/compiled/*`  
 - **Agent workspace:** Markdown-first core prompts, FAQ, and v2 skill metadata under `agent_workspace/` (see `agent_workspace/README.md` and `00_manifest.md`)  
 - **Google Sheets Integration:** Warranty & stock lookups  
 - **Multi-language:** English ↔ Bahasa Melayu auto-switching  
 - **WhatsApp Integration (via Twilio)**  
-- **Daily Auto-Refresh** of SOP & Google Sheets  
+- **Daily Auto-Refresh** of compiled runtime knowledge + warranty cache  
 - **Debug, Health & Benchmark Tools** to test coverage and performance  
 
 ---
@@ -57,7 +57,7 @@ Or hardcode in `config.py`.
 # App (FastAPI + uvicorn)
 uvicorn app:app --host 0.0.0.0 --port 8000
 # Health check
-curl http://127.0.0.1:8000/
+curl http://127.0.0.1:8000/docs
 ```
 
 ### 4) Run with Docker
@@ -85,19 +85,45 @@ Exposed endpoints (in Docker):
 - `http://127.0.0.1:6090/admin/refresh-sop`
 - `http://127.0.0.1:6090/admin/reset_memory`
 
-Route mode (workspace skills + main conversation):
+Route mode (trace label + future strategy toggle):
 
 - `KAI_ROUTE_MODE=hybrid` (default) — try skills after session/handover gate, then `main_conversation` if no skill succeeds
 - `KAI_ROUTE_MODE=agent_first` — same router ordering today; reserved for stricter agent preference later
 - `KAI_ROUTE_MODE=stable_only` — treated as `hybrid` (legacy env value)
 
-Both `POST /agent/message` and `POST /v2/agent/message` use the same handler (trace fields always included). Shadow logging runs only on `/v2/agent/message` when `KAI_SHADOW_MODE` is on.
+Both `POST /agent/message` and `POST /v2/agent/message` use the same active handler (trace fields always included). Legacy shadow execution has been removed.
+
+Model backend (default DeepSeek, model-agnostic adapter):
+
+- `KAI_LLM_PROVIDER=deepseek` (default)
+- `KAI_LLM_MODEL=<provider_model_name>`
+- `KAI_LLM_BASE_URL=<openai_compatible_base_url>`
+- `KAI_LLM_API_KEY=<provider_api_key>`
+
+Canonical runtime artifacts are compiled at startup into `agent_workspace/compiled/` (`intents.json`, `workflows.json`, `kb_chunks.jsonl`, `tool_policies.json`).
+
+Haystack/Qdrant/rerank/observability toggles:
+
+- `KAI_QDRANT_ENABLED=1`
+- `KAI_QDRANT_URL=http://127.0.0.1:6333`
+- `KAI_QDRANT_COLLECTION=kai_support`
+- `KAI_RERANKER_BACKEND=provider`
+- `KAI_GUARDRAILS_ENABLED=1`
+- `KAI_TRACING_ENABLED=1`
+- `KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER=1` (on escalation, force Chatwoot conversation switch to live-agent mode; fail-closed on switch failure)
+- `KAI_SOP_WRITEBACK_ENABLED=1` (on FAQ publish, write updated `master_faq.md` back to Google Docs)
+- `GOOGLE_DOCS_SOP_DOC_ID=<google_doc_id>` (target SOP/FAQ Google Doc for writeback)
 
 Machine-agent auth for `/v2/agent/*`:
 
 - `KAI_SERVICE_KEYS=internal-key:public_info.read|repo.read|media.read`
 - `KAI_GITHUB_TOKEN=<optional_github_token_for_higher_rate_limits>`
 - Repo-reader scope is hard-locked to public repos under `https://github.com/kommuai`.
+
+Admin endpoint auth for `/admin/*`:
+
+- `ADMIN_TOKEN=<strong-admin-token>`
+- Send `x-admin-token: <ADMIN_TOKEN>` header with admin requests.
 
 ---
 
@@ -109,10 +135,31 @@ Machine-agent auth for `/v2/agent/*`:
 python debug_check.py
 ```
 
+### E) Runtime evaluation harness (offline)
+
+```bash
+python tools/eval_support_runtime.py
+```
+
+### F) FAQ approval CLI
+
+```bash
+# API mode (default)
+python tools/faq_approval_cli.py --base-url http://127.0.0.1:8000 poll
+python tools/faq_approval_cli.py list --status pending_review
+python tools/faq_approval_cli.py approve 12
+python tools/faq_approval_cli.py publish 12
+
+# Local mode (no API server, direct SQLite/functions)
+python tools/faq_approval_cli.py --mode local list --status pending_review
+python tools/faq_approval_cli.py --mode local approve 12
+python tools/faq_approval_cli.py --mode local publish 12
+```
+
 Expected output:
 
 ```
-[SOP-DOC] Loaded 50 Q/A from Google Doc and rebuilt RAG.
+[SOP-DOC] Loaded FAQ content and refreshed compiled knowledge artifacts.
 [WARRANTY] Loaded total rows: 476; 308 unique dongle ids; 98 phone/serial keys.
 [HEALTH] All templates OK.
 [LANG] Detector ready (EN/BM).
@@ -123,10 +170,12 @@ Expected output:
 
 ```bash
 # Trigger SOP + warranty refresh manually
-curl -X POST http://127.0.0.1:6090/admin/refresh-sop
+curl -X POST http://127.0.0.1:6090/admin/refresh-sop \
+  -H "x-admin-token: <ADMIN_TOKEN>"
 
 # Reset one conversation memory
-curl -X POST "http://127.0.0.1:6090/admin/reset_memory?user_id=+6000000000"
+curl -X POST "http://127.0.0.1:6090/admin/reset_memory?user_id=+6000000000" \
+  -H "x-admin-token: <ADMIN_TOKEN>"
 ```
 
 ### C) Test message route manually
@@ -169,16 +218,16 @@ tail -n 200 /home/deployment-user/kai-refresh.log
 
 ##  How the Chatbot Works (High-Level)
 
-The diagram below illustrates the **end-to-end workflow**. A chat message hits `POST /agent/message` or `POST /v2/agent/message` (same logic). **Pre-router** handles handover keywords, frozen/resume, and logs the user turn. **RouterEngine** tries workspace skills (`agent_workspace/03_skills/`). If no skill succeeds, **main_conversation** runs warranty dongle lookup, car/RAG, and general RAG—same behavior as before, without double-counting the user message on fallback.
+The diagram below illustrates the **end-to-end workflow**. A chat message hits `POST /agent/message` or `POST /v2/agent/message` (same logic). **Pre-router** preserves Chatwoot handover/frozen behavior first. Then runtime follows deterministic router-first flow with retrieval/rerank/tool/escalation decisions.
 
 ```mermaid
 flowchart TD
     A[User sends message] --> C[FastAPI /agent/message or /v2/agent/message]
     C --> D[PreRouter handover frozen resume]
     D -->|Immediate| E[Response + trace]
-    D -->|Continue| F[RouterEngine workspace skills]
-    F -->|Skill ok| E
-    F -->|No skill ok| G[MainConversation warranty RAG]
+    D -->|Continue| F[IntentRouter confidence gate]
+    F -->|Known high confidence| E
+    F -->|Needs retrieval| G[Haystack retrieve plus rerank plus grounded answer]
     G --> E
 
 
@@ -193,7 +242,7 @@ flowchart TD
 ├── app.py                    # FastAPI app
 ├── config.py                 # Config + constants
 ├── data/sop/                 # SOP docs
-├── rag/                      # FAISS index files
+├── support_runtime/          # Active runtime (router/retrieval/graph/tools)
 ├── tools/                    # Audits & benchmarks
 ├── logs/                     # Runtime & benchmark logs
 ├── docker-compose.yml
@@ -201,6 +250,34 @@ flowchart TD
 ├── requirements.txt
 └── README.md
 ```
+
+---
+
+## Current Architecture Files
+
+Use these as the primary runtime map:
+
+- Runtime/API:
+  - `app.py`
+  - `api/v2/agent_message.py`
+  - `api/v2/agent_query.py`
+  - `support_runtime/`
+- Chatwoot parity/session layer:
+  - `services/kai_service.py`
+  - `session_state.py`
+- Knowledge + eval:
+  - `agent_workspace/02_knowledge/faq/master_faq.md`
+  - `agent_workspace/compiled/`
+  - `tools/eval_support_runtime.py`
+  - `tests/test_pre_router.py`
+  - `tests/test_chatwoot_parity_contract.py`
+  - `tests/test_support_runtime.py`
+
+Legacy items that were moved are documented in:
+
+- `docs/architecture/current_architecture_map.md`
+- `archive_legacy/`
+- `ARCHIVE_LEGACY.md`
 
 ---
 

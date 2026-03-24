@@ -1,23 +1,24 @@
-# Skills Architecture
+# Runtime Capabilities (Haystack Revision)
 
-Skills are capability modules loaded from the agent workspace and selected by router policy.
+The support runtime is router-first and Haystack-oriented, and no longer depends on workspace skill `can_handle` competition for primary chat flow.
 
-## Contract
+## Core capability nodes
 
-- `can_handle(request, context_meta) -> float`
-- `execute(request, context_bundle, budget) -> CapabilityResult`
-- `degrade(reason) -> CapabilityResult`
+- `canonical_answer` for high-confidence known intents
+- `grounded_composer` for retrieve + rerank + grounded answering
+- `tool_policy` for conditional tool-required turns
+- `confidence_gate` / validator for escalation and low-confidence handling
+- `guardrails` for unsafe-content escalation
 
-## Workspace activation
+## Legacy skills
 
-- **Source:** `agent_workspace/03_skills/<skill_id>/skill.md` with YAML frontmatter (`id`, `version`, `enabled`, `handler_class`, `timeout_ms`, `retry_count`, `permissions`) plus optional markdown notes.
-- **Implementation:** `agent_workspace/03_skills/<skill_id>/handler.py` — Python module loaded with `importlib` (the folder name `03_skills` is not a dotted import path).
-- `core/skills/workspace_registry.py` parses `skill.md`; `core/skills/workspace_factory.py` loads `handler_class` from `handler.py` and instantiates it for the v2 router.
+Legacy workspace skills under `agent_workspace/03_skills/` are still present for compatibility and tests, but they are not the primary runtime routing mechanism for `/agent/message` and `/v2/agent/query`.
 
-## Current skills
+## Compiled knowledge artifacts
 
-- `legacy_rag`
-- `legacy_warranty`
-- `repo_reader`
-- `image_diag`
-- `video_diag`
+`support_runtime.compiler` compiles support content into:
+
+- `agent_workspace/compiled/intents.json`
+- `agent_workspace/compiled/workflows.json`
+- `agent_workspace/compiled/kb_chunks.jsonl`
+- `agent_workspace/compiled/tool_policies.json`

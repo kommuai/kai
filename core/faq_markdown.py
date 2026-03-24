@@ -1,4 +1,4 @@
-"""Parse FAQ from master_faq.md (## headings) and maintain SOP doc sync region."""
+"""Parse structured master_faq.md schema and maintain SOP doc sync region."""
 from __future__ import annotations
 
 import re
@@ -8,36 +8,96 @@ SOP_SYNC_START_DEFAULT = "<!-- sop-sync:start -->"
 SOP_SYNC_END_DEFAULT = "<!-- sop-sync:end -->"
 
 
-def parse_faq_markdown(text: str) -> list[dict[str, str]]:
-    """Split markdown on `## ` headings; each block is question (title) + answer (body)."""
-    if not text or not text.strip():
-        return []
-    lines = text.replace("\r\n", "\n").split("\n")
-    blocks: list[tuple[str, list[str]]] = []
-    current_title: str | None = None
-    current_body: list[str] = []
-
-    heading_re = re.compile(r"^##\s+(.+?)\s*$")
-
+def _split_schema_blocks(text: str) -> list[tuple[str, str, str]]:
+    lines = (text or "").replace("\r\n", "\n").split("\n")
+    header_re = re.compile(r"^##\s+(intent|workflow|data|dynamic)\s*:\s*([A-Za-z0-9_\-./]+)\s*$")
+    out: list[tuple[str, str, str]] = []
+    cur_kind = ""
+    cur_name = ""
+    cur_body: list[str] = []
     for line in lines:
-        m = heading_re.match(line)
+        m = header_re.match(line.strip())
         if m:
-            if current_title is not None:
-                body = "\n".join(current_body).strip()
-                if current_title and body:
-                    blocks.append((current_title, body))
-            current_title = m.group(1).strip()
-            current_body = []
+            if cur_kind:
+                out.append((cur_kind, cur_name, "\n".join(cur_body).strip()))
+            cur_kind = m.group(1).strip()
+            cur_name = m.group(2).strip()
+            cur_body = []
             continue
-        if current_title is not None:
-            current_body.append(line)
+        if cur_kind:
+            cur_body.append(line)
+    if cur_kind:
+        out.append((cur_kind, cur_name, "\n".join(cur_body).strip()))
+    return out
 
-    if current_title is not None:
-        body = "\n".join(current_body).strip()
-        if current_title and body:
-            blocks.append((current_title, body))
 
-    return [{"question": q, "answer": a} for q, a in blocks]
+def parse_master_faq_schema(text: str) -> dict[str, list[dict[str, Any]]]:
+    if not text or not text.strip():
+        return {"intents": [], "workflows": [], "data": [], "dynamic": []}
+    sections = {"intents": [], "workflows": [], "data": [], "dynamic": []}
+    for kind, name, body in _split_schema_blocks(text):
+        if kind == "intent":
+            aliases: list[str] = []
+            answer_lines: list[str] = []
+            mode = ""
+            for ln in body.splitlines():
+                raw = ln.rstrip()
+                s = raw.strip()
+                if not s:
+                    if mode == "answer":
+                        answer_lines.append("")
+                    continue
+                if s == "aliases:":
+                    mode = "aliases"
+                    continue
+                if s == "answer:":
+                    mode = "answer"
+                    continue
+                if mode == "aliases" and s.startswith("- "):
+                    aliases.append(s[2:].strip())
+                elif mode == "answer":
+                    answer_lines.append(raw)
+            answer = "\n".join(answer_lines).strip()
+            if not answer:
+                raise ValueError(f"Invalid intent block '{name}': missing answer")
+            sections["intents"].append({"intent_id": name, "aliases": aliases, "answer": answer})
+        elif kind == "workflow":
+            steps: list[str] = []
+            in_steps = False
+            for ln in body.splitlines():
+                s = ln.strip()
+                if s == "steps:":
+                    in_steps = True
+                    continue
+                if in_steps and re.match(r"^\d+\.\s+.+$", s):
+                    steps.append(re.sub(r"^\d+\.\s+", "", s))
+            if not steps:
+                raise ValueError(f"Invalid workflow block '{name}': missing steps")
+            sections["workflows"].append({"workflow_id": name, "steps": steps})
+        else:
+            kv: dict[str, str] = {}
+            for ln in body.splitlines():
+                s = ln.strip()
+                if not s or s.startswith("---"):
+                    continue
+                if ":" not in s:
+                    continue
+                k, v = s.split(":", 1)
+                kv[k.strip()] = v.strip()
+            if not kv:
+                raise ValueError(f"Invalid {kind} block '{name}': missing key-values")
+            sections["data" if kind == "data" else "dynamic"].append({"name": name, "fields": kv})
+    return sections
+
+
+def parse_faq_markdown(text: str) -> list[dict[str, str]]:
+    """Compatibility helper: produce Q/A list from strict intent blocks only."""
+    schema = parse_master_faq_schema(text)
+    out = []
+    for row in schema["intents"]:
+        q = (row.get("aliases") or [row["intent_id"]])[0]
+        out.append({"question": q, "answer": row["answer"]})
+    return out
 
 
 def render_qas_markdown(qas: list[dict[str, Any]], *, trailing_blank: bool = True) -> str:
@@ -47,7 +107,8 @@ def render_qas_markdown(qas: list[dict[str, Any]], *, trailing_blank: bool = Tru
         a = (item.get("answer") or "").strip()
         if not q or not a:
             continue
-        parts.append(f"## {q}\n\n{a}")
+        slug = re.sub(r"[^a-z0-9]+", "_", q.lower()).strip("_")[:80] or "intent_generated"
+        parts.append(f"## intent: {slug}\naliases:\n- {q}\nanswer:\n{a}")
     out = "\n\n".join(parts)
     if trailing_blank and out:
         out += "\n"

@@ -1,0 +1,5 @@
+{"query":"Can I install today?","lang":"EN","expected_decision":"direct_answer","expected_capability":"canonical_answer","tool_required":false,"escalation_required":false}
+{"query":"My device shows error 1003 and cannot see logs","lang":"EN","expected_decision":"direct_answer","expected_capability":"grounded_composer","tool_required":false,"escalation_required":false}
+{"query":"Is my order shipped? order-12345","lang":"EN","expected_decision":"tool_use","expected_capability":"tool_policy","tool_required":true,"escalation_required":true}
+{"query":"Is my order shipped?","lang":"EN","expected_decision":"clarifying_question","expected_capability":"tool_policy","tool_required":true,"escalation_required":false}
+{"query":"I am angry and want a live agent","lang":"EN","expected_decision":"escalate_human","expected_capability":"confidence_gate","tool_required":false,"escalation_required":true}

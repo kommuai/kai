@@ -24,7 +24,3 @@ def get_default_timeout_ms() -> int:
 def get_default_retry_count() -> int:
     return int(os.getenv("KAI_TOOL_RETRY_COUNT", "1"))
 
-
-def get_shadow_mode_enabled() -> bool:
-    return os.getenv("KAI_SHADOW_MODE", "1").strip() in {"1", "true", "yes", "on"}
-
