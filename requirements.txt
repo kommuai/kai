@@ -3,6 +3,7 @@ fastapi==0.111.0
 uvicorn[standard]==0.30.1
 pytz==2024.1
 python-dotenv==1.0.1
+PyYAML>=6.0.1
 requests==2.32.3
 
 # NLP / ML
@@ -19,5 +20,6 @@ openai>=1.30.0
 # Document parsing / scraping
 fastapi-utils==0.7.0
 colorama==0.4.6
+typing-inspect
 
 deep-translator==1.11.4

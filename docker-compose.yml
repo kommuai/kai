@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   kai:
     build: .
@@ -12,8 +10,10 @@ services:
       - ./data:/data
       - ./media:/app/media
       - ./logs:/app/logs
+      - ./agent_workspace:/app/agent_workspace
     environment:
       - TZ=Asia/Kuala_Lumpur
+      - AGENT_WORKSPACE=/app/agent_workspace
       - SESSION_DB_PATH=/data/sessions.db
       - DB_PATH=/data/sessions.db
 

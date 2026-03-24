@@ -7,7 +7,8 @@ Designed to handle customer and internal support queries with **speed, accuracy,
 
 ##  Features
 
-- **RAG (Retrieval-Augmented Generation):** SOP + chat logs indexed with FAISS  
+- **RAG (Retrieval-Augmented Generation):** FAQ markdown (`agent_workspace/02_knowledge/faq/master_faq.md`) indexed with FAISS; optional Google Doc sync overwrites only the `<!-- sop-sync:* -->` region  
+- **Agent workspace:** Markdown-first core prompts, FAQ, and v2 skill metadata under `agent_workspace/` (see `agent_workspace/README.md` and `00_manifest.md`)  
 - **Google Sheets Integration:** Warranty & stock lookups  
 - **Multi-language:** English ↔ Bahasa Melayu auto-switching  
 - **WhatsApp Integration (via Twilio)**  
@@ -67,11 +68,36 @@ docker compose up -d
 curl http://127.0.0.1:6090/
 ```
 
+Docker mounts `./agent_workspace` at `/app/agent_workspace`. Session SQLite stays on `./data` → `/data/sessions.db` (see `00_manifest.md` frontmatter `session_store`).
+
+**Env (optional):**
+
+- `AGENT_WORKSPACE` — path to workspace root (default: `agent_workspace` next to `app.py`)
+- `MASTER_FAQ_PATH` — override FAQ markdown path
+- `CONTEXT_REGISTRY_YAML` — override path to `agent_workspace/04_context/context_registry.yaml`
+
 Exposed endpoints (in Docker):
 
 - `http://127.0.0.1:6090/agent/message`
+- `http://127.0.0.1:6090/v2/agent/message`
+- `http://127.0.0.1:6090/v2/agent/query`
+- `http://127.0.0.1:6090/v2/agent/search`
 - `http://127.0.0.1:6090/admin/refresh-sop`
 - `http://127.0.0.1:6090/admin/reset_memory`
+
+Route mode (workspace skills + main conversation):
+
+- `KAI_ROUTE_MODE=hybrid` (default) — try skills after session/handover gate, then `main_conversation` if no skill succeeds
+- `KAI_ROUTE_MODE=agent_first` — same router ordering today; reserved for stricter agent preference later
+- `KAI_ROUTE_MODE=stable_only` — treated as `hybrid` (legacy env value)
+
+Both `POST /agent/message` and `POST /v2/agent/message` use the same handler (trace fields always included). Shadow logging runs only on `/v2/agent/message` when `KAI_SHADOW_MODE` is on.
+
+Machine-agent auth for `/v2/agent/*`:
+
+- `KAI_SERVICE_KEYS=internal-key:public_info.read|repo.read|media.read`
+- `KAI_GITHUB_TOKEN=<optional_github_token_for_higher_rate_limits>`
+- Repo-reader scope is hard-locked to public repos under `https://github.com/kommuai`.
 
 ---
 
@@ -111,6 +137,15 @@ curl -X POST http://127.0.0.1:6090/agent/message \
   -d '{"phone_number":"+6000000000","content":"Hi, what cars are supported?"}'
 ```
 
+### D) Test machine-agent query (A2A)
+
+```bash
+curl -X POST http://127.0.0.1:6090/v2/agent/query \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: internal-key" \
+  -d '{"user_id":"agent-client","query":"What is KommuAssist?","lang":"EN"}'
+```
+
 ---
 
 ##  Daily Auto-Refresh
@@ -134,23 +169,17 @@ tail -n 200 /home/deployment-user/kai-refresh.log
 
 ##  How the Chatbot Works (High-Level)
 
-The diagram below illustrates the **end-to-end workflow** of the Kai Kommu ChatBot. A chat message enters the FastAPI `agent/message` route, where session management, language detection, and intent routing take place. Depending on the intent, the bot either performs a Google Sheets lookup (for warranty/stock), queries the RAG index (for SOP/FAQs), or falls back to a general response. A response is composed with i18n handling and returned to the caller.
+The diagram below illustrates the **end-to-end workflow**. A chat message hits `POST /agent/message` or `POST /v2/agent/message` (same logic). **Pre-router** handles handover keywords, frozen/resume, and logs the user turn. **RouterEngine** tries workspace skills (`agent_workspace/03_skills/`). If no skill succeeds, **main_conversation** runs warranty dongle lookup, car/RAG, and general RAG—same behavior as before, without double-counting the user message on fallback.
 
 ```mermaid
 flowchart TD
-    A[User sends message] --> C[FastAPI /agent/message]
-    C --> D{Session Guard Check}
-    D -->|Yes: frozen| E[Return Agent Handoff]
-    D -->|No| F[Detect Language EN/BM]
-    F --> G{Intent Routing}
-    G -->|Warranty/Stock| H[Google Sheets Lookup]
-    G -->|SOP/FAQ| I[RAG FAISS Index]
-    G -->|Small Talk| J[Fallback Templates]
-    H --> K[Compose Response with Templates + i18n]
-    I --> K
-    J --> K
-    K --> N[Log Query/Answer]
-    N --> O[Process Complete]
+    A[User sends message] --> C[FastAPI /agent/message or /v2/agent/message]
+    C --> D[PreRouter handover frozen resume]
+    D -->|Immediate| E[Response + trace]
+    D -->|Continue| F[RouterEngine workspace skills]
+    F -->|Skill ok| E
+    F -->|No skill ok| G[MainConversation warranty RAG]
+    G --> E
 
 
    

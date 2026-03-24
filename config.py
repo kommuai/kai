@@ -33,6 +33,17 @@ RAG_DIR = os.path.join(BASE_DIR, "rag")
 FAISS_DIR = os.path.join(RAG_DIR, "faiss_index")
 SOP_JSON_PATH = os.path.join(RAG_DIR, "sop_data.json")
 
+# agent_workspace (content root: core MD, FAQ, skills metadata)
+_agent_ws = os.getenv("AGENT_WORKSPACE", "agent_workspace")
+AGENT_WORKSPACE = _agent_ws if os.path.isabs(_agent_ws) else os.path.join(BASE_DIR, _agent_ws)
+MASTER_FAQ_PATH = os.getenv("MASTER_FAQ_PATH") or os.path.join(
+    AGENT_WORKSPACE, "02_knowledge", "faq", "master_faq.md"
+)
+CONTEXT_REGISTRY_YAML = os.getenv("CONTEXT_REGISTRY_YAML") or os.path.join(
+    AGENT_WORKSPACE, "04_context", "context_registry.yaml"
+)
+WORKSPACE_MANIFEST_PATH = os.path.join(AGENT_WORKSPACE, "00_manifest.md")
+
 # Optional web search
 BING_API_KEY = os.getenv("BING_API_KEY", "")
 
