@@ -61,6 +61,19 @@ Session log for this repo. Global handoff: `/home/ting/system-notes/AGENT_CONTEX
 - Updated `services/kai_service.py` to show `For Live Agent, type LA` (BM equivalent taip LA) and make the live-agent trigger LA-only (typing `KA1`/`KA2` will no longer hand over).
 - Validation: `python3 -m pytest -q tests/test_agent_loop.py tests/test_intent_accuracy.py` -> 5 passed; manual simulation confirms LA-only footer string.
 
+## 2026-03-26 — vehicle support false-negative fix (official list first)
+
+- Updated `services/kai_service.py` to check official support evidence (`kommu.ai/support` text match by model/year) before generic RAG fallback in car-support flow.
+- Added tests in `tests/test_vehicle_support_matching.py` for positive model/year match and year mismatch guard.
+- Validation: `python3 -m pytest -q tests/test_vehicle_support_matching.py tests/test_vehicle_support_evidence.py tests/test_agent_loop.py` -> 8 passed.
+
+## 2026-03-26 — active support_runtime path fix for Alphard 2020
+
+- Updated `support_runtime/agent_tools.py` `search_kommu_support` with explicit official vehicle matching + year-range logic so active `/agent/message` route can recognize listed models/years reliably.
+- Added test `tests/test_vehicle_support_official_match.py` (Toyota Alphard 2020 match).
+- Validation: `python3 -m pytest -q tests/test_vehicle_support_official_match.py tests/test_vehicle_support_evidence.py tests/test_agent_loop.py` -> 7 passed.
+- Note: server restart required; without restart live requests still use old code.
+
 ## 2026-03-25 (follow-up) — Google Docs writeback
 
 - Ran `push_master_faq_to_google_doc()` again; result `ok: true`, `mode: sync_region_only`.

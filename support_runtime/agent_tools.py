@@ -37,6 +37,16 @@ def _strip_html(raw: str) -> str:
     return re.sub(r"\s+", " ", txt).strip()
 
 
+def _expand_years(raw: str) -> set[int]:
+    text = str(raw or "")
+    years: set[int] = set()
+    for a, b in re.findall(r"((?:19|20)\d{2})\s*[–-]\s*((?:19|20)\d{2})", text):
+        years.update(range(int(a), int(b) + 1))
+    for y in re.findall(r"\b((?:19|20)\d{2})\b", text):
+        years.add(int(y))
+    return {y for y in years if 1980 <= y <= 2035}
+
+
 @lru_cache(maxsize=1)
 def _kommu_support_text() -> str:
     try:
@@ -46,6 +56,77 @@ def _kommu_support_text() -> str:
         return _strip_html(resp.text)
     except Exception:
         return ""
+
+
+@lru_cache(maxsize=1)
+def _official_supported_vehicles() -> list[dict[str, Any]]:
+    # Support page itself is JS-driven; it references this official data source.
+    source = "https://raw.githubusercontent.com/kommuai/bukapilot/snapshot/selfdrive/car/supported_vehicle.json"
+    try:
+        resp = requests.get(source, timeout=VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS)
+        if not resp.ok:
+            return []
+        obj = resp.json()
+    except Exception:
+        return []
+
+    rows: list[dict[str, Any]] = []
+    items: list[dict[str, Any]] = []
+    if isinstance(obj, dict):
+        for v in obj.values():
+            if isinstance(v, list):
+                items.extend([x for x in v if isinstance(x, dict)])
+    elif isinstance(obj, list):
+        items = [x for x in obj if isinstance(x, dict)]
+
+    for row in items:
+        brand = str(row.get("brand") or "").strip()
+        model = str(row.get("model") or "").strip()
+        if not (brand or model):
+            continue
+        years = _expand_years(row.get("year") or "")
+        variant = str(row.get("variant") or "").strip()
+        rows.append(
+            {
+                "name": f"{brand} {model}".strip(),
+                "brand": brand,
+                "model": model,
+                "years": years,
+                "variant": variant,
+            }
+        )
+    return rows
+
+
+def _match_official_vehicle(query: str) -> dict[str, Any] | None:
+    vehicles = _official_supported_vehicles()
+    if not vehicles:
+        return None
+    q = (query or "").lower()
+    if not q:
+        return None
+    year_m = re.search(r"\b(19|20)\d{2}\b", q)
+    q_year = int(year_m.group(0)) if year_m else None
+    stop = {"is", "my", "car", "support", "supported", "do", "you", "can", "vehicle", "kommu"}
+    q_tokens = [t for t in re.split(r"[^a-z0-9]+", q) if len(t) >= 3 and t not in stop]
+    if not q_tokens:
+        return None
+
+    best = None
+    best_score = -1
+    for row in vehicles:
+        name_l = str(row.get("name") or "").lower()
+        token_hits = sum(1 for t in q_tokens if t in name_l)
+        if token_hits < 2:
+            continue
+        years = row.get("years") or set()
+        if q_year is not None and years and q_year not in years:
+            continue
+        score = token_hits + (2 if q_year is not None and q_year in years else 0)
+        if score > best_score:
+            best_score = score
+            best = row
+    return best
 
 
 @dataclass
@@ -216,6 +297,20 @@ class AgentToolRegistry:
             return {"ok": False, "error": f"bing_exception:{exc}", "results": []}
 
     def search_kommu_support(self, query: str) -> dict[str, Any]:
+        matched = _match_official_vehicle(query)
+        if matched:
+            years = sorted(matched.get("years") or [])
+            year_text = f"{years[0]}-{years[-1]}" if years else "listed"
+            variant = str(matched.get("variant") or "").strip()
+            text = f"{matched.get('name')} {year_text}".strip()
+            if variant:
+                text += f" ({variant})"
+            return {
+                "ok": True,
+                "source_url": VEHICLE_SUPPORT_OFFICIAL_URL,
+                "results": [{"text": text, "score": 1.0, "official_match": True}],
+            }
+
         corpus = _kommu_support_text()
         if not corpus:
             return {"ok": False, "error": "official_support_unavailable", "results": []}

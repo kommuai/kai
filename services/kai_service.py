@@ -1,12 +1,18 @@
 from datetime import datetime
+from functools import lru_cache
+import html
 import logging
 import os
 import re
+from typing import Any
 
 import pytz
+import requests
 from deep_translator import GoogleTranslator
 
 from config import (
+    VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS,
+    VEHICLE_SUPPORT_OFFICIAL_URL,
     TZ_REGION,
     OFFICE_START,
     OFFICE_END,
@@ -66,6 +72,175 @@ TESTDRIVE = "TD"
 LIVEAGENT = ["LA"]
 FOOTER_EN = "\n\nFor Live Agent, type LA"
 FOOTER_BM = "\n\nJika anda mahu bercakap dengan ejen yang sedia ada, taip LA"
+SUPPORTED_VEHICLE_JSON_URL = (
+    "https://raw.githubusercontent.com/kommuai/bukapilot/snapshot/selfdrive/car/supported_vehicle.json"
+)
+_SUPPORT_QUERY_STOPWORDS = {
+    "is",
+    "my",
+    "car",
+    "support",
+    "supported",
+    "can",
+    "does",
+    "have",
+    "with",
+    "the",
+    "and",
+    "for",
+    "kommu",
+    "kommuassist",
+}
+
+
+def _strip_html(raw: str) -> str:
+    txt = html.unescape(raw or "")
+    txt = re.sub(r"(?is)<script.*?>.*?</script>", " ", txt)
+    txt = re.sub(r"(?is)<style.*?>.*?</style>", " ", txt)
+    txt = re.sub(r"(?s)<[^>]+>", " ", txt)
+    return re.sub(r"\s+", " ", txt).strip()
+
+
+@lru_cache(maxsize=1)
+def _official_support_text() -> str:
+    try:
+        resp = requests.get(VEHICLE_SUPPORT_OFFICIAL_URL, timeout=VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS)
+        if not resp.ok:
+            return ""
+        return _strip_html(resp.text)
+    except Exception:
+        return ""
+
+
+def _extract_support_evidence(user_text: str, support_corpus: str) -> str:
+    corpus = (support_corpus or "").lower()
+    if not corpus:
+        return ""
+    query = (user_text or "").lower()
+    tokens = [
+        tok
+        for tok in re.split(r"[^a-z0-9]+", query)
+        if len(tok) >= 3 and tok not in _SUPPORT_QUERY_STOPWORDS
+    ]
+    if not tokens:
+        return ""
+    year_match = re.search(r"\b(19|20)\d{2}\b", query)
+    year = year_match.group(0) if year_match else ""
+
+    def _year_in_sentence(sentence_l: str, y: str) -> bool:
+        if not y:
+            return True
+        try:
+            yi = int(y)
+        except ValueError:
+            return False
+        if y in sentence_l:
+            return True
+        for a, b in re.findall(r"((?:19|20)\d{2})\s*[–-]\s*((?:19|20)\d{2})", sentence_l):
+            if int(a) <= yi <= int(b):
+                return True
+        return False
+
+    best_score = 0
+    best_sentence = ""
+    for sentence in re.split(r"(?<=[\.\!\?])\s+", support_corpus):
+        s = sentence.strip()
+        if not s:
+            continue
+        sl = s.lower()
+        token_hits = sum(1 for tok in tokens if tok in sl)
+        if token_hits == 0:
+            continue
+        year_hit = _year_in_sentence(sl, year)
+        score = token_hits + (2 if year_hit else 0)
+        # Require fairly specific evidence to avoid false positives.
+        if year and not year_hit:
+            continue
+        if token_hits < 2 and not year_hit:
+            continue
+        if score > best_score:
+            best_score = score
+            best_sentence = s
+    return best_sentence
+
+
+def _expand_years(raw: str) -> set[int]:
+    text = str(raw or "")
+    years: set[int] = set()
+    for a, b in re.findall(r"((?:19|20)\d{2})\s*[–-]\s*((?:19|20)\d{2})", text):
+        years.update(range(int(a), int(b) + 1))
+    for y in re.findall(r"\b((?:19|20)\d{2})\b", text):
+        years.add(int(y))
+    return {y for y in years if 1980 <= y <= 2035}
+
+
+@lru_cache(maxsize=1)
+def _official_supported_vehicles() -> list[dict[str, Any]]:
+    try:
+        resp = requests.get(SUPPORTED_VEHICLE_JSON_URL, timeout=VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS)
+        if not resp.ok:
+            return []
+        obj = resp.json()
+    except Exception:
+        return []
+
+    rows: list[dict[str, Any]] = []
+    items: list[dict[str, Any]] = []
+    if isinstance(obj, dict):
+        for v in obj.values():
+            if isinstance(v, list):
+                items.extend([x for x in v if isinstance(x, dict)])
+    elif isinstance(obj, list):
+        items = [x for x in obj if isinstance(x, dict)]
+
+    for row in items:
+        brand = str(row.get("brand") or "").strip()
+        model = str(row.get("model") or "").strip()
+        if not (brand or model):
+            continue
+        years = _expand_years(str(row.get("year") or ""))
+        rows.append(
+            {
+                "brand": brand,
+                "model": model,
+                "name": f"{brand} {model}".strip(),
+                "years": years,
+            }
+        )
+    return rows
+
+
+def _match_supported_vehicle_query(user_text: str, vehicles: list[dict[str, Any]]) -> dict[str, Any] | None:
+    query = (user_text or "").lower()
+    if not query:
+        return None
+    year_match = re.search(r"\b(19|20)\d{2}\b", query)
+    query_year = int(year_match.group(0)) if year_match else None
+    query_tokens = [
+        tok
+        for tok in re.split(r"[^a-z0-9]+", query)
+        if len(tok) >= 3 and tok not in _SUPPORT_QUERY_STOPWORDS
+    ]
+    if not query_tokens:
+        return None
+
+    best: dict[str, Any] | None = None
+    best_score = -1
+    for row in vehicles:
+        name_l = str(row.get("name") or "").lower()
+        if not name_l:
+            continue
+        token_hits = sum(1 for tok in query_tokens if tok in name_l)
+        if token_hits < 2:
+            continue
+        years = row.get("years") or set()
+        if query_year is not None and years and query_year not in years:
+            continue
+        score = token_hits + (2 if query_year is not None and query_year in years else 0)
+        if score > best_score:
+            best_score = score
+            best = row
+    return best
 
 
 class KaiService:
@@ -94,6 +269,9 @@ class KaiService:
 
     def detect_car_support_query(self, text: str) -> bool:
         return any(k in text.lower() for k in CAR_KEYWORDS)
+
+    def official_support_evidence(self, text: str) -> str:
+        return _extract_support_evidence(text, _official_support_text())
 
     def extract_year(self, text: str) -> int | None:
         m = re.search(r"\b(19|20)\d{2}\b", text)
@@ -249,6 +427,22 @@ class KaiService:
                 return {"type": "reply", "message": self.add_footer(conversation_id, msg_out, lang), "next_state": "bot"}
 
         if self.detect_car_support_query(text):
+            support_hit = self.official_support_evidence(text)
+            if support_hit:
+                msg_out = (
+                    "Based on our official support list, your vehicle appears supported. "
+                    f"Reference: {support_hit}\n\n"
+                    "If you want, I can help you with the next step for installation or booking."
+                    if lang == "EN"
+                    else "Berdasarkan senarai sokongan rasmi kami, kenderaan anda kelihatan disokong. "
+                    f"Rujukan: {support_hit}\n\n"
+                    "Jika anda mahu, saya boleh bantu langkah seterusnya untuk pemasangan atau tempahan."
+                )
+                add_message_to_history(conversation_id, "bot", msg_out)
+                update_session_summary(conversation_id, "bot", msg_out)
+                extract_and_store_facts(conversation_id, msg_out, source="bot")
+                return {"type": "reply", "message": self.add_footer(conversation_id, msg_out, lang), "next_state": "bot"}
+
             answer = self.run_rag_dual(text, lang_hint=lang, user_id=conversation_id)
             lower_ans = answer.lower() if answer else ""
             year_in_text = self.extract_year(text)
