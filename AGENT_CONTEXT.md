@@ -53,6 +53,14 @@ Session log for this repo. Global handoff: `/home/ting/system-notes/AGENT_CONTEX
 - Added tests in `tests/test_agent_loop.py` for plain-text fallback behavior and source-backed direct answers.
 - Validation: `python3 -m pytest -q tests/test_agent_loop.py` -> 4 passed; manual smoke script verified behavior on fabricated contact example.
 
+## 2026-03-26 — sales psychology + LA-only live-agent footer
+
+- Updated `support_runtime/agent_prompts.py` with a lightweight pricing strategy: for RTO, lead with RM175/month + RM1,999 deposit; mention RM4,999 cash when explicitly asked.
+- Updated `agent_workspace/02_knowledge/faq/master_faq.md`: revised `pricing` and `rto_details`, and added new `full_cash_price` intent for explicit cash-price asks.
+- Recompiled canonical artifacts (`agent_workspace/compiled/intents.json`, `agent_workspace/compiled/kb_chunks.jsonl`, related compiled outputs) via `compile_canonical_knowledge()`.
+- Updated `services/kai_service.py` to show `For Live Agent, type LA` (BM equivalent taip LA) and make the live-agent trigger LA-only (typing `KA1`/`KA2` will no longer hand over).
+- Validation: `python3 -m pytest -q tests/test_agent_loop.py tests/test_intent_accuracy.py` -> 5 passed; manual simulation confirms LA-only footer string.
+
 ## 2026-03-25 (follow-up) — Google Docs writeback
 
 - Ran `push_master_faq_to_google_doc()` again; result `ok: true`, `mode: sync_region_only`.

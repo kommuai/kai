@@ -69,8 +69,21 @@ aliases:
 - berapa harga
 - what is the price
 - how much does it cost
+- monthly price
+- installment
 answer:
-KommuAssist KA2 is RM4,999 (cash) or RM175/month + RM1,999 deposit under our Rent to Own (RTO) plan.
+For most customers, the Rent to Own (RTO) plan is the easiest start: RM175/month + RM1,999 deposit, with 3-year warranty included. If you prefer outright purchase, I can share the full cash price too.
+
+## intent: full_cash_price
+aliases:
+- full price
+- cash price
+- outright price
+- one time payment
+- buy outright
+- pay in full
+answer:
+If you prefer full cash purchase, KA2 is RM4,999. If you'd like, I can also compare this with the RTO option (RM175/month + RM1,999 deposit) so you can pick what feels most comfortable.
 
 ## intent: install_booking
 aliases:
@@ -244,7 +257,7 @@ aliases:
 - installment plan
 - hire purchase
 answer:
-Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed. RTO includes a 3-year warranty. Read the terms here: https://kommu.ai/rto-terms/.
+Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed, and RTO includes a 3-year warranty. Read the terms here: https://kommu.ai/rto-terms/. If helpful, I can also share the full cash option for comparison.
 
 ## intent: reset_procedure
 aliases:

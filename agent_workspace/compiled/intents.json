@@ -112,9 +112,11 @@
       "cost",
       "berapa harga",
       "what is the price",
-      "how much does it cost"
+      "how much does it cost",
+      "monthly price",
+      "installment"
     ],
-    "canonical_answer": "KommuAssist KA2 is RM4,999 (cash) or RM175/month + RM1,999 deposit under our Rent to Own (RTO) plan.",
+    "canonical_answer": "For most customers, the Rent to Own (RTO) plan is the easiest start: RM175/month + RM1,999 deposit, with 3-year warranty included. If you prefer outright purchase, I can share the full cash price too.",
     "policy_flags": [
       "grounded_only"
     ],
@@ -122,6 +124,31 @@
     "metadata": {
       "source": "master_faq",
       "index": 5,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "full_cash_price",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "full price",
+      "cash price",
+      "outright price",
+      "one time payment",
+      "buy outright",
+      "pay in full"
+    ],
+    "canonical_answer": "If you prefer full cash purchase, KA2 is RM4,999. If you'd like, I can also compare this with the RTO option (RM175/month + RM1,999 deposit) so you can pick what feels most comfortable.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 6,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -150,7 +177,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 6,
+      "index": 7,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -179,7 +206,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 7,
+      "index": 8,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -202,7 +229,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 8,
+      "index": 9,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -228,7 +255,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 9,
+      "index": 10,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -253,7 +280,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 10,
+      "index": 11,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -277,7 +304,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 11,
+      "index": 12,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -301,7 +328,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 12,
+      "index": 13,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -325,7 +352,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 13,
+      "index": 14,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -349,7 +376,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 14,
+      "index": 15,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -376,7 +403,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 15,
+      "index": 16,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -401,7 +428,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 16,
+      "index": 17,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -425,7 +452,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 17,
+      "index": 18,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -449,7 +476,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 18,
+      "index": 19,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -475,7 +502,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 19,
+      "index": 20,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -493,14 +520,14 @@
       "installment plan",
       "hire purchase"
     ],
-    "canonical_answer": "Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed. RTO includes a 3-year warranty. Read the terms here: https://kommu.ai/rto-terms/.",
+    "canonical_answer": "Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed, and RTO includes a 3-year warranty. Read the terms here: https://kommu.ai/rto-terms/. If helpful, I can also share the full cash option for comparison.",
     "policy_flags": [
       "grounded_only"
     ],
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 20,
+      "index": 21,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -525,7 +552,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 21,
+      "index": 22,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -550,7 +577,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 22,
+      "index": 23,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -573,7 +600,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 23,
+      "index": 24,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -596,7 +623,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 24,
+      "index": 25,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -620,7 +647,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 25,
+      "index": 26,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -645,7 +672,7 @@
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 26,
+      "index": 27,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -669,7 +696,7 @@
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 27,
+      "index": 28,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -694,7 +721,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 28,
+      "index": 29,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -717,7 +744,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 29,
+      "index": 30,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -739,7 +766,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 30,
+      "index": 31,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -764,7 +791,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 31,
+      "index": 32,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -785,7 +812,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 32,
+      "index": 33,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -808,7 +835,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 33,
+      "index": 34,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -832,7 +859,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 34,
+      "index": 35,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -854,7 +881,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 35,
+      "index": 36,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -875,7 +902,7 @@
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 36,
+      "index": 37,
       "product": "KA",
       "audience": "customer",
       "version": "v1",

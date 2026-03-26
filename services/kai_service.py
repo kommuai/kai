@@ -63,10 +63,9 @@ CAR_KEYWORDS = [
 ]
 DROPOFF = "DROPOFF"
 TESTDRIVE = "TD"
-LIVEAGENT = ["KA1", "KA2", "LA"]
-LIVEAGENT_TEXT = " | ".join(LIVEAGENT)
-FOOTER_EN = f"\n\nFor Live Agent, type {LIVEAGENT_TEXT}"
-FOOTER_BM = f"\n\nJika anda mahu bercakap dengan ejen yang sedia ada, taip {LIVEAGENT_TEXT}"
+LIVEAGENT = ["LA"]
+FOOTER_EN = "\n\nFor Live Agent, type LA"
+FOOTER_BM = "\n\nJika anda mahu bercakap dengan ejen yang sedia ada, taip LA"
 
 
 class KaiService:
