@@ -200,14 +200,11 @@ def infer_possible_solution_from_bukapilot(issue_text: str) -> str:
 
 
 def append_backlog_issue(
-    issue: str,
-    possible_solution: str = "",
     *,
-    user_id: str = "",
-    device: str = "Unknown",
-    car: str = "Unknown",
-    category: str = "unknown",
-    status: str = "New",
+    device: str,
+    car: str,
+    issue_description: str,
+    reproduction_steps: str,
 ) -> dict[str, Any]:
     if not TECH_BACKLOG_SHEET_ID:
         return {"ok": False, "error": "missing_tech_backlog_sheet_id"}
@@ -227,15 +224,13 @@ def append_backlog_issue(
         ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         row = [
             ts,
-            (user_id or "").strip(),
             (device or "Unknown").strip() or "Unknown",
             (car or "Unknown").strip() or "Unknown",
-            (category or "unknown").strip().lower() or "unknown",
-            (issue or "").strip(),
-            (possible_solution or "").strip(),
-            (status or "New").strip() or "New",
+            (issue_description or "").strip(),
+            (reproduction_steps or "").strip(),
         ]
-        range_name = f"'{TECH_BACKLOG_TAB_NAME}'!A:H"
+        # Only 5 columns: timestamp, device, car, issue description, reproduction steps.
+        range_name = f"'{TECH_BACKLOG_TAB_NAME}'!A:E"
         body = {"values": [row]}
         out = (
             sheets.spreadsheets()
@@ -285,7 +280,7 @@ def find_similar_active_issue(issue: str, *, min_score: float = 0.28) -> dict[st
         rows = (
             sheets.spreadsheets()
             .values()
-            .get(spreadsheetId=TECH_BACKLOG_SHEET_ID, range=f"'{TECH_ACTIVE_TAB_NAME}'!A:H")
+            .get(spreadsheetId=TECH_BACKLOG_SHEET_ID, range=f"'{TECH_ACTIVE_TAB_NAME}'!A:E")
             .execute()
             .get("values", [])
         )
@@ -294,25 +289,18 @@ def find_similar_active_issue(issue: str, *, min_score: float = 0.28) -> dict[st
         q = _terms(issue)
         best = {"score": 0.0}
         for idx, row in enumerate(rows[1:], start=2):
-            if len(row) > 5:
-                issue_cell = (row[5] or "").strip()
-            else:
-                issue_cell = (row[0] if len(row) > 0 else "").strip()
+            # Column D (index 3) is the human-readable issue description.
+            issue_cell = (row[3] or "").strip() if len(row) > 3 else ""
             if not issue_cell:
                 continue
             t = _terms(issue_cell)
             score = len(q.intersection(t)) / max(1, len(q))
             if score > best.get("score", 0.0):
-                sol = ""
-                if len(row) > 6:
-                    sol = (row[6] or "").strip()
-                elif len(row) > 1:
-                    sol = (row[1] or "").strip()
                 best = {
                     "score": score,
                     "row": idx,
                     "issue": issue_cell,
-                    "possible_solution": sol,
+                    "possible_solution": "",
                 }
         if best.get("score", 0.0) < min_score:
             return {"ok": True, "found": False}
@@ -321,7 +309,7 @@ def find_similar_active_issue(issue: str, *, min_score: float = 0.28) -> dict[st
             if gid
             else f"https://docs.google.com/spreadsheets/d/{TECH_BACKLOG_SHEET_ID}/edit"
         )
-        row_link = f"{tab_link}&range=A{best['row']}:H{best['row']}" if gid else tab_link
+        row_link = f"{tab_link}&range=A{best['row']}:E{best['row']}" if gid else tab_link
         return {
             "ok": True,
             "found": True,

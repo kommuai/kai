@@ -128,6 +128,57 @@ def render_qas_markdown(qas: list[dict[str, Any]], *, trailing_blank: bool = Tru
     return out
 
 
+def render_master_faq_schema(schema: dict[str, list[dict[str, Any]]], *, trailing_blank: bool = True) -> str:
+    """Render structured FAQ schema blocks back to markdown."""
+    blocks: list[str] = []
+
+    for row in schema.get("intents", []):
+        intent_id = (row.get("intent_id") or "").strip()
+        answer = (row.get("answer") or "").strip()
+        if not intent_id or not answer:
+            continue
+        aliases = [str(a).strip() for a in (row.get("aliases") or []) if str(a).strip()]
+        parts = [f"## intent: {intent_id}", "aliases:"]
+        parts.extend(f"- {a}" for a in aliases)
+        parts.append("answer:")
+        parts.append(answer)
+        blocks.append("\n".join(parts))
+
+    for row in schema.get("workflows", []):
+        workflow_id = (row.get("workflow_id") or "").strip()
+        steps = [str(s).strip() for s in (row.get("steps") or []) if str(s).strip()]
+        if not workflow_id or not steps:
+            continue
+        parts = [f"## workflow: {workflow_id}", "steps:"]
+        parts.extend(f"{i}. {step}" for i, step in enumerate(steps, start=1))
+        blocks.append("\n".join(parts))
+
+    for row in schema.get("data", []):
+        name = (row.get("name") or "").strip()
+        fields = row.get("fields") or {}
+        if not name or not isinstance(fields, dict) or not fields:
+            continue
+        parts = [f"## data: {name}"]
+        for k, v in fields.items():
+            parts.append(f"{k}: {v}")
+        blocks.append("\n".join(parts))
+
+    for row in schema.get("dynamic", []):
+        name = (row.get("name") or "").strip()
+        fields = row.get("fields") or {}
+        if not name or not isinstance(fields, dict) or not fields:
+            continue
+        parts = [f"## dynamic: {name}"]
+        for k, v in fields.items():
+            parts.append(f"{k}: {v}")
+        blocks.append("\n".join(parts))
+
+    out = "\n\n".join(blocks)
+    if trailing_blank and out:
+        out += "\n"
+    return out
+
+
 def replace_sop_sync_region(
     full_text: str,
     inner_markdown: str,

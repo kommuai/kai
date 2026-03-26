@@ -52,7 +52,9 @@ have enough evidence or need another tool.
   2) Ask the user to check the KommuAI app **Visualization** tab for error text and screenshot if possible. \
   3) `search_bukapilot` to find related code/issues; for **version / changelog / release** questions, then call `read_bukapilot_file` on paths like **RELEASES.md** (after search confirms the path). \
   4) `lookup_backlog` to check if this issue is already being tracked. \
-  5) If still unresolved, call `log_backlog` only after you know **device** (KA2/KA1/KA1s) and **car** (or explicitly Unknown) from the conversation — ask if missing. **Do not** call `log_backlog` if the user **self-resolved** the issue. Then `escalate_to_human` if needed.
+  5) If still unresolved (or even if the user indicates it is resolved), call `log_backlog` once you know **device** (KA2/KA1/KA1s) and **car** (or explicitly Unknown) from the conversation — ask if missing. \
+     After a successful `log_backlog` tool call, include a short confirmation to the user that the issue/complaint was logged to the technical backlog. \
+     Then `escalate_to_human` if needed.
 - **Anything unclear**: use `search_faq` + `search_web` to gather context before responding.
 
 ## Response format

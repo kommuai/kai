@@ -1,0 +1,20 @@
+{
+  "last_sync_at": "2026-03-26T14:12:56.332056+08:00",
+  "last_sync_date": "2026-03-26",
+  "hashes": {
+    "local_before": "f90c2adf41fc92a812816bbbe360c9a9df18b10c42bc17de02113f0f1c878b58",
+    "google_before": "5c08b9f3d9ea1b5cc4b5f4ef751f8282d4d4c943d4b107df7fb915c895397515",
+    "merged": "1953a11168954780a279f6dfc4bdcc1ecd6f0b41b813fca785f6b8bedc73bbef"
+  },
+  "counts": {
+    "intents": 35,
+    "workflows": 1,
+    "data": 3,
+    "dynamic": 1
+  },
+  "writeback": {
+    "ok": true,
+    "doc_id": "1Y80JRyFIQrb99XNgPIUA3p0cGy4KUyoAhG1vdJMO0fs",
+    "mode": "sync_region_only"
+  }
+}

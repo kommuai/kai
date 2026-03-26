@@ -13,8 +13,10 @@ aliases:
 - tell me about your product
 - what do you sell
 - what is adas aftermarket
+- what is the added value of Kommu
+- difference with original adas
 answer:
-KommuAssist is an advanced driving assistance system (ADAS) that can control gas, brake and steering. It is mainly used for highway driving and traffic jam assist. It is an aftermarket device that you install in your existing car to get self-driving-like capabilities on supported roads.
+KommuAssist is an advanced driving assistance system (ADAS) that can control gas, brake and steering. It is mainly used for highway driving and traffic jam assist. It is an aftermarket device that you install in your existing car to get self-driving-like capabilities. It greatly enhances the cruise function and safety by ensuring the steering control stays 100% active with multi-priority decision-making AI model (detecting lane lines, lead car, road borders, divider etc.). Hands on wheel alert is replaced with driver facial attentiveness monitoring to allow for more driving convenience. The braking and acceleration are also made more comfortable with our double camera system that can detect the lead vehicle more confidently for the AI software to impose smoother controls.
 
 ## intent: software_stack
 aliases:
@@ -101,7 +103,7 @@ answer:
 Kommu HQ: EmHub, Block B-03-31, Kota Damansara, 47810 Petaling Jaya, Selangor.
 Waze: https://waze.com/ul/hw281zr717
 Google Maps: https://maps.app.goo.gl/wbUA1fUzTxRxUiVK6
-For entrance access: https://emhub.smartserva.com/visitor_pass.php?v=0212G1XZ78P0I5T8AUHJAWWYYEFASM
+For entrance access: we will provide 1 day prior your test drive/installation slot
 Video guide: https://youtu.be/63PJBqvxvsY
 Hours: Mon-Fri 10AM-6PM, Sat by appointment only.
 
@@ -188,7 +190,7 @@ aliases:
 - schedule test drive
 - calendly test drive
 answer:
-Yes, test drives are available. You can try it on our Kommu vehicle or bring your own supported car to our office. **Book or reschedule here:** https://calendly.com/kommuassist/test-drive — whenever someone asks about a test drive, demo, or trying before buying, share this link so they can pick a slot.
+Yes, test drives are available. You can try it on our Kommu vehicle or bring your own supported car to our office. Book your slot here: https://calendly.com/kommuassist/test-drive.
 
 ## intent: return_policy
 aliases:
@@ -199,7 +201,7 @@ aliases:
 - money back
 - can i return it
 answer:
-No refunds are available after purchase. Please reach out if you have specific concerns — we're happy to help troubleshoot or clarify before you buy.
+No refunds are available after shipment or installation. Please reach out if you have specific concerns — we're happy to help troubleshoot or clarify before you buy.
 
 ## intent: transfer_device
 aliases:
@@ -219,7 +221,7 @@ aliases:
 - compatibility failed
 - my car cannot use
 answer:
-A car needs factory ACC (Adaptive Cruise Control) and LKA (Lane Keep Assist) to be supported. It must also use CAN bus (not FlexRay). If the car is supportable but not yet on our list, we may be able to add support — the vehicle typically needs to stay at our HQ for at least a full day for connector work, data collection, and reverse engineering.
+A car needs factory ACC (Adaptive Cruise Control) and LKA (Lane Keep Assist) to be supported. It must also use CAN bus (not FlexRay). If the car is supportable but not yet on our list, we may be able to add support — the vehicle typically needs to stay at our HQ for at least 3-5 days for connector work, data collection, and reverse engineering.
 
 ## intent: beta_program
 aliases:
@@ -231,7 +233,7 @@ aliases:
 - support new car
 - beta support new car
 answer:
-If your car is supportable but not yet supported, you can work with us on beta support. The car usually needs to be at Kommu HQ for at least one full day so we can find the right connector, run data collection, and do reverse engineering work. In return you may receive an RM300 discount (confirm current terms with sales). A live agent will coordinate schedule and technical checks.
+If your car is supportable but not yet supported, you can work with us on beta support. The car usually needs to be at Kommu HQ for at least 3-5 days so we can find the right connector, run data collection, and do reverse engineering work. In return you may receive an RM300 discount (confirm current terms with sales). A live agent will coordinate schedule and technical checks.
 
 ## intent: rto_details
 aliases:
@@ -242,7 +244,7 @@ aliases:
 - installment plan
 - hire purchase
 answer:
-Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed. RTO includes a 3-year warranty. Contact us for the latest exact terms.
+Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed. RTO includes a 3-year warranty. Read the terms here: https://kommu.ai/rto-terms/.
 
 ## intent: reset_procedure
 aliases:
@@ -268,42 +270,6 @@ Batch timelines depend on stock availability, assembly progress, and installatio
 
 
 # SECTION 2: WORKFLOWS (INTERNAL)
-
-## workflow: repair_flow
-steps:
-1. check warranty status
-2. if under warranty -> arrange service
-3. if not under warranty -> quote repair price
-4. collect payment
-5. arrange repair/install appointment
-
-
-# SECTION 3: DATA (REFERENCE)
-
-## data: ka1_parts_prices_ringgits
-controller_board: 300
-motherboard: 400
-kommu_power: 50
-vehicle_connector: 150
-relay: 50
-fan: 30
-mount: 30
-screen: 150
-front_case: 200
-back_case: 200
-shipping_local: 8
-
-## data: bank
-name: Kommu Sdn Bhd
-bank: Maybank
-account: 514208667737
-
-## data: shipment_address
-name: Wong Kean Wei
-phone: 0149676780
-address: Emhub, Kota Damansara
-
-# SECTION 4: TROUBLESHOOTING
 
 ## intent: no_logs
 aliases:
@@ -425,7 +391,47 @@ aliases:
 answer:
 To restore KA2 to **factory software**, use **https://flash.kommu.ai** and follow the on-screen steps. Typically you connect **5V non–Power Delivery** power **and** the **diagnostic** USB to a **PC or laptop**, then flash using **Chrome**. **Only Linux and macOS have been tested** as working environments for this flow. **Do not unplug** the device while flashing is in progress. If the device is badly bricked, you may need to remove the **top four screws**, press the **recovery** button **while** applying power to enter loader mode — but usually you can use the KommuAI app **Settings → Enter boot loader** instead.
 
+## intent: ativa_myvi_braking_sound
+aliases:
+- braking sound
+- abs brake pump
+- car brake making noise every 3 seconds
+answer:
+The stock ACC on the Perodua Ativa and Perodua Myvi is not capable of braking the vehicle all the way to a standstill (0 km/h). Kommu addressed this limitation by transmitting repeated brake commands approximately every 3 seconds. This approach was necessary because the ABS brake pump would still release brake pressure even when commands were sent at a higher frequency. As a result, there is a slight nudge each time the pump releases and re-clamps the brake disc.
+
 # SECTION 5: DYNAMIC
+
+## workflow: repair_flow
+steps:
+1. check warranty status
+2. if under warranty -> arrange service
+3. if not under warranty -> quote repair price
+4. collect payment
+5. arrange repair/install appointment
+
+## data: ka1_parts_prices_ringgits
+controller_board: 300
+motherboard: 400
+kommu_power: 50
+vehicle_connector: 150
+relay: 50
+fan: 30
+mount: 30
+screen: 150
+front_case: 200
+back_case: 200
+shipping_local: 8
+
+## data: bank
+name: Kommu Sdn Bhd
+bank: Maybank
+account: 514208667737
+
+## data: shipment_address
+name: Wong Kean Wei
+phone: 0149676780
+address: Block B-03-31, Emhub, Kota Damansara, 47810 Petaling Jaya, Selangor
+# SECTION 4: TROUBLESHOOTING
 
 ## dynamic: batch_status
 batch: 4

@@ -26,6 +26,7 @@ from support_runtime.tech_backlog import (
     infer_possible_solution_from_bukapilot,
     summarize_issue,
 )
+from deepseek_client import chat_completion as deepseek_chat_completion
 
 
 def _strip_html(raw: str) -> str:
@@ -157,19 +158,14 @@ class AgentToolRegistry:
             ToolDef(
                 name="log_backlog",
                 description=(
-                    "Append unresolved issue to Chatbot Backlog (8 columns). Before calling, determine from the "
-                    "conversation (or ask) device type (KA2/KA1/KA1s) and car brand/model/year. Do not log if the "
-                    "user self-resolved the issue."
+                    "Append an issue to Chatbot Backlog (5 columns: timestamp, device, car, problem description, reproduction steps). "
+                    "Before calling, determine from the conversation (or ask) device type (KA2/KA1/KA1s) and "
+                    "car brand/model/year. Tool will refuse to log if `device` or `car` are `Unknown`."
                 ),
                 schema={
                     "type": "object",
                     "properties": {
                         "issue": {"type": "string", "description": "Detailed issue summary"},
-                        "possible_solution": {
-                            "type": "string",
-                            "description": "From bukapilot search or reasoning; may be left empty to auto-infer",
-                        },
-                        "user_id": {"type": "string", "description": "Phone number or chat user id"},
                         "device": {
                             "type": "string",
                             "description": "KA2, KA1, KA1s, or Unknown",
@@ -177,10 +173,6 @@ class AgentToolRegistry:
                         "car": {
                             "type": "string",
                             "description": "Brand model year, or Unknown",
-                        },
-                        "category": {
-                            "type": "string",
-                            "description": "hardware, software, connectivity, or unknown",
                         },
                     },
                     "required": ["issue"],
@@ -295,27 +287,62 @@ class AgentToolRegistry:
     def log_backlog(
         self,
         issue: str,
-        possible_solution: str = "",
-        user_id: str = "",
         device: str = "Unknown",
         car: str = "Unknown",
-        category: str = "unknown",
+        **_ignored: Any,
     ) -> dict[str, Any]:
-        solution = possible_solution.strip() if possible_solution else infer_possible_solution_from_bukapilot(issue)
-        summary = summarize_issue(
-            issue,
-            product_class="",
-            device=(device or "Unknown").strip(),
-            car=car,
-            category=category,
+        dev = (device or "").strip()
+        car_s = (car or "").strip()
+        if not dev or dev.lower() == "unknown" or not car_s or car_s.lower() == "unknown":
+            return {"ok": False, "error": "log_backlog_not_ready_missing_device_car"}
+        def _extract_first_json_object(text: str) -> dict[str, Any]:
+            # DeepSeek sometimes wraps JSON in extra text/markdown; extract the first {...} object.
+            m = re.search(r"\{.*\}", text or "", flags=re.S)
+            if not m:
+                return {}
+            try:
+                obj = json.loads(m.group(0))
+                return obj if isinstance(obj, dict) else {}
+            except Exception:
+                return {}
+
+        system_prompt = (
+            "You are a technical documentation writer for KommuAssist (KA2). "
+            "Given a customer issue report, produce a concise technical note. "
+            "Return ONLY a valid JSON object (no markdown, no code fences) with keys: "
+            "\"problem_description\" and \"reproduction_steps\"."
         )
+        user_prompt = (
+            f"Device: {dev}\nCar: {car_s}\n\n"
+            f"Issue report:\n{issue}\n\n"
+            "problem_description: 1-3 sentences describing the problem in technical terms, "
+            "including likely symptom, error codes mentioned, and relevant context from the report.\n"
+            "reproduction_steps: a single paragraph describing how to reproduce the issue step-by-step "
+            "in plain sentences (no bullet lists). If reproduction is unknown, write what the customer did "
+            "and what conditions seem important.\n"
+            "Return only JSON."
+        )
+
+        deepseek_raw = deepseek_chat_completion(system_prompt, user_prompt)
+        parsed = _extract_first_json_object(deepseek_raw or "")
+
+        problem_description = str(parsed.get("problem_description") or "").strip()
+        reproduction_steps = str(parsed.get("reproduction_steps") or "").strip()
+
+        if not problem_description:
+            # Fallback: old heuristic summary.
+            problem_description = summarize_issue(issue, product_class="", device="", car="", category="")
+            reproduction_steps = ""
+
+        # Keep sheet cells reasonably bounded.
+        problem_description = problem_description[:2000]
+        reproduction_steps = reproduction_steps[:2000] if reproduction_steps else ""
+
         return append_backlog_issue(
-            summary,
-            solution,
-            user_id=user_id,
-            device=device,
-            car=car,
-            category=category,
+            device=dev,
+            car=car_s,
+            issue_description=problem_description,
+            reproduction_steps=reproduction_steps,
         )
 
     def escalate_to_human(self, reason: str) -> dict[str, Any]:

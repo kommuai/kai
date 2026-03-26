@@ -112,6 +112,9 @@ Haystack/Qdrant/rerank/observability toggles:
 - `KAI_TRACING_ENABLED=1`
 - `KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER=1` (on escalation, force Chatwoot conversation switch to live-agent mode; fail-closed on switch failure)
 - `KAI_SOP_WRITEBACK_ENABLED=1` (on FAQ publish, write updated `master_faq.md` back to Google Docs)
+- `KAI_SOP_MERGE_SYNC_ENABLED=1` (enable scheduled bidirectional SOP merge-sync at 8:00 local time)
+- `KAI_SOP_MERGE_SYNC_HOUR=8`
+- `KAI_SOP_MERGE_SYNC_MINUTE=0`
 - `GOOGLE_DOCS_SOP_DOC_ID=<google_doc_id>` (target SOP/FAQ Google Doc for writeback)
 
 Machine-agent auth for `/v2/agent/*`:
