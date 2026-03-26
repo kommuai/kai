@@ -50,6 +50,32 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual(out.decision, "escalate_human")
         self.assertTrue(out.escalate_needed)
 
+    def test_plain_text_response_becomes_clarifying_question(self):
+        provider = _FakeProvider(
+            ["You can email support at support@kommu.ai and engineering@kommu.ai for urgent fixes."]
+        )
+        registry = AgentToolRegistry(HybridRetriever(provider=None), SimpleReranker(provider=None))
+        loop = ReActAgentLoop(
+            AgentLoopDependencies(provider=provider, tools=registry, system_prompt="test")
+        )
+        out = loop.run(text="How to contact support?", lang="EN", user_id="u3")["result"]
+        self.assertEqual(out.decision, "clarifying_question")
+        self.assertLessEqual(out.confidence, 0.55)
+
+    def test_direct_answer_with_sources_is_allowed(self):
+        provider = _FakeProvider(
+            [
+                '{"action":"final","decision":"direct_answer","answer":"Install by appointment.","confidence":0.9,"source_ids":["intent:install_booking"]}',
+            ]
+        )
+        registry = AgentToolRegistry(HybridRetriever(provider=None), SimpleReranker(provider=None))
+        loop = ReActAgentLoop(
+            AgentLoopDependencies(provider=provider, tools=registry, system_prompt="test")
+        )
+        out = loop.run(text="Can I walk in for install?", lang="EN", user_id="u4")["result"]
+        self.assertEqual(out.decision, "direct_answer")
+        self.assertGreaterEqual(out.confidence, 0.8)
+
 
 if __name__ == "__main__":
     unittest.main()

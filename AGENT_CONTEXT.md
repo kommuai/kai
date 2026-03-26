@@ -40,6 +40,19 @@ Session log for this repo. Global handoff: `/home/ting/system-notes/AGENT_CONTEX
 - Successes: `ready_1` → `A1:E1`, `ready_2` → `A2:E2`, `ready_3` → `A3:E3`, `ready_4` → `A4:E4`, `ready_5` → `A5:E5`.
 - Blocked: `not_ready_1_device_unknown`, `not_ready_2_car_unknown`, `not_ready_3_both_unknown` → `log_backlog_not_ready_missing_device_car`.
 
+## 2026-03-26 — executable helper for forced SOP sync
+
+- Added `tools/force_sop_sync.py` as a runnable executable wrapper for `sync_sop_regions()`.
+- Usage: `./tools/force_sop_sync.py` from repo root.
+- Validation: command runs successfully and returns structured JSON sync result with `ok: true`.
+
+## 2026-03-26 — factual-answer guardrails
+
+- Updated `support_runtime/agent_prompts.py` to resolve conflicting instructions and prefer grounded factual claims with concise uncertainty when unsupported.
+- Updated `support_runtime/agent_loop.py` to remove plain-text direct-answer fallback and add a lightweight grounding gate: non-chitchat `direct_answer` needs evidence (`source_ids` or successful tool observation), otherwise downgraded to clarifying question / lower confidence.
+- Added tests in `tests/test_agent_loop.py` for plain-text fallback behavior and source-backed direct answers.
+- Validation: `python3 -m pytest -q tests/test_agent_loop.py` -> 4 passed; manual smoke script verified behavior on fabricated contact example.
+
 ## 2026-03-25 (follow-up) — Google Docs writeback
 
 - Ran `push_master_faq_to_google_doc()` again; result `ok: true`, `mode: sync_region_only`.

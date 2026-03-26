@@ -181,6 +181,13 @@ curl -X POST "http://127.0.0.1:6090/admin/reset_memory?user_id=+6000000000" \
   -H "x-admin-token: <ADMIN_TOKEN>"
 ```
 
+### B2) Force SOP merge-sync now (local executable)
+
+```bash
+cd /home/ting/workspace/kai
+./tools/force_sop_sync.py
+```
+
 ### C) Test message route manually
 
 ```bash

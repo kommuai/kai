@@ -27,6 +27,26 @@ def _extract_json(raw: str) -> dict[str, Any]:
         return {}
 
 
+def _looks_like_chitchat(text: str) -> bool:
+    t = (text or "").strip().lower()
+    if not t:
+        return False
+    short = len(t.split()) <= 6
+    markers = (
+        "hi",
+        "hello",
+        "hey",
+        "thanks",
+        "thank you",
+        "ok",
+        "okay",
+        "good morning",
+        "good afternoon",
+        "good evening",
+    )
+    return short and any(m in t for m in markers)
+
+
 @dataclass
 class AgentLoopDependencies:
     provider: Any
@@ -78,6 +98,7 @@ class ReActAgentLoop:
         decision = "clarifying_question"
         confidence = 0.5
         fallback_reason = ""
+        user_chitchat = _looks_like_chitchat(text)
 
         for step in range(MAX_AGENT_STEPS):
             raw = self.deps.provider.chat_messages(
@@ -87,12 +108,6 @@ class ReActAgentLoop:
             parsed = _extract_json(raw)
 
             if not parsed:
-                if raw.strip() and not raw.strip().startswith("{"):
-                    answer = raw.strip()
-                    decision = "direct_answer"
-                    confidence = 0.7
-                    fallback_reason = "plain_text_response"
-                    break
                 fallback_reason = "invalid_agent_json"
                 messages.append({"role": "assistant", "content": raw})
                 messages.append({
@@ -165,13 +180,24 @@ class ReActAgentLoop:
                     decision = str(parsed.get("decision", "direct_answer"))
                     confidence = float(parsed.get("confidence", 0.75) or 0.75)
                 else:
-                    answer = raw.strip() if raw.strip() else "I found some information but couldn't formulate a clear answer. Could you rephrase?"
-                    decision = "direct_answer"
-                    confidence = 0.6
+                    answer = "I found some information but need one more detail to avoid guessing. Could you clarify your model/year or the exact error shown?"
+                    decision = "clarifying_question"
+                    confidence = 0.55
             else:
                 decision = "clarifying_question"
                 answer = "Could you share a bit more detail so I can help you better?"
                 fallback_reason = fallback_reason or "no_signal"
+
+        has_tool_evidence = any(bool(obs.get("result", {}).get("ok")) for obs in observations)
+        has_source_ids = bool(source_ids)
+        if decision == "direct_answer" and not user_chitchat and not (has_tool_evidence or has_source_ids):
+            if confidence >= 0.65:
+                decision = "clarifying_question"
+                confidence = 0.55
+                fallback_reason = fallback_reason or "ungrounded_answer_blocked"
+                answer = "I want to make sure I give you accurate info. Could you share one more detail so I can confirm the facts?"
+            else:
+                confidence = min(confidence, 0.55)
 
         return {
             "result": RuntimeResult(
