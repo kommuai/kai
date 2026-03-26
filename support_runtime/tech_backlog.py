@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from datetime import datetime, timezone
 import importlib.util
 import json
 import os
@@ -61,7 +62,15 @@ def _extract_error_codes(text: str) -> list[str]:
     return found[:5]
 
 
-def summarize_issue(text: str, product_class: str = "", recent_user_messages: list[str] | None = None) -> str:
+def summarize_issue(
+    text: str,
+    product_class: str = "",
+    recent_user_messages: list[str] | None = None,
+    *,
+    device: str = "",
+    car: str = "",
+    category: str = "",
+) -> str:
     recent_user_messages = recent_user_messages or []
     cleaned = re.sub(r"\s+", " ", (text or "").strip())
     latest_recent = [re.sub(r"\s+", " ", t).strip() for t in recent_user_messages if (t or "").strip()][-3:]
@@ -80,8 +89,17 @@ def summarize_issue(text: str, product_class: str = "", recent_user_messages: li
     ]
     signal_hits = [s for s in signals if s in (cleaned.lower())][:4]
     parts = []
-    if product_class:
-        parts.append(f"Product={product_class}")
+    dev = (device or "").strip()
+    if dev:
+        parts.append(f"Device={dev}")
+    elif (product_class or "").strip():
+        parts.append(f"Product={(product_class or '').strip()}")
+    car_s = (car or "").strip()
+    if car_s and car_s.lower() != "unknown":
+        parts.append(f"Car={car_s}")
+    cat_s = (category or "").strip()
+    if cat_s and cat_s.lower() != "unknown":
+        parts.append(f"Category={cat_s}")
     parts.append(f"Latest user report={cleaned[:320]}")
     if latest_recent:
         parts.append(f"Recent context={' | '.join(latest_recent)[:360]}")
@@ -181,7 +199,16 @@ def infer_possible_solution_from_bukapilot(issue_text: str) -> str:
     )[:1500]
 
 
-def append_backlog_issue(issue: str, possible_solution: str) -> dict[str, Any]:
+def append_backlog_issue(
+    issue: str,
+    possible_solution: str = "",
+    *,
+    user_id: str = "",
+    device: str = "Unknown",
+    car: str = "Unknown",
+    category: str = "unknown",
+    status: str = "New",
+) -> dict[str, Any]:
     if not TECH_BACKLOG_SHEET_ID:
         return {"ok": False, "error": "missing_tech_backlog_sheet_id"}
     try:
@@ -197,8 +224,19 @@ def append_backlog_issue(issue: str, possible_solution: str) -> dict[str, Any]:
             info, scopes=["https://www.googleapis.com/auth/spreadsheets"]
         )
         sheets = build("sheets", "v4", credentials=creds, cache_discovery=False)
-        range_name = f"'{TECH_BACKLOG_TAB_NAME}'!A:B"
-        body = {"values": [[issue, possible_solution]]}
+        ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        row = [
+            ts,
+            (user_id or "").strip(),
+            (device or "Unknown").strip() or "Unknown",
+            (car or "Unknown").strip() or "Unknown",
+            (category or "unknown").strip().lower() or "unknown",
+            (issue or "").strip(),
+            (possible_solution or "").strip(),
+            (status or "New").strip() or "New",
+        ]
+        range_name = f"'{TECH_BACKLOG_TAB_NAME}'!A:H"
+        body = {"values": [row]}
         out = (
             sheets.spreadsheets()
             .values()
@@ -247,7 +285,7 @@ def find_similar_active_issue(issue: str, *, min_score: float = 0.28) -> dict[st
         rows = (
             sheets.spreadsheets()
             .values()
-            .get(spreadsheetId=TECH_BACKLOG_SHEET_ID, range=f"'{TECH_ACTIVE_TAB_NAME}'!A:B")
+            .get(spreadsheetId=TECH_BACKLOG_SHEET_ID, range=f"'{TECH_ACTIVE_TAB_NAME}'!A:H")
             .execute()
             .get("values", [])
         )
@@ -256,17 +294,25 @@ def find_similar_active_issue(issue: str, *, min_score: float = 0.28) -> dict[st
         q = _terms(issue)
         best = {"score": 0.0}
         for idx, row in enumerate(rows[1:], start=2):
-            issue_cell = (row[0] if len(row) > 0 else "").strip()
+            if len(row) > 5:
+                issue_cell = (row[5] or "").strip()
+            else:
+                issue_cell = (row[0] if len(row) > 0 else "").strip()
             if not issue_cell:
                 continue
             t = _terms(issue_cell)
             score = len(q.intersection(t)) / max(1, len(q))
             if score > best.get("score", 0.0):
+                sol = ""
+                if len(row) > 6:
+                    sol = (row[6] or "").strip()
+                elif len(row) > 1:
+                    sol = (row[1] or "").strip()
                 best = {
                     "score": score,
                     "row": idx,
                     "issue": issue_cell,
-                    "possible_solution": (row[1] if len(row) > 1 else "").strip(),
+                    "possible_solution": sol,
                 }
         if best.get("score", 0.0) < min_score:
             return {"ok": True, "found": False}
@@ -275,7 +321,7 @@ def find_similar_active_issue(issue: str, *, min_score: float = 0.28) -> dict[st
             if gid
             else f"https://docs.google.com/spreadsheets/d/{TECH_BACKLOG_SHEET_ID}/edit"
         )
-        row_link = f"{tab_link}&range=A{best['row']}:B{best['row']}" if gid else tab_link
+        row_link = f"{tab_link}&range=A{best['row']}:H{best['row']}" if gid else tab_link
         return {
             "ok": True,
             "found": True,

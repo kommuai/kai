@@ -15,6 +15,17 @@ class TechBacklogEnrichmentTests(unittest.TestCase):
         self.assertIn("Error codes=", out)
         self.assertIn("Recent context=", out)
 
+    def test_summarize_issue_includes_device_car_category(self):
+        out = summarize_issue(
+            "Bluetooth drops in KommuAI settings",
+            device="KA2",
+            car="Honda City 2021",
+            category="connectivity",
+        )
+        self.assertIn("Device=KA2", out)
+        self.assertIn("Car=Honda City 2021", out)
+        self.assertIn("Category=connectivity", out)
+
     @patch(
         "support_runtime.tech_backlog.bukapilot_agentic_search",
         return_value={

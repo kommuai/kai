@@ -14,6 +14,7 @@ class AgentToolsTests(unittest.TestCase):
                 "search_web",
                 "search_kommu_support",
                 "search_bukapilot",
+                "read_bukapilot_file",
                 "lookup_warranty",
                 "lookup_backlog",
                 "log_backlog",

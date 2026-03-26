@@ -86,7 +86,20 @@ def parse_master_faq_schema(text: str) -> dict[str, list[dict[str, Any]]]:
                 kv[k.strip()] = v.strip()
             if not kv:
                 raise ValueError(f"Invalid {kind} block '{name}': missing key-values")
-            sections["data" if kind == "data" else "dynamic"].append({"name": name, "fields": kv})
+            if kind == "data":
+                sections["data"].append({"name": name, "fields": kv})
+            else:
+                dyn: dict[str, Any] = {"name": name, "fields": kv}
+                pst = (kv.get("priority") or "").strip()
+                try:
+                    dyn["priority"] = int(pst) if pst else 0
+                except ValueError:
+                    dyn["priority"] = 0
+                vf = (kv.get("valid_from") or "").strip()
+                vu = (kv.get("valid_until") or "").strip()
+                dyn["valid_from"] = vf or None
+                dyn["valid_until"] = vu or None
+                sections["dynamic"].append(dyn)
     return sections
 
 

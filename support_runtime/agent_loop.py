@@ -116,8 +116,9 @@ class ReActAgentLoop:
                     source_ids.append(f"tool:{tool_name}")
 
                 result_summary = json.dumps(result, ensure_ascii=False, default=str)
-                if len(result_summary) > 2000:
-                    result_summary = result_summary[:2000] + "..."
+                max_tool_chars = 80_000 if tool_name == "read_bukapilot_file" else 2000
+                if len(result_summary) > max_tool_chars:
+                    result_summary = result_summary[:max_tool_chars] + "..."
 
                 messages.append({"role": "assistant", "content": json.dumps(parsed)})
                 messages.append({

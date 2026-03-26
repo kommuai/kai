@@ -132,6 +132,12 @@ class HybridRetriever:
             if query_vec and idx < len(chunk_vecs):
                 sem_like = max(0.0, self._cosine(query_vec, chunk_vecs[idx]))
             score = 0.5 * sem_like + 0.35 * dense_like + 0.15 * sparse_like
+            try:
+                dp = int(md.get("dynamic_priority") or 0)
+            except (TypeError, ValueError):
+                dp = 0
+            if dp:
+                score += min(0.45, 0.045 * dp)
             if score <= 0:
                 continue
             out.append(
@@ -168,6 +174,14 @@ class SimpleReranker:
                 bonus += 0.15
             if meta.get("category") == "known_faq_intent":
                 bonus += 0.05
+            if meta.get("category") == "dynamic_faq":
+                bonus += 0.06
+            try:
+                dp = int(meta.get("dynamic_priority") or 0)
+            except (TypeError, ValueError):
+                dp = 0
+            if dp:
+                bonus += min(0.4, 0.04 * dp)
             bonus += min(0.3, model_scores[idx] if idx < len(model_scores) else 0.0)
             rescored.append(
                 RetrievalItem(

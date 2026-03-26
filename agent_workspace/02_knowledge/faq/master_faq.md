@@ -184,8 +184,11 @@ aliases:
 - demo
 - try before buy
 - test it first
+- book test drive
+- schedule test drive
+- calendly test drive
 answer:
-Yes, test drives are available. You can try it on our Kommu vehicle or bring your own supported car to our office.
+Yes, test drives are available. You can try it on our Kommu vehicle or bring your own supported car to our office. **Book or reschedule here:** https://calendly.com/kommuassist/test-drive — whenever someone asks about a test drive, demo, or trying before buying, share this link so they can pick a slot.
 
 ## intent: return_policy
 aliases:
@@ -216,7 +219,7 @@ aliases:
 - compatibility failed
 - my car cannot use
 answer:
-A car needs factory ACC (Adaptive Cruise Control) and LKA (Lane Keep Assist) to be supported. It must also use CAN bus (not FlexRay). If the car is supportable but not yet on our list, we may be able to add support — we'd just need to borrow the car for a few hours.
+A car needs factory ACC (Adaptive Cruise Control) and LKA (Lane Keep Assist) to be supported. It must also use CAN bus (not FlexRay). If the car is supportable but not yet on our list, we may be able to add support — the vehicle typically needs to stay at our HQ for at least a full day for connector work, data collection, and reverse engineering.
 
 ## intent: beta_program
 aliases:
@@ -226,8 +229,9 @@ aliases:
 - vehicle development program
 - car lending program
 - support new car
+- beta support new car
 answer:
-If your car is supportable but not yet supported, you can lend it to us for development. In return, you get an RM300 discount. Our live agent will coordinate the schedule and technical checks.
+If your car is supportable but not yet supported, you can work with us on beta support. The car usually needs to be at Kommu HQ for at least one full day so we can find the right connector, run data collection, and do reverse engineering work. In return you may receive an RM300 discount (confirm current terms with sales). A live agent will coordinate schedule and technical checks.
 
 ## intent: rto_details
 aliases:
@@ -356,12 +360,80 @@ aliases:
 answer:
 GPS needs clear sky view to get a fix. Try driving to an open area. If you're using the device indoors or in a covered parking structure, GPS won't lock on. A phone hotspot connection can help with assisted GPS.
 
+## intent: kommuai_app_overview
+aliases:
+- kommuai app
+- mobile app settings
+- ka2 app
+- phone app for ka2
+- app reboot format sd
+- recalibration app
+answer:
+For KA2, most settings, calibration, and diagnostics go through the **KommuAI** mobile app. From the app you can reboot the device, format the SD card, run recalibration, enable quiet mode, toggle assisted lane change, toggle lane departure warning (LDW), adjust ADAS-related options, open the **Visualization** tab (paths, lanes, distances, driver monitoring), and manage logs / feedback. If a user needs step-by-step guidance for settings or calibration, always point them to the KommuAI app first.
+
+## intent: kommuai_app_visualization
+aliases:
+- visualization tab
+- error info on app
+- lane lines app
+- driver monitoring app
+answer:
+In the KommuAI app, the **Visualization** tab shows live driving visualization: paths, lane lines, distance settings, and driver monitoring state. It also surfaces **error information** that is very useful when debugging — ask the user to note or screenshot what appears there when reporting a problem to technical support.
+
+## intent: kommuai_app_logs
+aliases:
+- submit full logs
+- app logs feedback
+- driving logs app
+answer:
+The **Logs** section in the KommuAI app shows driving logs. Users can submit feedback from there and use **Submit full logs** when reporting an issue. Remind them to write a **clear, descriptive** summary of the problem (when it happens, what they were doing, error text if any) so support can act faster.
+
+## intent: kommuai_app_settings
+aliases:
+- bluetooth settings ka2
+- experimental mode
+- sim 2g 4g app
+- upload status logs
+- wifi fingerprint app
+- ios app slow settings
+answer:
+The **Settings** page in the KommuAI app connects to KA2 over **Bluetooth**. If another phone or device is also using Bluetooth heavily, it can **contest the connection** and cause unstable or missing settings — disconnect extra Bluetooth devices when possible. On **iOS**, if the settings page does not show or is very slow, **force-quit (kill) the app** and reopen; connection often recovers. Settings may include **Experimental mode** (alpha / testing features), **Wi‑Fi** setup, and **fingerprint** selection. For the built-in SIM: **2G** in the app usually means **no usable data connection**; **4G** means there is connection. If logs seem empty, check whether data has already uploaded — the settings area shows **remaining upload** status. If problems persist after checking connectivity and uploads, escalate to technical support.
+
+## intent: kommuai_app_bluetooth_issue
+aliases:
+- bluetooth unstable ka2
+- cannot connect app bluetooth
+answer:
+Unstable Bluetooth to KA2 is often caused by **other devices** competing for the same radio. Ask the user to turn off Bluetooth on other phones/wearables temporarily, move closer to the device, and retry. On **iOS**, killing and reopening the KommuAI app often fixes a stuck settings connection.
+
+## intent: ka2_usb_ports_warning
+aliases:
+- which usb port ka2
+- diagnostic port power port
+- wrong usb burned
+- silicone cover usb
+answer:
+**Important — warranty-critical:** KA2 has **two USB ports**. The **power port** is at the **edge** of the device and is the one meant for **in-car power**. The **diagnostic / data port** is separate and is usually covered with a **silicone plug**. **Never apply 12V vehicle power to the diagnostic port** — it can destroy the board. **Damage from wrong-port power is not covered under warranty.** If unsure, ask the user to send a photo of the ports before advising.
+
+## intent: flash_kommu_restore
+aliases:
+- flash.kommu.ai
+- factory reset ka2 software
+- reflash ka2
+- recovery button ka2
+- bootloader ka2
+answer:
+To restore KA2 to **factory software**, use **https://flash.kommu.ai** and follow the on-screen steps. Typically you connect **5V non–Power Delivery** power **and** the **diagnostic** USB to a **PC or laptop**, then flash using **Chrome**. **Only Linux and macOS have been tested** as working environments for this flow. **Do not unplug** the device while flashing is in progress. If the device is badly bricked, you may need to remove the **top four screws**, press the **recovery** button **while** applying power to enter loader mode — but usually you can use the KommuAI app **Settings → Enter boot loader** instead.
+
 # SECTION 5: DYNAMIC
 
 ## dynamic: batch_status
 batch: 4
 status: assembling
 eta: April 2026
+valid_from: 2026-03-01
+valid_until: 2026-12-31
+priority: 10
 <!-- sop-sync:end -->
 
 
