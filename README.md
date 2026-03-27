@@ -116,6 +116,7 @@ Haystack/Qdrant/rerank/observability toggles:
 - `KAI_SOP_MERGE_SYNC_HOUR=8`
 - `KAI_SOP_MERGE_SYNC_MINUTE=0`
 - `GOOGLE_DOCS_SOP_DOC_ID=<google_doc_id>` (target SOP/FAQ Google Doc for writeback)
+- `KAI_SMARTSERVA_TOOL_PATH=/app/integrations/smartserva/create_visitor_pass.py` (optional explicit path override for visitor-pass tool)
 
 Machine-agent auth for `/v2/agent/*`:
 
@@ -253,6 +254,7 @@ flowchart TD
 ├── config.py                 # Config + constants
 ├── data/sop/                 # SOP docs
 ├── support_runtime/          # Active runtime (router/retrieval/graph/tools)
+├── integrations/smartserva/  # SmartServa visitor-pass automation module
 ├── tools/                    # Audits & benchmarks
 ├── logs/                     # Runtime & benchmark logs
 ├── docker-compose.yml

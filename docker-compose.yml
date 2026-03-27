@@ -11,7 +11,6 @@ services:
       - ./media:/app/media
       - ./logs:/app/logs
       - ./agent_workspace:/app/agent_workspace
-      - ../smartserva:/app/smartserva:ro
     environment:
       - TZ=Asia/Kuala_Lumpur
       - AGENT_WORKSPACE=/app/agent_workspace

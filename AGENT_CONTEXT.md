@@ -162,3 +162,21 @@ Session log for this repo. Global handoff: `/home/ting/system-notes/AGENT_CONTEX
     - If unresolved, returns explicit config error: `missing_smartserva_tool:set_KAI_SMARTSERVA_TOOL_PATH_or_mount_smartserva`.
 - Validation:
   - `python3 -m py_compile support_runtime/agent_tools.py` -> OK.
+
+## 2026-03-27 — SmartServa moved inside Kai repo
+
+- Intent: reorganize project by moving SmartServa assets into Kai so production deploy does not depend on sibling directories.
+- New location:
+  - `integrations/smartserva/create_visitor_pass.py`
+  - `integrations/smartserva/README.md`
+  - `integrations/smartserva/LOGIN_PLAN.md`
+  - `integrations/smartserva/AGENT_CONTEXT.md`
+- Runtime wiring updates:
+  - `support_runtime/agent_tools.py` discovery now prioritizes `integrations/smartserva/create_visitor_pass.py`.
+  - `docker-compose.yml` removed external mount `../smartserva:/app/smartserva:ro`.
+  - `README.md` updated with integration location + optional `KAI_SMARTSERVA_TOOL_PATH`.
+- Security cleanup:
+  - Removed old external runtime artifact containing session cookies (`workspace/smartserva/runtime/login_success_latest.json`) instead of migrating it.
+- Validation:
+  - `python3 -m py_compile support_runtime/agent_tools.py integrations/smartserva/create_visitor_pass.py` -> OK.
+  - `AgentToolRegistry.call("create_visitor_pass", {})` -> `ok=True`, `visitor_pass_link` present.

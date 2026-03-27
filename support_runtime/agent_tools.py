@@ -477,8 +477,10 @@ class AgentToolRegistry:
         if not script_path:
             repo_root = Path(__file__).resolve().parents[1]
             candidates = [
+                repo_root / "integrations" / "smartserva" / "create_visitor_pass.py",
                 repo_root / "smartserva" / "create_visitor_pass.py",
                 repo_root.parent / "smartserva" / "create_visitor_pass.py",
+                Path.cwd() / "integrations" / "smartserva" / "create_visitor_pass.py",
                 Path.cwd() / "smartserva" / "create_visitor_pass.py",
             ]
             found = next((p for p in candidates if p.is_file()), None)
@@ -488,7 +490,7 @@ class AgentToolRegistry:
         if not script_path or not os.path.isfile(script_path):
             return {
                 "ok": False,
-                "error": "missing_smartserva_tool:set_KAI_SMARTSERVA_TOOL_PATH_or_mount_smartserva",
+                "error": "missing_smartserva_tool:set_KAI_SMARTSERVA_TOOL_PATH_or_place_file_at_integrations/smartserva/create_visitor_pass.py",
             }
 
         cmd = [
