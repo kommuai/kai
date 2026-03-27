@@ -136,3 +136,29 @@ Session log for this repo. Global handoff: `/home/ting/system-notes/AGENT_CONTEX
 - Root cause found for QR generation failure in runtime path: SmartServa env keys in `.env` had invalid spacing (`KEY = value`) so runtime did not load them correctly.
 - Updated `.env` formatting for SmartServa keys to strict `KEY=value`.
 - Validation (runtime repro): `support_runtime_service.execute("can i have the access qr now", ...)` now reaches `create_visitor_pass`; subsequent failure shifted to SmartServa booking-window rule, confirming credentials are now loaded.
+
+## 2026-03-27 — Docker readiness for visitor-pass tool
+
+- Intent: ensure containerized Kai can run `create_visitor_pass` with required dependencies and script path.
+- Files changed:
+  - `requirements.txt`: added `ddddocr` dependency.
+  - `support_runtime/agent_tools.py`: updated `create_visitor_pass` script path resolution to prefer `/app/smartserva/create_visitor_pass.py` in containers, with local fallback.
+  - `docker-compose.yml`: mounted `../smartserva` into container as read-only `/app/smartserva`.
+  - `.dockerignore`: added to reduce build context size and avoid shipping local artifacts/secrets.
+- Validation:
+  - `python3 -m py_compile support_runtime/agent_tools.py` -> OK.
+  - Runtime smoke call `reg.call("create_visitor_pass", {})` -> `ok=True` (with local env available).
+  - `docker compose build kai` started successfully and reached dependency installation stage with `ddddocr` included.
+
+## 2026-03-27 — Removed hardcoded SmartServa path defaults
+
+- Intent: make `create_visitor_pass` path resolution production-portable across different host layouts.
+- File changed:
+  - `support_runtime/agent_tools.py`
+    - Removed machine-specific absolute fallback paths.
+    - Resolution order is now:
+      1) `KAI_SMARTSERVA_TOOL_PATH` env var
+      2) repo-relative discovery (`<kai_repo>/smartserva/create_visitor_pass.py`, sibling `../smartserva/create_visitor_pass.py`, and `cwd/smartserva/create_visitor_pass.py`)
+    - If unresolved, returns explicit config error: `missing_smartserva_tool:set_KAI_SMARTSERVA_TOOL_PATH_or_mount_smartserva`.
+- Validation:
+  - `python3 -m py_compile support_runtime/agent_tools.py` -> OK.

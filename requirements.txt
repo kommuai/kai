@@ -29,3 +29,4 @@ colorama==0.4.6
 typing-inspect
 
 deep-translator==1.11.4
+ddddocr>=1.5.6

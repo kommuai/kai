@@ -5,6 +5,7 @@ import json
 from functools import lru_cache
 import html
 import os
+from pathlib import Path
 import re
 import subprocess
 from typing import Any, Callable
@@ -472,14 +473,23 @@ class AgentToolRegistry:
         return {"ok": True, "escalate": True, "reason": reason}
 
     def create_visitor_pass(self, visit_date: str = "", visit_time: str = "", unit_id: str = "") -> dict[str, Any]:
-        script_path = (
-            os.getenv("KAI_SMARTSERVA_TOOL_PATH", "").strip()
-            or "/home/ting/workspace/smartserva/create_visitor_pass.py"
-        )
+        script_path = os.getenv("KAI_SMARTSERVA_TOOL_PATH", "").strip()
+        if not script_path:
+            repo_root = Path(__file__).resolve().parents[1]
+            candidates = [
+                repo_root / "smartserva" / "create_visitor_pass.py",
+                repo_root.parent / "smartserva" / "create_visitor_pass.py",
+                Path.cwd() / "smartserva" / "create_visitor_pass.py",
+            ]
+            found = next((p for p in candidates if p.is_file()), None)
+            script_path = str(found) if found else ""
         timeout_sec = int(os.getenv("KAI_SMARTSERVA_TOOL_TIMEOUT_SECONDS", "180"))
 
-        if not os.path.isfile(script_path):
-            return {"ok": False, "error": f"missing_smartserva_tool:{script_path}"}
+        if not script_path or not os.path.isfile(script_path):
+            return {
+                "ok": False,
+                "error": "missing_smartserva_tool:set_KAI_SMARTSERVA_TOOL_PATH_or_mount_smartserva",
+            }
 
         cmd = [
             "python3",
