@@ -42,6 +42,8 @@ class SupportRuntimeService:
     def execute(self, text: str, lang: str = "EN", user_id: str = "") -> RuntimeResult:
         if not self.graph:
             self.startup()
+        # Refresh clock in system prompt every turn so "today/tomorrow" matches wall time.
+        self.graph.deps.system_prompt = build_system_prompt(self.agent_tools.list_schemas())
 
         history = get_history(user_id) if user_id else []
 

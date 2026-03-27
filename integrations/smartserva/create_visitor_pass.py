@@ -22,11 +22,18 @@ import re
 import sys
 import time
 from typing import Dict, Optional, Tuple
+from zoneinfo import ZoneInfo
 
 import ddddocr
 import requests
 
 BASE_URL = "https://emhub.smartserva.com"
+
+
+def _local_now() -> dt.datetime:
+    # Subprocess may only inherit `TZ` (Docker); Kai also uses `TZ_REGION` in config.
+    tz_name = (os.getenv("TZ_REGION") or os.getenv("TZ") or "Asia/Kuala_Lumpur").strip()
+    return dt.datetime.now(ZoneInfo(tz_name))
 
 
 def parse_args() -> argparse.Namespace:
@@ -122,7 +129,7 @@ def random_malaysian_mobile() -> str:
 
 
 def parse_schedule(date_raw: str, time_raw: str) -> Tuple[str, str, str]:
-    now = dt.datetime.now()
+    now = _local_now()
     date_raw = (date_raw or "").strip()
     time_raw = (time_raw or "").strip()
     visit_date = dt.datetime.strptime(date_raw, "%Y-%m-%d").date() if date_raw else now.date()

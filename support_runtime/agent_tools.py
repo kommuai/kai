@@ -283,11 +283,11 @@ class AgentToolRegistry:
                     "properties": {
                         "visit_date": {
                             "type": "string",
-                            "description": "Visit date in YYYY-MM-DD format",
+                            "description": "Visit date in YYYY-MM-DD (Malaysia calendar day when user specifies a day)",
                         },
                         "visit_time": {
                             "type": "string",
-                            "description": "Visit time in HH:MM 24-hour format",
+                            "description": "Visit time in HH:MM 24-hour Malaysia local time",
                         },
                         "unit_id": {
                             "type": "string",

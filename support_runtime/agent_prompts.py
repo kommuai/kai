@@ -1,7 +1,21 @@
 from __future__ import annotations
 
-import json
+import os
+from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
+
+
+def local_clock_block() -> str:
+    """Malaysia-local wall clock for relative dates (today / tomorrow) and office-hours reasoning."""
+    tz_name = (os.getenv("TZ_REGION") or os.getenv("TZ") or "Asia/Kuala_Lumpur").strip()
+    now = datetime.now(ZoneInfo(tz_name))
+    return (
+        "## Current time (ground truth for scheduling)\n"
+        f"- Now: `{now.strftime('%Y-%m-%d %H:%M')}` `{now.strftime('%A')}` — timezone `{tz_name}`\n"
+        f"- Today's date for `visit_date`: `{now.strftime('%Y-%m-%d')}`\n"
+        "- Interpret **today**, **tomorrow**, **tonight** from this section, not from training cutoff.\n"
+    )
 
 
 SYSTEM_PROMPT = """\
@@ -63,10 +77,10 @@ have enough evidence or need another tool.
      After a successful `log_backlog` tool call, include a short confirmation to the user that the issue/complaint was logged to the technical backlog. \
      Then `escalate_to_human` if needed.
 - **Building entry QR / visitor pass link** (user asks for QR, pass link, or entry link): \
-  1) If visit date/time is missing, assume current local date/time and proceed. \
-  2) Call `create_visitor_pass` with provided `visit_date`/`visit_time` when present; otherwise call it without those args. \
+  1) Times use **Malaysia time** (`TZ_REGION`, default `Asia/Kuala_Lumpur`). For phrases like **tomorrow**, **today**, **this evening**, compute `visit_date` as `YYYY-MM-DD` and `visit_time` as `HH:MM`, and call the tool with **both** fields whenever the user gave a schedule — never pass only the time (that can book the wrong calendar day). \
+  2) If visit schedule is completely missing, call `create_visitor_pass` with **no** date/time args (the tool picks a valid default). \
   3) Return the generated `visitor_pass_link` directly to the user. \
-  4) If tool fails, explain briefly and ask for corrected date/time or escalate to human.
+  4) If the tool returns `ok:false`, repeat the **exact** `error` string to the user (do not invent extra “system restrictions”). For Emhub, a common message is visit slot outside **6:00 AM–10:00 PM**; fix by adjusting date/time and retry once before escalating.
 - **Anything unclear**: use `search_faq` + `search_web` to gather context before responding.
 
 ## Response format
@@ -90,6 +104,7 @@ IMPORTANT: Output ONLY the JSON object, nothing else. No markdown, no explanatio
 - For factual claims, ground them in FAQ/tool outputs; if not grounded, keep wording uncertain or ask a brief clarifying question.
 - When the user mentions a non-English word that could be a car model (e.g. "myvi", "vios", "saga"), treat it as a vehicle query.
 - For escalation: only escalate after you've tried your tools. Don't escalate immediately.
+- Scheduling and office-hours questions: always anchor to **Current time** above.
 """
 
 
@@ -98,4 +113,4 @@ def build_system_prompt(tool_schemas: list[dict[str, Any]]) -> str:
         f"- **{t['name']}**: {t['description']}"
         for t in tool_schemas
     )
-    return SYSTEM_PROMPT + f"\n## Available tools\n{tool_block}\n"
+    return SYSTEM_PROMPT + local_clock_block() + f"\n## Available tools\n{tool_block}\n"

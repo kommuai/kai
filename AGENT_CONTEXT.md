@@ -180,3 +180,9 @@ Session log for this repo. Global handoff: `/home/ting/system-notes/AGENT_CONTEX
 - Validation:
   - `python3 -m py_compile support_runtime/agent_tools.py integrations/smartserva/create_visitor_pass.py` -> OK.
   - `AgentToolRegistry.call("create_visitor_pass", {})` -> `ok=True`, `visitor_pass_link` present.
+
+## 2026-03-28 — Per-turn wall clock in system prompt
+
+- `support_runtime/agent_prompts.py`: `local_clock_block()` injects current Malaysia-local date/time (`TZ_REGION` / `TZ`) before tool list.
+- `support_runtime/service.py`: rebuilds `system_prompt` on each `execute()` so “today/tomorrow” stays current.
+- Tests: `pytest tests/test_agent_loop.py` → 4 passed.
