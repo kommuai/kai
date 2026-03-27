@@ -2,6 +2,53 @@
 
 Session log for this repo. Global handoff: `/home/ting/system-notes/AGENT_CONTEXT.md`.
 
+## 2026-03-27 — Integrate SMARTSERVA visitor-pass automation into Kai tools
+
+- Intent: when users ask for building-entry QR/pass links, let Kai call the SMARTSERVA automation and return the generated link directly.
+- Files changed:
+  - `support_runtime/agent_tools.py`
+    - Added tool registration: `create_visitor_pass` with schema (`visit_date`, `visit_time`, optional `unit_id`).
+    - Added handler `create_visitor_pass(...)` that runs `/home/ting/workspace/smartserva/create_visitor_pass.py` via subprocess and returns normalized output (`visitor_pass_link`, visitor metadata).
+    - Added tool-timeout/file-missing/failure handling.
+  - `support_runtime/agent_prompts.py`
+    - Added explicit tool strategy section for building-entry QR/link intents: ask date/time if missing, call `create_visitor_pass`, return link.
+  - `tests/test_agent_tools.py`
+    - Added assertions that registry includes `create_visitor_pass`.
+    - Added success/failure handler tests with mocked subprocess execution.
+- Validation:
+  - `python3 -m pytest -q tests/test_agent_tools.py tests/test_agent_loop.py` → `8 passed`.
+  - Live tool smoke via registry call with SMARTSERVA creds env set returned `ok: True` and a real `visitor_pass_link`.
+  - Prompt/tool wiring check confirms both `create_visitor_pass` and strategy text are present in built system prompt.
+- Next:
+  - Ensure runtime environment where Kai runs has `SMARTSERVA_USERNAME` and `SMARTSERVA_PASSWORD` set.
+  - Optional override vars: `KAI_SMARTSERVA_TOOL_PATH`, `KAI_SMARTSERVA_TOOL_TIMEOUT_SECONDS`.
+
+## 2026-03-27 — Default current date/time when missing for visitor-pass requests
+
+- Intent: if user asks for building-entry QR/pass link without date/time, proceed using current time instead of asking follow-up.
+- Files changed:
+  - `support_runtime/agent_tools.py`
+    - `create_visitor_pass` schema no longer requires `visit_date`/`visit_time`.
+    - Handler now accepts optional `visit_date`/`visit_time` and only passes CLI flags when provided (empty => script defaults).
+  - `support_runtime/agent_prompts.py`
+    - Updated guidance: missing visit date/time should default to current local date/time and proceed.
+  - `tests/test_agent_tools.py`
+    - Added test ensuring empty args call omits `--date`/`--time` and still succeeds.
+  - `../smartserva/create_visitor_pass.py`
+    - `--date` and `--time` made optional.
+    - Missing values now default to current local date/time in schedule parsing.
+- Validation:
+  - `python3 -m py_compile /home/ting/workspace/smartserva/create_visitor_pass.py`
+  - `python3 -m pytest -q tests/test_agent_tools.py tests/test_agent_loop.py` → `9 passed`
+  - Live runtime call `reg.call("create_visitor_pass", {})` returned `ok: True` with generated link and current timestamped schedule.
+
+## 2026-03-26 — SOP resync command lookup
+
+- Intent: User asked for the executable command to resync SOP with `master_faq`.
+- Verified script: `tools/force_sop_sync.py` exists and is executable.
+- Confirmed usage in `README.md` section "Force SOP merge-sync now (local executable)".
+- Recommended command from repo root: `./tools/force_sop_sync.py` (or `python3 tools/force_sop_sync.py`).
+
 ## 2026-03-26 — SOP merge sync (8am)
 
 - Added `core/sop_sync_merge.py` to pull local+Google SOP regions, parse/merge with field-level Google precedence, re-render schema, write local, write back to Google, and track hashes/date in `rag/sop_sync_state.json`.
@@ -83,3 +130,9 @@ Session log for this repo. Global handoff: `/home/ting/system-notes/AGENT_CONTEX
 - **Summary:** Master FAQ expanded; dynamic FAQ blocks now support `valid_from` / `valid_until` / `priority`, compiled into searchable chunks; backlog append uses columns A–H; new `read_bukapilot_file` tool; agent loop allows 80k-char tool results for that tool; system prompt updated.
 - **Validation:** `timeout 900 python3 -m pytest -q` → 55 passed. Google Docs FAQ writeback succeeded when enabled.
 - **Next:** Ensure spreadsheet headers match A–H if operators rely on row 1 labels.
+
+## 2026-03-27 — QR link runtime fix verified
+
+- Root cause found for QR generation failure in runtime path: SmartServa env keys in `.env` had invalid spacing (`KEY = value`) so runtime did not load them correctly.
+- Updated `.env` formatting for SmartServa keys to strict `KEY=value`.
+- Validation (runtime repro): `support_runtime_service.execute("can i have the access qr now", ...)` now reaches `create_visitor_pass`; subsequent failure shifted to SmartServa booking-window rule, confirming credentials are now loaded.

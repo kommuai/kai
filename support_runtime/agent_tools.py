@@ -6,6 +6,7 @@ from functools import lru_cache
 import html
 import os
 import re
+import subprocess
 from typing import Any, Callable
 
 import requests
@@ -269,6 +270,33 @@ class AgentToolRegistry:
                 handler=self.escalate_to_human,
             )
         )
+        self._register(
+            ToolDef(
+                name="create_visitor_pass",
+                description=(
+                    "Create SMARTSERVA building-entry visitor pass (delivery) and return pass link. "
+                    "Use for user requests about QR/link/pass to enter building."
+                ),
+                schema={
+                    "type": "object",
+                    "properties": {
+                        "visit_date": {
+                            "type": "string",
+                            "description": "Visit date in YYYY-MM-DD format",
+                        },
+                        "visit_time": {
+                            "type": "string",
+                            "description": "Visit time in HH:MM 24-hour format",
+                        },
+                        "unit_id": {
+                            "type": "string",
+                            "description": "Optional SMARTSERVA unit id override",
+                        },
+                    },
+                },
+                handler=self.create_visitor_pass,
+            )
+        )
 
     def search_faq(self, query: str) -> dict[str, Any]:
         items = self.retriever.retrieve(query, top_k=8)
@@ -442,6 +470,78 @@ class AgentToolRegistry:
 
     def escalate_to_human(self, reason: str) -> dict[str, Any]:
         return {"ok": True, "escalate": True, "reason": reason}
+
+    def create_visitor_pass(self, visit_date: str = "", visit_time: str = "", unit_id: str = "") -> dict[str, Any]:
+        script_path = (
+            os.getenv("KAI_SMARTSERVA_TOOL_PATH", "").strip()
+            or "/home/ting/workspace/smartserva/create_visitor_pass.py"
+        )
+        timeout_sec = int(os.getenv("KAI_SMARTSERVA_TOOL_TIMEOUT_SECONDS", "180"))
+
+        if not os.path.isfile(script_path):
+            return {"ok": False, "error": f"missing_smartserva_tool:{script_path}"}
+
+        cmd = [
+            "python3",
+            script_path,
+        ]
+        if str(visit_date or "").strip():
+            cmd.extend(["--date", str(visit_date).strip()])
+        if str(visit_time or "").strip():
+            cmd.extend(["--time", str(visit_time).strip()])
+        if str(unit_id or "").strip():
+            cmd.extend(["--unit-id", str(unit_id).strip()])
+
+        try:
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout_sec,
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            return {"ok": False, "error": "smartserva_tool_timeout"}
+        except Exception as exc:  # noqa: BLE001
+            return {"ok": False, "error": f"smartserva_tool_exec_failed:{exc}"}
+
+        output_blob = (proc.stdout or "").strip()
+        err_blob = (proc.stderr or "").strip()
+        merged = "\n".join([x for x in [output_blob, err_blob] if x]).strip()
+        m = re.search(r"\{.*\}", merged, flags=re.S)
+        payload: dict[str, Any] = {}
+        if m:
+            try:
+                obj = json.loads(m.group(0))
+                if isinstance(obj, dict):
+                    payload = obj
+            except Exception:
+                payload = {}
+
+        if proc.returncode != 0:
+            return {
+                "ok": False,
+                "error": payload.get("error") if payload else "smartserva_tool_failed",
+                "stdout": output_blob[:500],
+                "stderr": err_blob[:500],
+            }
+
+        if not payload:
+            return {"ok": False, "error": "smartserva_tool_invalid_output", "stdout": output_blob[:500]}
+
+        if not payload.get("ok"):
+            return {"ok": False, "error": payload.get("error", "smartserva_tool_failed"), "raw": payload}
+
+        return {
+            "ok": True,
+            "visit_date": payload.get("visit_date"),
+            "visit_time": payload.get("visit_time"),
+            "visitor_name": payload.get("visitor_name"),
+            "visitor_phone": payload.get("visitor_phone"),
+            "visitor_id": payload.get("visitor_id"),
+            "status": payload.get("status"),
+            "visitor_pass_link": payload.get("visitor_pass_link"),
+        }
 
 
 def parse_tool_call(raw: str) -> tuple[str, dict[str, Any]] | tuple[None, None]:
