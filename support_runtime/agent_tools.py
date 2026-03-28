@@ -60,9 +60,34 @@ def _kommu_support_text() -> str:
         return ""
 
 
+_VEHICLE_QUERY_ALIASES: dict[str, str] = {
+    "cr-v": "crv",
+    "crv5": "crv gen 5",
+    "cr-v5": "crv gen 5",
+    "hr-v": "hrv",
+    "atto3": "atto 3",
+    "sealion7": "sealion 7",
+    "x50fl": "x50 fl",
+    "x70fl": "x70 fl",
+    "cityfl": "city fl",
+}
+
+_VEHICLE_QUERY_STOPWORDS: frozenset[str] = frozenset({
+    "is", "my", "car", "support", "supported", "do", "you", "can",
+    "vehicle", "kommu", "ada", "tak", "boleh", "ke", "the", "a",
+    "with", "have", "has", "does", "it", "for", "of", "on",
+})
+
+
+def _normalize_vehicle_query(text: str) -> str:
+    t = (text or "").lower().strip()
+    for alias, replacement in _VEHICLE_QUERY_ALIASES.items():
+        t = re.sub(r"\b" + re.escape(alias) + r"\b", replacement, t)
+    return t
+
+
 @lru_cache(maxsize=1)
 def _official_supported_vehicles() -> list[dict[str, Any]]:
-    # Support page itself is JS-driven; it references this official data source.
     source = "https://raw.githubusercontent.com/kommuai/bukapilot/snapshot/selfdrive/car/supported_vehicle.json"
     try:
         resp = requests.get(source, timeout=VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS)
@@ -88,6 +113,9 @@ def _official_supported_vehicles() -> list[dict[str, Any]]:
             continue
         years = _expand_years(row.get("year") or "")
         variant = str(row.get("variant") or "").strip()
+        search_text = _normalize_vehicle_query(f"{brand} {model} {variant}")
+        search_words = set(search_text.split())
+        model_words = set(model.lower().split())
         rows.append(
             {
                 "name": f"{brand} {model}".strip(),
@@ -95,6 +123,8 @@ def _official_supported_vehicles() -> list[dict[str, Any]]:
                 "model": model,
                 "years": years,
                 "variant": variant,
+                "search_words": search_words,
+                "model_words": model_words,
             }
         )
     return rows
@@ -104,22 +134,27 @@ def _match_official_vehicle(query: str) -> dict[str, Any] | None:
     vehicles = _official_supported_vehicles()
     if not vehicles:
         return None
-    q = (query or "").lower()
+    q = _normalize_vehicle_query(query)
     if not q:
         return None
     year_m = re.search(r"\b(19|20)\d{2}\b", q)
     q_year = int(year_m.group(0)) if year_m else None
-    stop = {"is", "my", "car", "support", "supported", "do", "you", "can", "vehicle", "kommu"}
-    q_tokens = [t for t in re.split(r"[^a-z0-9]+", q) if len(t) >= 3 and t not in stop]
+    q_tokens = [
+        t for t in re.split(r"[^a-z0-9]+", q)
+        if len(t) >= 2 and t not in _VEHICLE_QUERY_STOPWORDS
+    ]
     if not q_tokens:
         return None
 
     best = None
     best_score = -1
     for row in vehicles:
-        name_l = str(row.get("name") or "").lower()
-        token_hits = sum(1 for t in q_tokens if t in name_l)
-        if token_hits < 2:
+        search_words: set[str] = row.get("search_words") or set()
+        model_words: set[str] = row.get("model_words") or set()
+        token_hits = sum(1 for t in q_tokens if t in search_words)
+        has_model_hit = any(t in model_words for t in q_tokens)
+        min_hits = 1 if has_model_hit else 2
+        if token_hits < min_hits:
             continue
         years = row.get("years") or set()
         if q_year is not None and years and q_year not in years:

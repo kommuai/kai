@@ -15,6 +15,8 @@ class VehicleSupportOfficialMatchTests(unittest.TestCase):
                 "model": "Alphard",
                 "years": set(range(2019, 2023)),
                 "variant": "2.5V, Hybrid",
+                "search_words": {"toyota", "alphard", "2", "5v", "hybrid"},
+                "model_words": {"alphard"},
             }
         ],
     )
