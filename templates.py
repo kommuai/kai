@@ -28,10 +28,10 @@ def reply_how(lang="EN"):
 def reply_buy(lang="EN"):
     if lang=="BM":
         return ("Tempah KommuAssist 1s: https://kommu.ai/products/ "
-                "(anggaran hantar ~1 minggu; pemasangan percuma di HQ dgn janji temu). "
+                "(anggaran hantar ~1 minggu; pemasangan sendiri digalakkan — bantuan di HQ pilihan dgn janji temu). "
                 "Semak sokongan: https://kommu.ai/support/ — beritahu jenama/model/tahun/varian + ACC & LKAS.")
     return ("Order KommuAssist 1s: https://kommu.ai/products/ "
-            "(ships ~1 week; free install at HQ by appointment). "
+            "(ships ~1 week; self-install is encouraged — optional free help at HQ by appointment if you want it). "
             "Check support: https://kommu.ai/support/ — tell me make/model/year/trim + ACC & LKAS.")
 
 def reply_test_drive(lang="EN"):

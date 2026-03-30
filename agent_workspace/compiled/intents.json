@@ -168,9 +168,12 @@
       "booking",
       "walk in install",
       "i want to install",
-      "just bought can i come"
+      "just bought can i come",
+      "install myself",
+      "self install",
+      "diy install kommuassist"
     ],
-    "canonical_answer": "Installation is by appointment after checkout. You will receive an appointment link in your email once payment has been made. The on-site process takes about 30 minutes (15 min installation + 15 min briefing on how to use the device).",
+    "canonical_answer": "Kommu **encourages self-installation**: many customers fit KommuAssist themselves using the installation guide, product videos, and the **KommuAI** app. If you are comfortable with basic in-car wiring and following safety steps (engine off when plugging electronics, correct USB ports on the relay, etc.), you can install at home or wherever is convenient. **Optional HQ help:** if you prefer on-site support at Kommu, you can book an installation slot \u2014 customers often receive an **appointment link by email after checkout** for that option. When done at HQ, expect about **30 minutes** total (roughly **15 minutes** hardware + **15 minutes** briefing on using the device). If you get stuck during self-install, contact **support@kommu.ai** with photos or error details.",
     "policy_flags": [
       "grounded_only"
     ],
@@ -222,7 +225,7 @@
       "install takes how many minutes",
       "how long does installation take"
     ],
-    "canonical_answer": "About 30 minutes total \u2014 15 minutes for hardware installation and 15 minutes for briefing on how to use KommuAssist.",
+    "canonical_answer": "Plan about **30 minutes** end to end for hardware installation plus a first-time walkthrough of how to use KommuAssist \u2014 whether you **self-install** or have **optional** help at Kommu HQ. Times vary slightly with experience and vehicle access.",
     "policy_flags": [
       "grounded_only"
     ],
@@ -230,6 +233,40 @@
     "metadata": {
       "source": "master_faq",
       "index": 9,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "kommuassist_installation_guide",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "how to install kommuassist",
+      "kommuassist installation steps",
+      "installation procedure",
+      "hardware installation kommuassist",
+      "relay setup kommu",
+      "kommu relay installation",
+      "kommu vision mount",
+      "windshield mount kommuassist",
+      "cable routing installation",
+      "obd kommu power",
+      "installation sop",
+      "car fingerprint kommuassist",
+      "vehicle fingerprint bukapilot",
+      "controls waiting to start",
+      "usb cable swapped relay"
+    ],
+    "canonical_answer": "Standard KommuAssist installation (per Kommu Installation & Briefing SOP) uses the **Kommu Relay**, **Kommu Vision** camera, **Kommu Power** at the OBD port, and USB-C cabling. Kommu **encourages capable customers to self-install** using this procedure; the steps below are the same reference workflow used for training and optional on-site support. **Do not treat HQ installation as required** \u2014 it is an extra option if you want hands-on help. Work carefully around **airbags** and **high-voltage** areas; if anything is unclear, pause and ask **support@kommu.ai** before forcing connectors.\n\n**Video:** KommuAssist Installation Guide (internal training video title in SOP).\n\n**What\u2019s in the box (conceptually):** Relay with brand-specific harness, long and short USB-C cables, Kommu Power (OBD), Kommu Vision on its mount, electrostatic windshield sticker, and related hardware as shipped for your vehicle.\n\n**A. Kommu Relay**\n- Remove the car\u2019s ADAS cover with a plastic pry tool.\n- **Engine off** \u2014 unplug the **original ADAS connector**.\n- Plug in the **Kommu Relay** using the **brand-specific harness**.\n- **Engine on** \u2014 confirm **no ADAS/error warnings** on the instrument cluster.\n- Plug the **long USB-C** into the Relay port labeled **Vision**, and the **short USB-C** into the port labeled **Power** (do not swap these; swapped cables can cause \u201ccamera on but no control\u201d).\n- Seat the relay assembly and refit the ADAS cover.\n\n**B. Cable management**\n- Partially remove the **door weather strip** on the routing side.\n- Loosen the **right A-pillar airbag plastic trim** (route safely around/below airbag as trained).\n- Run the **long USB-C** behind the airbag area if applicable, then along the weather-strip gap to the bottom of the steering-dash panel (side hole).\n- Route above the **steering rack** so the cable cannot tangle with the driver\u2019s feet.\n- Connect the lower end to **Kommu Power**, then plug Kommu Power into the **OBD** port.\n- Slip the upper section into the **headliner**; tuck excess into the weather strip / A-pillar area.\n- Refit A-pillar trim, then the weather strip.\n\n**C. Kommu Vision**\n- Clean the windshield with an **alcohol swab**.\n- Apply the **electrostatic sticker** with face **\u201c1\u201d** to the glass **just below the ADAS cover**; no trapped air bubbles.\n- Stick the **mount (with Vision)** to face **\u201c2\u201d** of the sticker \u2014 **vertical and centered**.\n- Remove Vision momentarily, press the mount firmly so the **3M** fully contacts the sticker (check from outside the car).\n- **Engine off** \u2014 connect the **short cable\u2019s L-shaped end** to the Vision port (always **engine off** when plugging electronics).\n- Remount Vision, then continue to terms briefing and user tutorial.\n\n**Briefing highlights for the customer**\n- Data collection improves software and support; drive logs and usage appear in the **mobile app**.\n- KommuAssist **enhances** factory **ACC + LKA**; it is **not** full autonomy \u2014 **Level 2**: the **driver stays responsible**.\n- **1 year** hardware warranty with ongoing software/firmware support; warranty may be void for **unauthorized** hardware tampering or unofficial software changes \u2014 **self-install following Kommu\u2019s guide is fine**.\n- On-screen cues: **white** lane lines, **red** divider/border/grass, **thick path** = planned path; **yellow triangle** = lead vehicle (explains braking behavior).\n- Engagement/disengagement matches the **stock ACC** method (including brake or **CANCEL** to disengage). **Driver monitoring** replaces steering touch \u2014 distraction triggers visual/audio alerts.\n- Stock ADAS (AEB, PCW, LDP, etc.) remains; Kommu adds sensing to strengthen ACC/LKA. **Bukapilot** does **not** reliably detect traffic lights, potholes, or speed bumps.\n- **Device** page: **Dongle ID** for app pairing; **Reset calibration** if lane detection feels wrong. **Personalised**: follow distance, path skew, fan speed, auto power-off. **Network**: Wi\u2011Fi for log upload and updates. **Software**: check version, use **Check** until last update shows **now**, then **reboot** to apply downloads.\n\n**Common issues (quick fixes)**\n- **Cluster errors:** Reseat ADAS/Relay connector with **Vision unplugged** until cleared. On some **Perodua** cars the lamp may linger until Vision fully boots.\n- **Stuck on \u201cgetting ready\u201d / no camera view:** Often **GPS not synced** yet \u2014 wait; it should come online.\n- **Device error / no camera view:** Possible **bad flash** \u2014 **reboot**; firmware often self-recovers.\n- **Camera malfunction:** Faulty Vision unit \u2014 warranty/service path.\n- **Calibration invalid:** Camera needs ~**50% road / 50% sky** \u2014 remount; if the **case is deformed**, return for case service.\n- **\u201cCar unrecognized\u201d / dashcam mode:** Set **Software \u2192 Fingerprint** to the exact string for the vehicle (see table). If the car is **not listed**, contact **support@kommu.ai**.\n- **\u201cControls waiting to start\u201d:** **Typo in fingerprint** \u2014 re-check against the table.\n- **Camera on but no control:** **USB-C to Relay swapped** \u2014 Vision vs Power ports.\n\n**Car fingerprint names (Table 1)**\n- Perodua Alza \u2192 `Perodua Alza`\n- Perodua Ativa \u2192 `Perodua Ativa`\n- Perodua Myvi \u2192 `Perodua Myvi PSD`\n- Proton S70 \u2192 `Proton S70`\n- Proton X50 \u2192 `Proton X50`\n- Proton X90 \u2192 `Proton X90`\n- BYD Atto 3 \u2192 `BYD Atto 3`\n- Toyota Alphard / Vellfire \u2192 `Toyota Alphard 2020`\n- Toyota Corolla \u2192 `Toyota Corolla TSS2 2019`\n- Toyota Corolla Cross \u2192 `Toyota Corolla Hybrid TSS2 2019`\n\n**KA2 note:** Newer KA2 units use the **KommuAI** app for many settings, calibration, and diagnostics; always follow the **printed port labels** on the device (never apply **12V vehicle power** to the **diagnostic/data** USB). When in doubt, use app guidance and support.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 10,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -255,7 +292,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 10,
+      "index": 11,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -280,7 +317,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 11,
+      "index": 12,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -304,7 +341,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 12,
+      "index": 13,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -328,7 +365,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 13,
+      "index": 14,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -352,7 +389,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 14,
+      "index": 15,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -376,7 +413,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 15,
+      "index": 16,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -403,7 +440,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 16,
+      "index": 17,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -428,7 +465,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 17,
+      "index": 18,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -452,7 +489,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 18,
+      "index": 19,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -476,7 +513,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 19,
+      "index": 20,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -502,7 +539,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 20,
+      "index": 21,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -527,7 +564,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 21,
+      "index": 22,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -552,7 +589,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 22,
+      "index": 23,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -577,7 +614,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 23,
+      "index": 24,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -600,7 +637,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 24,
+      "index": 25,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -623,7 +660,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 25,
+      "index": 26,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -647,7 +684,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 26,
+      "index": 27,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -672,7 +709,7 @@
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 27,
+      "index": 28,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -696,7 +733,7 @@
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 28,
+      "index": 29,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -721,7 +758,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 29,
+      "index": 30,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -744,7 +781,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 30,
+      "index": 31,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -766,7 +803,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 31,
+      "index": 32,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -791,7 +828,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 32,
+      "index": 33,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -812,7 +849,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 33,
+      "index": 34,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -835,7 +872,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 34,
+      "index": 35,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -859,7 +896,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 35,
+      "index": 36,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -881,7 +918,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 36,
+      "index": 37,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -895,14 +932,14 @@
       "KA2 error 1003 logs missing",
       "error 1003"
     ],
-    "canonical_answer": "Resolved by reboot and firmware update. Power cycle the device and ensure it's connected to internet to pull the latest firmware.\n\n<!-- provenance: conv=111 msg=2 agent=9 product=KA2 -->",
+    "canonical_answer": "Resolved by reboot and firmware update. Power cycle the device and ensure it's connected to internet to pull the latest firmware.\n\n<!-- provenance: conv=111 msg=2 agent=9 product=KA2 -->\n<!-- provenance: kommuassist_installation_guide sourced from support@kommu.ai Drive \"AI-Agent Public Knowledge/Standard Operating Procedures/Installation & Briefing SOP.docx\" (last edited 7 Jul 2024 in doc) -->",
     "policy_flags": [
       "grounded_only"
     ],
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 37,
+      "index": 38,
       "product": "KA",
       "audience": "customer",
       "version": "v1",

@@ -2,6 +2,8 @@
 """
 Create a SMARTSERVA visitor pass from date/time inputs.
 
+Visitor name and phone sent to SmartServa are fixed (Kommu / "1") for consistent listing lookup.
+
 Usage:
   python3 create_visitor_pass.py --date 2026-03-28 --time 18:30
   python3 create_visitor_pass.py   # defaults to current local date/time
@@ -17,7 +19,6 @@ import argparse
 import datetime as dt
 import json
 import os
-import random
 import re
 import sys
 import time
@@ -29,6 +30,10 @@ import requests
 
 BASE_URL = "https://emhub.smartserva.com"
 
+# Fixed visitor identity for Emhub passes (requested: name + phone literal "1").
+SMARTSERVA_VISITOR_NAME = "Kommu"
+SMARTSERVA_VISITOR_PHONE = "1"
+
 
 def _local_now() -> dt.datetime:
     # Subprocess may only inherit `TZ` (Docker); Kai also uses `TZ_REGION` in config.
@@ -38,7 +43,7 @@ def _local_now() -> dt.datetime:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Create visitor pass link with random Malaysian details."
+        description="Create visitor pass link (visitor name/phone fixed for Kommu automation)."
     )
     parser.add_argument(
         "--date",
@@ -80,52 +85,6 @@ def require_credentials() -> Tuple[str, str]:
             "Missing credentials. Set SMARTSERVA_USERNAME and SMARTSERVA_PASSWORD."
         )
     return username, password
-
-
-def random_malaysian_name() -> str:
-    first_names = [
-        "Ahmad",
-        "Aisyah",
-        "Farid",
-        "Hafiz",
-        "Irfan",
-        "Nadia",
-        "Nurul",
-        "Siti",
-        "Syafiq",
-        "Zul",
-        "Khai",
-        "Amir",
-        "Balqis",
-        "Daniel",
-        "Izzati",
-    ]
-    last_parts = [
-        "Hakim",
-        "Rahman",
-        "Salleh",
-        "Yusof",
-        "Ismail",
-        "Hamid",
-        "Shah",
-        "Azman",
-        "Hassan",
-        "Nordin",
-        "Rosli",
-        "Haris",
-        "Kamal",
-    ]
-    suffix = "".join(random.choice("ABCDEFGHJKLMNPQRSTUVWXYZ23456789") for _ in range(4))
-    return f"{random.choice(first_names)} {random.choice(last_parts)} {suffix}"
-
-
-def random_malaysian_mobile() -> str:
-    # Common Malaysian mobile prefixes.
-    # 011 typically has 8 trailing digits (11-digit total), others usually 7 trailing digits.
-    prefix = random.choice(["010", "011", "012", "013", "014", "016", "017", "018", "019"])
-    trailing_len = 8 if prefix == "011" else 7
-    trailing = "".join(random.choice("0123456789") for _ in range(trailing_len))
-    return f"{prefix}{trailing}"
 
 
 def parse_schedule(date_raw: str, time_raw: str) -> Tuple[str, str, str]:
@@ -340,8 +299,8 @@ def main() -> int:
     username, password = require_credentials()
     appoint_date_dd_mmm, slot, time_hhmm = parse_schedule(args.date, args.time)
 
-    visitor_name = random_malaysian_name()
-    visitor_phone = random_malaysian_mobile()
+    visitor_name = SMARTSERVA_VISITOR_NAME
+    visitor_phone = SMARTSERVA_VISITOR_PHONE
 
     session = build_session(args.timeout)
     login_with_captcha(session, username, password, args.max_login_attempts)

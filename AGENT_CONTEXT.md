@@ -1,6 +1,51 @@
 # Kai — Agent context
 
+## 2026-03-29 — Visitor pass: plain URL + fixed SmartServa name/phone
+
+- Intent: QR/visitor links stay tappable (strip markdown bold around https URLs in outbound replies); SmartServa visitor row uses fixed name `Kommu` and phone `1`.
+- Files changed: `services/kai_service.py` (`strip_bold_markdown_wrapping_around_urls`, `add_footer`); `support_runtime/agent_prompts.py`; `support_runtime/agent_tools.py` (`create_visitor_pass` tool description); `integrations/smartserva/create_visitor_pass.py`; `tests/test_support_runtime.py`.
+- Validation: `pytest tests/test_support_runtime.py::SupportRuntimeTests::test_strip_bold_markdown_wrapping_around_urls tests/test_agent_tools.py -q` → 6 passed.
+
+## 2026-03-29 — Live-agent handback FAQ learning + remove legacy Chatwoot FAQ candidates
+
+- Intent: Replace tag-poll `faq_candidates` / admin publish-to-`master_faq` with a **session-backed** flow: on `resume` after live handoff (or after AI escalation handover), pop the human-window transcript and append a **unified diff** suggestion to `agent_learnt_faq.md` (not compiled into KB). Align **AI escalation** with **frozen** + same segment capture.
+- Files changed: removed `support_runtime/faq_feedback.py`, `tools/faq_approval_cli.py`; `session_state.py` (DROP `faq_candidates`, human segment helpers); `config.py` (`AGENT_LEARNT_FAQ_PATH`, `KAI_FAQ_LEARN_*`); `support_runtime/faq_learn.py` (new); `services/kai_service.py` (pre_router segment + deduped user history vs `execute`); `services/chatwoot_handover.py` (`extract_chatwoot_conversation_id`); `api/v2/agent_message.py` (removed admin FAQ routes; escalate → segment + freeze); `app.py` (removed FAQ poll task); `agent_workspace/02_knowledge/faq/agent_learnt_faq.md`; `README.md`; tests `test_faq_learn.py`, `test_pre_router.py`, `test_chatwoot_parity_contract.py`, `test_diagnostic_and_faq_loop.py`.
+- Validation: `pytest tests/test_faq_learn.py tests/test_diagnostic_and_faq_loop.py tests/test_pre_router.py tests/test_chatwoot_live_handover.py tests/test_chatwoot_parity_contract.py -q` → pass.
+- Breaking: `/admin/faq-feedback/*` and `/admin/faq-candidates/*` removed; `faq_candidates` table dropped on `init_db`.
+- Next: Optional n8n hook to POST **human_agent** lines into `append_human_segment_turn`; merge job from `agent_learnt_faq.md` → `master_faq.md`.
+
+
 Session log for this repo. Global handoff: `/home/ting/system-notes/AGENT_CONTEXT.md`.
+
+## 2026-03-29 — Install positioning: self-install encouraged (not HQ-default)
+
+- Intent: Stop implying Kommu always installs the device or pushing appointment booking; Kommu encourages **self-install** with HQ as **optional** help.
+- Files changed: `agent_workspace/02_knowledge/faq/master_faq.md` (`install_booking`, `installation_time`, `kommuassist_installation_guide` intro + warranty bullet; aliases `install myself`, `self install`, `diy install kommuassist`); `support_runtime/agent_prompts.py` (Products install line + Rules **Installation tone**); `templates.py` `reply_buy` EN/BM; `services/kai_service.py` supported-car follow-up copy.
+- Validation: `compile_canonical_knowledge()` OK; `pytest tests/test_faq_markdown.py` → 4 passed.
+
+## 2026-03-29 — Installation chatbot live validation (20 Q) + email
+
+- Intent: Build **20** diverse user questions tied to the Installation & Briefing SOP (standard steps, USB swap, cluster errors, fingerprints, Malay phrasing, briefing topics), run **live** `SupportRuntimeService.execute` (same stack as `/v2/agent/message`), email full Q+A to **support@kommu.ai** with subject **chatbot installation validation test**.
+- Files changed:
+  - `tools/run_install_validation_batch.py` — batch runner writing JSON path (default `/tmp/...` or argv).
+- Artifacts (not committed): `/tmp/kai_install_validation_report.json`, `/tmp/chatbot_installation_validation_body.txt`.
+- Validation: batch finished successfully; `email_ops` IMAP send reported `status: sent` to `support@kommu.ai`.
+- Security note: email skill `config.runtime.json` had plaintext credentials in repo; recommend rotation and `chmod 600` + gitignore pattern for local secrets copy.
+- Next: Optional — gzip long reports or attach JSON; tune questions from support feedback.
+
+## 2026-03-29 — Installation SOP → master_faq + compile
+
+- Intent: Pull Kommu **Installation & Briefing SOP** from `support@kommu.ai` Google Drive (rclone remote), condense into Kai knowledge, update `master_faq.md`.
+- Source file: `AI-Agent Public Knowledge/Standard Operating Procedures/Installation & Briefing SOP.docx` (Relay + Vision + Kommu Power workflow; fingerprint table as in doc).
+- Files changed:
+  - `agent_workspace/02_knowledge/faq/master_faq.md` — new intent `kommuassist_installation_guide` (inside `sop-sync` region); `Last updated` date; provenance HTML comment after sync region.
+  - `agent_workspace/compiled/intents.json`, `kb_chunks.jsonl`, `workflows.json`, `tool_policies.json` — regenerated via `compile_canonical_knowledge()`.
+- Validation:
+  - `parse_master_faq_schema` on full `master_faq.md` OK; `kommuassist_installation_guide` present.
+  - `python3 -c "from support_runtime.compiler import compile_canonical_knowledge; ..."` → 38 intents, 39 chunks.
+  - `python3 -m pytest tests/test_faq_markdown.py -q` → 4 passed.
+- Note: `./tools/force_sop_sync.py` **failed** here because Google SOP region parse hits invalid `collaboration` intent (missing answer) in the remote doc — unrelated to this FAQ edit. Use local compiler for KB rebuild until Google doc is fixed.
+- Next: Repair Google Doc SOP region or skip merge; optionally add official video URL if marketing provides one.
 
 ## 2026-03-27 — Integrate SMARTSERVA visitor-pass automation into Kai tools
 

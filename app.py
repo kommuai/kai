@@ -13,8 +13,6 @@ import pytz
 from api.v2.agent_message import router as v2_message_router
 from api.v2.agent_query import router as v2_query_router
 from config import (
-    KAI_CHATWOOT_ENABLED,
-    KAI_CHATWOOT_POLL_SECONDS,
     KAI_SOP_MERGE_SYNC_ENABLED,
     KAI_SOP_MERGE_SYNC_HOUR,
     KAI_SOP_MERGE_SYNC_MINUTE,
@@ -24,7 +22,6 @@ from config import (
 from core.sop_sync_merge import STATE_PATH, sync_sop_regions
 from core.workspace_manifest import log_session_store_hint
 from services.container import kai_service, support_runtime_service
-from support_runtime.faq_feedback import ingest_tagged_resolutions
 
 os.makedirs("logs", exist_ok=True)
 handler = RotatingFileHandler("logs/kai.log", maxBytes=2_000_000, backupCount=3, encoding="utf-8")
@@ -46,16 +43,6 @@ def startup_event():
 @repeat_every(seconds=86400)
 def auto_refresh():
     support_runtime_service.refresh_knowledge()
-
-
-@repeat_every(seconds=max(30, KAI_CHATWOOT_POLL_SECONDS))
-def auto_ingest_faq_feedback():
-    if str(KAI_CHATWOOT_ENABLED).strip().lower() not in {"1", "true", "yes", "on"}:
-        return
-    try:
-        ingest_tagged_resolutions()
-    except Exception:
-        logging.getLogger("kai").exception("FAQ feedback ingestion failed")
 
 
 @repeat_every(seconds=600)

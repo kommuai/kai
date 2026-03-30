@@ -29,6 +29,7 @@ from rag.rag import RAGEngine
 from rag.rebuild_index_combined import rebuild as rebuild_rag
 from session_state import (
     add_message_to_history,
+    append_human_segment_turn,
     extract_and_store_facts,
     freeze,
     get_history,
@@ -40,8 +41,11 @@ from session_state import (
     save_session,
     set_lang,
     set_last_intent,
+    start_human_segment,
     update_session_summary,
 )
+from services.chatwoot_handover import extract_chatwoot_conversation_id
+from support_runtime.faq_learn import schedule_faq_learn_after_handback
 log = logging.getLogger("kai")
 
 CAR_KEYWORDS = [
@@ -99,6 +103,13 @@ def _strip_html(raw: str) -> str:
     txt = re.sub(r"(?is)<style.*?>.*?</style>", " ", txt)
     txt = re.sub(r"(?s)<[^>]+>", " ", txt)
     return re.sub(r"\s+", " ", txt).strip()
+
+
+def strip_bold_markdown_wrapping_around_urls(text: str) -> str:
+    """Remove **bold** wrapping only around http(s) URLs (LLM habit breaks tappable links in WhatsApp, etc.)."""
+    if not text:
+        return text
+    return re.sub(r"\*\*(https?://[^\s*]+)\*\*", r"\1", text)
 
 
 @lru_cache(maxsize=1)
@@ -265,7 +276,8 @@ class KaiService:
         footer = ""
         if len(get_history(conversation_id)) >= 7:
             footer = FOOTER_BM if lang == "BM" else FOOTER_EN
-        return (answer or "").rstrip() + footer
+        body = strip_bold_markdown_wrapping_around_urls((answer or "").rstrip())
+        return body + footer
 
     def detect_car_support_query(self, text: str) -> bool:
         return any(k in text.lower() for k in CAR_KEYWORDS)
@@ -371,11 +383,14 @@ class KaiService:
         lang = "BM" if is_malay(text) else "EN"
         set_lang(conversation_id, lang)
         aft = not self.is_office_hours()
-        add_message_to_history(conversation_id, "user", text)
         update_session_summary(conversation_id, "user", text)
         extract_and_store_facts(conversation_id, text, source="user")
+        cw_id = extract_chatwoot_conversation_id(data) or None
 
         if text == DROPOFF and not sess.get("frozen") and not sess.get("handover"):
+            add_message_to_history(conversation_id, "user", text)
+            start_human_segment(conversation_id, cw_id)
+            append_human_segment_turn(conversation_id, "user", text)
             sess["frozen"] = True
             save_session(conversation_id, sess)
             msg_out = (
@@ -385,9 +400,13 @@ class KaiService:
             )
             if aft:
                 msg_out += self.after_hours_suffix(lang)
+            append_human_segment_turn(conversation_id, "assistant", msg_out)
             return {"type": "handover", "message": msg_out, "next_state": "human"}
 
         if text in LIVEAGENT and not sess.get("frozen") and not sess.get("handover"):
+            add_message_to_history(conversation_id, "user", text)
+            start_human_segment(conversation_id, cw_id)
+            append_human_segment_turn(conversation_id, "user", text)
             sess["frozen"] = True
             save_session(conversation_id, sess)
             msg_out = (
@@ -397,13 +416,20 @@ class KaiService:
             )
             if aft:
                 msg_out += self.after_hours_suffix(lang)
+            append_human_segment_turn(conversation_id, "assistant", msg_out)
             return {"type": "handover", "message": msg_out, "next_state": "human"}
 
         if sess.get("frozen"):
             if lower in {"resume", "unfreeze", "sambung"}:
+                add_message_to_history(conversation_id, "user", text)
+                schedule_faq_learn_after_handback(conversation_id)
                 freeze(conversation_id, False)
                 msg_out = "Bot resumed. How can I help?" if lang == "EN" else "Bot disambung semula. Ada apa saya boleh bantu?"
+                add_message_to_history(conversation_id, "assistant", msg_out)
+                update_session_summary(conversation_id, "assistant", msg_out)
                 return {"type": "reply", "message": msg_out, "next_state": "bot"}
+            add_message_to_history(conversation_id, "user", text)
+            append_human_segment_turn(conversation_id, "user", text)
             return {"type": "frozen", "message": "", "next_state": "human"}
 
         return None
@@ -432,11 +458,11 @@ class KaiService:
                 msg_out = (
                     "Based on our official support list, your vehicle appears supported. "
                     f"Reference: {support_hit}\n\n"
-                    "If you want, I can help you with the next step for installation or booking."
+                    "If you want, I can walk you through self-installation steps, or optional HQ support if you prefer on-site help."
                     if lang == "EN"
                     else "Berdasarkan senarai sokongan rasmi kami, kenderaan anda kelihatan disokong. "
                     f"Rujukan: {support_hit}\n\n"
-                    "Jika anda mahu, saya boleh bantu langkah seterusnya untuk pemasangan atau tempahan."
+                    "Jika anda mahu, saya boleh bimbing pemasangan sendiri, atau sokongan di HQ jika anda perlukan bantuan di tapak."
                 )
                 add_message_to_history(conversation_id, "bot", msg_out)
                 update_session_summary(conversation_id, "bot", msg_out)

@@ -1,6 +1,7 @@
 import unittest
 from uuid import uuid4
 
+from services.kai_service import strip_bold_markdown_wrapping_around_urls
 from support_runtime.compiler import compile_canonical_knowledge
 from support_runtime.router import IntentRouter
 from support_runtime.service import SupportRuntimeService
@@ -89,6 +90,13 @@ class SupportRuntimeTests(unittest.TestCase):
         self.assertEqual(out2.capability_used, "react_agent_loop")
         out3 = svc.execute(q, lang="EN", user_id=uid)
         self.assertEqual(out3.capability_used, "react_agent_loop")
+
+    def test_strip_bold_markdown_wrapping_around_urls(self):
+        raw = "Your pass: **https://emhub.smartserva.com/v/abc** (tap to open)"
+        self.assertEqual(
+            strip_bold_markdown_wrapping_around_urls(raw),
+            "Your pass: https://emhub.smartserva.com/v/abc (tap to open)",
+        )
 
 
 if __name__ == "__main__":

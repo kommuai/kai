@@ -311,7 +311,8 @@ class AgentToolRegistry:
                 name="create_visitor_pass",
                 description=(
                     "Create SMARTSERVA building-entry visitor pass (delivery) and return pass link. "
-                    "Use for user requests about QR/link/pass to enter building."
+                    "Use for user requests about QR/link/pass to enter building. "
+                    "When you reply to the user, output the URL as plain text only — do not wrap it in markdown bold."
                 ),
                 schema={
                     "type": "object",

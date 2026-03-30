@@ -25,13 +25,15 @@ KAI_RERANKER_BACKEND = os.getenv("KAI_RERANKER_BACKEND", "provider")
 KAI_GUARDRAILS_ENABLED = os.getenv("KAI_GUARDRAILS_ENABLED", "0")
 KAI_TRACING_ENABLED = os.getenv("KAI_TRACING_ENABLED", "0")
 KAI_DIAGNOSTIC_EXACT_THRESHOLD = float(os.getenv("KAI_DIAGNOSTIC_EXACT_THRESHOLD", "0.78"))
-KAI_CHATWOOT_ENABLED = os.getenv("KAI_CHATWOOT_ENABLED", "0")
 KAI_CHATWOOT_API_BASE = os.getenv("KAI_CHATWOOT_API_BASE", "")
 KAI_CHATWOOT_API_TOKEN = os.getenv("KAI_CHATWOOT_API_TOKEN", "")
 KAI_CHATWOOT_ACCOUNT_ID = os.getenv("KAI_CHATWOOT_ACCOUNT_ID", "")
-KAI_CHATWOOT_RESOLUTION_TAG = os.getenv("KAI_CHATWOOT_RESOLUTION_TAG", "faq-ready")
-KAI_CHATWOOT_POLL_SECONDS = int(os.getenv("KAI_CHATWOOT_POLL_SECONDS", "300"))
 KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER = os.getenv("KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER", "0")
+# Post live-agent handback: append unified-diff suggestions (not used in retrieval).
+KAI_FAQ_LEARN_ENABLED = os.getenv("KAI_FAQ_LEARN_ENABLED", "1")
+KAI_FAQ_LEARN_ASYNC = os.getenv("KAI_FAQ_LEARN_ASYNC", "1")
+KAI_FAQ_LEARN_FETCH_CHATWOOT = os.getenv("KAI_FAQ_LEARN_FETCH_CHATWOOT", "1")
+KAI_FAQ_LEARN_MASTER_FAQ_MAX_CHARS = int(os.getenv("KAI_FAQ_LEARN_MASTER_FAQ_MAX_CHARS", "120000"))
 KAI_SOP_WRITEBACK_ENABLED = os.getenv("KAI_SOP_WRITEBACK_ENABLED", "0")
 KAI_SOP_MERGE_SYNC_ENABLED = os.getenv("KAI_SOP_MERGE_SYNC_ENABLED", "0")
 KAI_SOP_MERGE_SYNC_HOUR = int(os.getenv("KAI_SOP_MERGE_SYNC_HOUR", "8"))
@@ -72,6 +74,9 @@ _agent_ws = os.getenv("AGENT_WORKSPACE", "agent_workspace")
 AGENT_WORKSPACE = _agent_ws if os.path.isabs(_agent_ws) else os.path.join(BASE_DIR, _agent_ws)
 MASTER_FAQ_PATH = os.getenv("MASTER_FAQ_PATH") or os.path.join(
     AGENT_WORKSPACE, "02_knowledge", "faq", "master_faq.md"
+)
+AGENT_LEARNT_FAQ_PATH = os.getenv("AGENT_LEARNT_FAQ_PATH") or os.path.join(
+    AGENT_WORKSPACE, "02_knowledge", "faq", "agent_learnt_faq.md"
 )
 CONTEXT_REGISTRY_YAML = os.getenv("CONTEXT_REGISTRY_YAML") or os.path.join(
     AGENT_WORKSPACE, "04_context", "context_registry.yaml"

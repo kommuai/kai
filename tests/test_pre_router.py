@@ -17,10 +17,10 @@ class PreRouterParityTests(unittest.TestCase):
         self.assertEqual(full.get("type"), tail.get("type"))
         self.assertEqual(full.get("next_state"), tail.get("next_state"))
 
-    def test_ka2_handover_matches_full_handle(self):
+    def test_la_handover_matches_full_handle(self):
         uid = "test_parity_ka2"
         reset_memory(uid)
-        data = {"content": "KA2", "phone_number": uid}
+        data = {"content": "LA", "phone_number": uid}
         full = kai_service.handle_agent_message(dict(data))
         reset_memory(uid)
         early = kai_service.pre_router(dict(data))

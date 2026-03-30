@@ -111,7 +111,7 @@ Haystack/Qdrant/rerank/observability toggles:
 - `KAI_GUARDRAILS_ENABLED=1`
 - `KAI_TRACING_ENABLED=1`
 - `KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER=1` (on escalation, force Chatwoot conversation switch to live-agent mode; fail-closed on switch failure)
-- `KAI_SOP_WRITEBACK_ENABLED=1` (on FAQ publish, write updated `master_faq.md` back to Google Docs)
+- `KAI_SOP_WRITEBACK_ENABLED=1` (on approved SOP/FAQ writeback paths, write updated `master_faq.md` back to Google Docs)
 - `KAI_SOP_MERGE_SYNC_ENABLED=1` (enable scheduled bidirectional SOP merge-sync at 8:00 local time)
 - `KAI_SOP_MERGE_SYNC_HOUR=8`
 - `KAI_SOP_MERGE_SYNC_MINUTE=0`
@@ -145,20 +145,11 @@ python debug_check.py
 python tools/eval_support_runtime.py
 ```
 
-### F) FAQ approval CLI
+### F) FAQ learning (post live-agent handback)
 
-```bash
-# API mode (default)
-python tools/faq_approval_cli.py --base-url http://127.0.0.1:8000 poll
-python tools/faq_approval_cli.py list --status pending_review
-python tools/faq_approval_cli.py approve 12
-python tools/faq_approval_cli.py publish 12
-
-# Local mode (no API server, direct SQLite/functions)
-python tools/faq_approval_cli.py --mode local list --status pending_review
-python tools/faq_approval_cli.py --mode local approve 12
-python tools/faq_approval_cli.py --mode local publish 12
-```
+After a human handoff, when the user sends `resume`, Kai appends a **unified diff** suggestion to
+`agent_workspace/02_knowledge/faq/agent_learnt_faq.md` (not loaded by the runtime retriever). Tune with
+`KAI_FAQ_LEARN_ENABLED`, `KAI_FAQ_LEARN_ASYNC`, `KAI_FAQ_LEARN_FETCH_CHATWOOT`.
 
 Expected output:
 

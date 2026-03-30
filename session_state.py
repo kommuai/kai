@@ -34,23 +34,7 @@ def init_db():
         UNIQUE(user_id, fact_type, fact_key)
     )
     """)
-    c.execute("""
-    CREATE TABLE IF NOT EXISTS faq_candidates (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        dedupe_key TEXT UNIQUE NOT NULL,
-        issue_summary TEXT NOT NULL,
-        final_answer TEXT NOT NULL,
-        product TEXT NOT NULL,
-        diagnostic_category TEXT NOT NULL,
-        source_conversation_id TEXT NOT NULL,
-        source_message_id TEXT NOT NULL,
-        source_agent_id TEXT NOT NULL,
-        source_timestamp TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'pending_review',
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL
-    )
-    """)
+    c.execute("DROP TABLE IF EXISTS faq_candidates")
     conn.commit()
     conn.close()
 
@@ -75,6 +59,9 @@ def get_session(user_id: str):
         "last_intent": None,
         "history": [],
         "session_summary": "",
+        "human_segment_open": False,
+        "human_segment_messages": [],
+        "human_segment_cw_conversation_id": "",
     }
 
 def save_session(user_id: str, data: dict):
@@ -330,6 +317,9 @@ def reset_memory(user_id: str | None = None):
             "last_intent": None,
             "history": [],
             "session_summary": "",
+            "human_segment_open": False,
+            "human_segment_messages": [],
+            "human_segment_cw_conversation_id": "",
         }
         c.execute("REPLACE INTO sessions (user_id, data) VALUES (?,?)", (user_id, json.dumps(default)))
         c.execute("DELETE FROM memory_facts WHERE user_id=?", (user_id,))
@@ -350,69 +340,50 @@ def get_all_user_ids():
     return rows
 
 
-def upsert_faq_candidate(candidate: dict) -> int | None:
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    now = _now_iso()
-    try:
-        c.execute(
-            """
-            INSERT INTO faq_candidates (
-                dedupe_key, issue_summary, final_answer, product, diagnostic_category,
-                source_conversation_id, source_message_id, source_agent_id, source_timestamp,
-                status, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_review', ?, ?)
-            """,
-            (
-                candidate["dedupe_key"],
-                candidate["issue_summary"],
-                candidate["final_answer"],
-                candidate["product"],
-                candidate["diagnostic_category"],
-                candidate["source_conversation_id"],
-                candidate["source_message_id"],
-                candidate["source_agent_id"],
-                candidate["source_timestamp"],
-                now,
-                now,
-            ),
-        )
-        conn.commit()
-        cid = c.lastrowid
-    except sqlite3.IntegrityError:
-        cid = None
-    finally:
-        conn.close()
-    return cid
+def _ensure_human_segment_fields(sess: dict) -> None:
+    sess.setdefault("human_segment_open", False)
+    sess.setdefault("human_segment_messages", [])
+    sess.setdefault("human_segment_cw_conversation_id", "")
 
 
-def list_faq_candidates(status: str | None = None) -> list[dict]:
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    if status:
-        c.execute(
-            "SELECT id, dedupe_key, issue_summary, final_answer, product, diagnostic_category, source_conversation_id, source_message_id, source_agent_id, source_timestamp, status, created_at, updated_at FROM faq_candidates WHERE status=? ORDER BY id DESC",
-            (status,),
-        )
+def start_human_segment(user_id: str, cw_conversation_id: str | None = None) -> None:
+    """Begin capturing turns for post-handback FAQ learning."""
+    sess = get_session(user_id)
+    _ensure_human_segment_fields(sess)
+    sess["human_segment_open"] = True
+    sess["human_segment_messages"] = []
+    if cw_conversation_id:
+        sess["human_segment_cw_conversation_id"] = str(cw_conversation_id)
     else:
-        c.execute(
-            "SELECT id, dedupe_key, issue_summary, final_answer, product, diagnostic_category, source_conversation_id, source_message_id, source_agent_id, source_timestamp, status, created_at, updated_at FROM faq_candidates ORDER BY id DESC"
-        )
-    rows = c.fetchall()
-    conn.close()
-    keys = [
-        "id", "dedupe_key", "issue_summary", "final_answer", "product", "diagnostic_category",
-        "source_conversation_id", "source_message_id", "source_agent_id", "source_timestamp",
-        "status", "created_at", "updated_at",
-    ]
-    return [dict(zip(keys, r)) for r in rows]
+        sess["human_segment_cw_conversation_id"] = ""
+    save_session(user_id, sess)
 
 
-def update_faq_candidate_status(candidate_id: int, status: str) -> bool:
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("UPDATE faq_candidates SET status=?, updated_at=? WHERE id=?", (status, _now_iso(), candidate_id))
-    ok = c.rowcount > 0
-    conn.commit()
-    conn.close()
-    return ok
+def append_human_segment_turn(user_id: str, role: str, text: str) -> None:
+    """Append one line to the live-agent window (user / assistant / human_agent)."""
+    sess = get_session(user_id)
+    _ensure_human_segment_fields(sess)
+    if not sess.get("human_segment_open"):
+        return
+    msg = (text or "").strip()
+    if not msg:
+        return
+    hist = sess.get("human_segment_messages") or []
+    hist.append({"role": role, "text": msg, "ts": _now_iso()})
+    sess["human_segment_messages"] = hist[-400:]
+    save_session(user_id, sess)
+
+
+def pop_human_segment_for_learn(user_id: str) -> tuple[list[dict], str]:
+    """Close the segment and return (messages, chatwoot_conversation_id)."""
+    sess = get_session(user_id)
+    _ensure_human_segment_fields(sess)
+    msgs = list(sess.get("human_segment_messages") or [])
+    cw = str(sess.get("human_segment_cw_conversation_id") or "")
+    sess["human_segment_open"] = False
+    sess["human_segment_messages"] = []
+    sess["human_segment_cw_conversation_id"] = ""
+    save_session(user_id, sess)
+    return msgs, cw
+
+

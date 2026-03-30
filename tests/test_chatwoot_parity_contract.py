@@ -9,7 +9,7 @@ class ChatwootParityContractTests(unittest.TestCase):
     def test_handover_trigger_preserved(self):
         uid = "parity_ka1"
         reset_memory(uid)
-        out = _process_agent_message_data({"phone_number": uid, "content": "KA1"})
+        out = _process_agent_message_data({"phone_number": uid, "content": "LA"})
         self.assertEqual(out.get("type"), "handover")
         self.assertEqual(out.get("next_state"), "human")
         self.assertEqual(out.get("capability_used"), "pre_router")
@@ -19,7 +19,7 @@ class ChatwootParityContractTests(unittest.TestCase):
     def test_frozen_resume_preserved(self):
         uid = "parity_resume"
         reset_memory(uid)
-        _ = kai_service.pre_router({"phone_number": uid, "content": "KA2"})
+        _ = kai_service.pre_router({"phone_number": uid, "content": "LA"})
         out = _process_agent_message_data({"phone_number": uid, "content": "resume"})
         self.assertEqual(out.get("type"), "reply")
         self.assertEqual(out.get("next_state"), "bot")

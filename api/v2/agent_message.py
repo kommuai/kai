@@ -11,8 +11,8 @@ from config import ADMIN_TOKEN, KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER, KAI_ROUTE_AG
 from lang_detect import is_malay
 from services.chatwoot_handover import enforce_live_agent_handover
 from services.container import kai_service, support_runtime_service
-from session_state import list_faq_candidates, update_faq_candidate_status
-from support_runtime.faq_feedback import ingest_tagged_resolutions, publish_candidate_to_faq
+from session_state import append_human_segment_turn, freeze, start_human_segment
+from services.chatwoot_handover import extract_chatwoot_conversation_id
 from support_runtime.tech_backlog import list_backlog_sheet_tabs
 
 log = logging.getLogger("kai.v2")
@@ -115,6 +115,11 @@ def _process_agent_message_data(data: dict) -> dict:
                     start=start,
                     fallback_reason=(result.fallback_reason or "escalation_handover_failed"),
                 )
+        cw_live = extract_chatwoot_conversation_id(data)
+        start_human_segment(user_id, cw_live or None)
+        append_human_segment_turn(user_id, "user", text)
+        append_human_segment_turn(user_id, "assistant", result.answer)
+        freeze(user_id, True)
         payload = {"type": "handover", "message": result.answer, "next_state": "human", "handover_applied": True}
     else:
         payload = {
@@ -174,41 +179,6 @@ async def admin_reset_memory(request: Request, x_admin_token: str | None = Heade
 def refresh_sop_endpoint(x_admin_token: str | None = Header(default=None)):
     _require_admin(x_admin_token)
     return _refresh_all_knowledge()
-
-
-@router.post("/admin/faq-feedback/poll")
-def admin_poll_faq_feedback(x_admin_token: str | None = Header(default=None)):
-    _require_admin(x_admin_token)
-    return ingest_tagged_resolutions()
-
-
-@router.get("/admin/faq-candidates")
-def admin_list_faq_candidates(status: str | None = None, x_admin_token: str | None = Header(default=None)):
-    _require_admin(x_admin_token)
-    return {"ok": True, "items": list_faq_candidates(status=status)}
-
-
-@router.post("/admin/faq-candidates/{candidate_id}/approve")
-def admin_approve_faq_candidate(candidate_id: int, x_admin_token: str | None = Header(default=None)):
-    _require_admin(x_admin_token)
-    ok = update_faq_candidate_status(candidate_id, "approved")
-    return {"ok": ok}
-
-
-@router.post("/admin/faq-candidates/{candidate_id}/reject")
-def admin_reject_faq_candidate(candidate_id: int, x_admin_token: str | None = Header(default=None)):
-    _require_admin(x_admin_token)
-    ok = update_faq_candidate_status(candidate_id, "rejected")
-    return {"ok": ok}
-
-
-@router.post("/admin/faq-candidates/{candidate_id}/publish")
-def admin_publish_faq_candidate(candidate_id: int, x_admin_token: str | None = Header(default=None)):
-    _require_admin(x_admin_token)
-    result = publish_candidate_to_faq(candidate_id)
-    if result.get("ok"):
-        result["refresh"] = _refresh_all_knowledge()
-    return result
 
 
 @router.get("/admin/tech-backlog/tabs")

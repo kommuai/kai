@@ -1,6 +1,6 @@
 # KOMMU MASTER FAQ (FULL REBUILD - SINGLE SOURCE OF TRUTH)
 
-Last updated: 24 Mar 2026
+Last updated: 29 Mar 2026 (install positioning: self-install encouraged)
 
 # SECTION 1: INTENTS (CUSTOMER-FACING)
 
@@ -97,8 +97,11 @@ aliases:
 - walk in install
 - i want to install
 - just bought can i come
+- install myself
+- self install
+- diy install kommuassist
 answer:
-Installation is by appointment after checkout. You will receive an appointment link in your email once payment has been made. The on-site process takes about 30 minutes (15 min installation + 15 min briefing on how to use the device).
+Kommu **encourages self-installation**: many customers fit KommuAssist themselves using the installation guide, product videos, and the **KommuAI** app. If you are comfortable with basic in-car wiring and following safety steps (engine off when plugging electronics, correct USB ports on the relay, etc.), you can install at home or wherever is convenient. **Optional HQ help:** if you prefer on-site support at Kommu, you can book an installation slot — customers often receive an **appointment link by email after checkout** for that option. When done at HQ, expect about **30 minutes** total (roughly **15 minutes** hardware + **15 minutes** briefing on using the device). If you get stuck during self-install, contact **support@kommu.ai** with photos or error details.
 
 ## intent: office_info
 aliases:
@@ -127,7 +130,89 @@ aliases:
 - install takes how many minutes
 - how long does installation take
 answer:
-About 30 minutes total — 15 minutes for hardware installation and 15 minutes for briefing on how to use KommuAssist.
+Plan about **30 minutes** end to end for hardware installation plus a first-time walkthrough of how to use KommuAssist — whether you **self-install** or have **optional** help at Kommu HQ. Times vary slightly with experience and vehicle access.
+
+## intent: kommuassist_installation_guide
+aliases:
+- how to install kommuassist
+- kommuassist installation steps
+- installation procedure
+- hardware installation kommuassist
+- relay setup kommu
+- kommu relay installation
+- kommu vision mount
+- windshield mount kommuassist
+- cable routing installation
+- obd kommu power
+- installation sop
+- car fingerprint kommuassist
+- vehicle fingerprint bukapilot
+- controls waiting to start
+- usb cable swapped relay
+answer:
+Standard KommuAssist installation (per Kommu Installation & Briefing SOP) uses the **Kommu Relay**, **Kommu Vision** camera, **Kommu Power** at the OBD port, and USB-C cabling. Kommu **encourages capable customers to self-install** using this procedure; the steps below are the same reference workflow used for training and optional on-site support. **Do not treat HQ installation as required** — it is an extra option if you want hands-on help. Work carefully around **airbags** and **high-voltage** areas; if anything is unclear, pause and ask **support@kommu.ai** before forcing connectors.
+
+**Video:** KommuAssist Installation Guide (internal training video title in SOP).
+
+**What’s in the box (conceptually):** Relay with brand-specific harness, long and short USB-C cables, Kommu Power (OBD), Kommu Vision on its mount, electrostatic windshield sticker, and related hardware as shipped for your vehicle.
+
+**A. Kommu Relay**
+- Remove the car’s ADAS cover with a plastic pry tool.
+- **Engine off** — unplug the **original ADAS connector**.
+- Plug in the **Kommu Relay** using the **brand-specific harness**.
+- **Engine on** — confirm **no ADAS/error warnings** on the instrument cluster.
+- Plug the **long USB-C** into the Relay port labeled **Vision**, and the **short USB-C** into the port labeled **Power** (do not swap these; swapped cables can cause “camera on but no control”).
+- Seat the relay assembly and refit the ADAS cover.
+
+**B. Cable management**
+- Partially remove the **door weather strip** on the routing side.
+- Loosen the **right A-pillar airbag plastic trim** (route safely around/below airbag as trained).
+- Run the **long USB-C** behind the airbag area if applicable, then along the weather-strip gap to the bottom of the steering-dash panel (side hole).
+- Route above the **steering rack** so the cable cannot tangle with the driver’s feet.
+- Connect the lower end to **Kommu Power**, then plug Kommu Power into the **OBD** port.
+- Slip the upper section into the **headliner**; tuck excess into the weather strip / A-pillar area.
+- Refit A-pillar trim, then the weather strip.
+
+**C. Kommu Vision**
+- Clean the windshield with an **alcohol swab**.
+- Apply the **electrostatic sticker** with face **“1”** to the glass **just below the ADAS cover**; no trapped air bubbles.
+- Stick the **mount (with Vision)** to face **“2”** of the sticker — **vertical and centered**.
+- Remove Vision momentarily, press the mount firmly so the **3M** fully contacts the sticker (check from outside the car).
+- **Engine off** — connect the **short cable’s L-shaped end** to the Vision port (always **engine off** when plugging electronics).
+- Remount Vision, then continue to terms briefing and user tutorial.
+
+**Briefing highlights for the customer**
+- Data collection improves software and support; drive logs and usage appear in the **mobile app**.
+- KommuAssist **enhances** factory **ACC + LKA**; it is **not** full autonomy — **Level 2**: the **driver stays responsible**.
+- **1 year** hardware warranty with ongoing software/firmware support; warranty may be void for **unauthorized** hardware tampering or unofficial software changes — **self-install following Kommu’s guide is fine**.
+- On-screen cues: **white** lane lines, **red** divider/border/grass, **thick path** = planned path; **yellow triangle** = lead vehicle (explains braking behavior).
+- Engagement/disengagement matches the **stock ACC** method (including brake or **CANCEL** to disengage). **Driver monitoring** replaces steering touch — distraction triggers visual/audio alerts.
+- Stock ADAS (AEB, PCW, LDP, etc.) remains; Kommu adds sensing to strengthen ACC/LKA. **Bukapilot** does **not** reliably detect traffic lights, potholes, or speed bumps.
+- **Device** page: **Dongle ID** for app pairing; **Reset calibration** if lane detection feels wrong. **Personalised**: follow distance, path skew, fan speed, auto power-off. **Network**: Wi‑Fi for log upload and updates. **Software**: check version, use **Check** until last update shows **now**, then **reboot** to apply downloads.
+
+**Common issues (quick fixes)**
+- **Cluster errors:** Reseat ADAS/Relay connector with **Vision unplugged** until cleared. On some **Perodua** cars the lamp may linger until Vision fully boots.
+- **Stuck on “getting ready” / no camera view:** Often **GPS not synced** yet — wait; it should come online.
+- **Device error / no camera view:** Possible **bad flash** — **reboot**; firmware often self-recovers.
+- **Camera malfunction:** Faulty Vision unit — warranty/service path.
+- **Calibration invalid:** Camera needs ~**50% road / 50% sky** — remount; if the **case is deformed**, return for case service.
+- **“Car unrecognized” / dashcam mode:** Set **Software → Fingerprint** to the exact string for the vehicle (see table). If the car is **not listed**, contact **support@kommu.ai**.
+- **“Controls waiting to start”:** **Typo in fingerprint** — re-check against the table.
+- **Camera on but no control:** **USB-C to Relay swapped** — Vision vs Power ports.
+
+**Car fingerprint names (Table 1)**
+- Perodua Alza → `Perodua Alza`
+- Perodua Ativa → `Perodua Ativa`
+- Perodua Myvi → `Perodua Myvi PSD`
+- Proton S70 → `Proton S70`
+- Proton X50 → `Proton X50`
+- Proton X90 → `Proton X90`
+- BYD Atto 3 → `BYD Atto 3`
+- Toyota Alphard / Vellfire → `Toyota Alphard 2020`
+- Toyota Corolla → `Toyota Corolla TSS2 2019`
+- Toyota Corolla Cross → `Toyota Corolla Hybrid TSS2 2019`
+
+**KA2 note:** Newer KA2 units use the **KommuAI** app for many settings, calibration, and diagnostics; always follow the **printed port labels** on the device (never apply **12V vehicle power** to the **diagnostic/data** USB). When in doubt, use app guidance and support.
 
 ## intent: warranty
 aliases:
@@ -464,3 +549,4 @@ answer:
 Resolved by reboot and firmware update. Power cycle the device and ensure it's connected to internet to pull the latest firmware.
 
 <!-- provenance: conv=111 msg=2 agent=9 product=KA2 -->
+<!-- provenance: kommuassist_installation_guide sourced from support@kommu.ai Drive "AI-Agent Public Knowledge/Standard Operating Procedures/Installation & Briefing SOP.docx" (last edited 7 Jul 2024 in doc) -->

@@ -7,7 +7,8 @@ import requests
 from config import KAI_CHATWOOT_ACCOUNT_ID, KAI_CHATWOOT_API_BASE, KAI_CHATWOOT_API_TOKEN
 
 
-def _extract_conversation_id(payload: dict[str, Any]) -> str:
+def extract_chatwoot_conversation_id(payload: dict[str, Any]) -> str:
+    """Resolve Chatwoot conversation id from n8n / webhook payload."""
     for key in ("conversation_id", "chatwoot_conversation_id", "cw_conversation_id"):
         value = payload.get(key)
         if value:
@@ -20,7 +21,7 @@ def _extract_conversation_id(payload: dict[str, Any]) -> str:
 
 def enforce_live_agent_handover(payload: dict[str, Any]) -> tuple[bool, str]:
     """Switch Chatwoot conversation into human/live-agent mode."""
-    conv_id = _extract_conversation_id(payload)
+    conv_id = extract_chatwoot_conversation_id(payload)
     if not conv_id:
         return False, "missing_conversation_id"
     if not (KAI_CHATWOOT_API_BASE and KAI_CHATWOOT_API_TOKEN and KAI_CHATWOOT_ACCOUNT_ID):
