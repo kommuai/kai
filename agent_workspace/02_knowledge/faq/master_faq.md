@@ -72,18 +72,20 @@ aliases:
 - monthly price
 - installment
 answer:
-For most customers, the Rent to Own (RTO) plan is the easiest start: RM175/month + RM1,999 deposit, with 3-year warranty included. If you prefer outright purchase, I can share the full cash price too.
+For most customers, the Rent to Own (RTO) plan is the easiest start: RM175/month + RM1,999 deposit, with 3-year warranty included. If you prefer a one-off purchase, I can share the one-off price too.
 
 ## intent: full_cash_price
 aliases:
 - full price
 - cash price
 - outright price
+- one-off price
+- one-off payment
 - one time payment
 - buy outright
 - pay in full
 answer:
-If you prefer full cash purchase, KA2 is RM4,999. If you'd like, I can also compare this with the RTO option (RM175/month + RM1,999 deposit) so you can pick what feels most comfortable.
+If you prefer a one-off purchase, KA2 is RM4,999. If you'd like, I can also compare this with the RTO option (RM175/month + RM1,999 deposit) so you can pick what feels most comfortable.
 
 ## intent: install_booking
 aliases:
@@ -224,7 +226,7 @@ aliases:
 - is it under warranty
 - device warranty
 answer:
-Warranty is 1 year for cash purchases, 3 years for RTO (Rent to Own). It covers manufacturing defects but excludes physical damage or misuse. If you want to check a specific device's warranty status, share your dongle ID and we can look it up.
+Warranty is 1 year for one-off purchases, 3 years for RTO (Rent to Own). It covers manufacturing defects but excludes physical damage or misuse. If you want to check a specific device's warranty status, share your dongle ID and we can look it up.
 
 ## intent: shipping
 aliases:
@@ -342,7 +344,7 @@ aliases:
 - installment plan
 - hire purchase
 answer:
-Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed, and RTO includes a 3-year warranty. Read the terms here: https://kommu.ai/rto-terms/. If helpful, I can also share the full cash option for comparison.
+Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed, and RTO includes a 3-year warranty. Read the terms here: https://kommu.ai/rto-terms/. If helpful, I can also share the one-off option for comparison.
 
 ## intent: reset_procedure
 aliases:

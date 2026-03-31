@@ -147,7 +147,7 @@ Session log for this repo. Global handoff: `/home/ting/system-notes/AGENT_CONTEX
 
 ## 2026-03-26 — sales psychology + LA-only live-agent footer
 
-- Updated `support_runtime/agent_prompts.py` with a lightweight pricing strategy: for RTO, lead with RM175/month + RM1,999 deposit; mention RM4,999 cash when explicitly asked.
+- Updated `support_runtime/agent_prompts.py` with a lightweight pricing strategy: for RTO, lead with RM175/month + RM1,999 deposit; mention RM4,999 **one-off** when explicitly asked.
 - Updated `agent_workspace/02_knowledge/faq/master_faq.md`: revised `pricing` and `rto_details`, and added new `full_cash_price` intent for explicit cash-price asks.
 - Recompiled canonical artifacts (`agent_workspace/compiled/intents.json`, `agent_workspace/compiled/kb_chunks.jsonl`, related compiled outputs) via `compile_canonical_knowledge()`.
 - Updated `services/kai_service.py` to show `For Live Agent, type LA` (BM equivalent taip LA) and make the live-agent trigger LA-only (typing `KA1`/`KA2` will no longer hand over).

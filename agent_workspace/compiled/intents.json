@@ -116,7 +116,7 @@
       "monthly price",
       "installment"
     ],
-    "canonical_answer": "For most customers, the Rent to Own (RTO) plan is the easiest start: RM175/month + RM1,999 deposit, with 3-year warranty included. If you prefer outright purchase, I can share the full cash price too.",
+    "canonical_answer": "For most customers, the Rent to Own (RTO) plan is the easiest start: RM175/month + RM1,999 deposit, with 3-year warranty included. If you prefer a one-off purchase, I can share the one-off price too.",
     "policy_flags": [
       "grounded_only"
     ],
@@ -137,11 +137,13 @@
       "full price",
       "cash price",
       "outright price",
+      "one-off price",
+      "one-off payment",
       "one time payment",
       "buy outright",
       "pay in full"
     ],
-    "canonical_answer": "If you prefer full cash purchase, KA2 is RM4,999. If you'd like, I can also compare this with the RTO option (RM175/month + RM1,999 deposit) so you can pick what feels most comfortable.",
+    "canonical_answer": "If you prefer a one-off purchase, KA2 is RM4,999. If you'd like, I can also compare this with the RTO option (RM175/month + RM1,999 deposit) so you can pick what feels most comfortable.",
     "policy_flags": [
       "grounded_only"
     ],
@@ -285,7 +287,7 @@
       "is it under warranty",
       "device warranty"
     ],
-    "canonical_answer": "Warranty is 1 year for cash purchases, 3 years for RTO (Rent to Own). It covers manufacturing defects but excludes physical damage or misuse. If you want to check a specific device's warranty status, share your dongle ID and we can look it up.",
+    "canonical_answer": "Warranty is 1 year for one-off purchases, 3 years for RTO (Rent to Own). It covers manufacturing defects but excludes physical damage or misuse. If you want to check a specific device's warranty status, share your dongle ID and we can look it up.",
     "policy_flags": [
       "grounded_only"
     ],
@@ -557,7 +559,7 @@
       "installment plan",
       "hire purchase"
     ],
-    "canonical_answer": "Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed, and RTO includes a 3-year warranty. Read the terms here: https://kommu.ai/rto-terms/. If helpful, I can also share the full cash option for comparison.",
+    "canonical_answer": "Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed, and RTO includes a 3-year warranty. Read the terms here: https://kommu.ai/rto-terms/. If helpful, I can also share the one-off option for comparison.",
     "policy_flags": [
       "grounded_only"
     ],
