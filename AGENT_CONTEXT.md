@@ -6,6 +6,17 @@
 - Files changed: `services/kai_service.py` (`strip_bold_markdown_wrapping_around_urls`, `add_footer`); `support_runtime/agent_prompts.py`; `support_runtime/agent_tools.py` (`create_visitor_pass` tool description); `integrations/smartserva/create_visitor_pass.py`; `tests/test_support_runtime.py`.
 - Validation: `pytest tests/test_support_runtime.py::SupportRuntimeTests::test_strip_bold_markdown_wrapping_around_urls tests/test_agent_tools.py -q` → 6 passed.
 
+## 2026-03-31 — SOP-side fix then force resync
+
+- Intent: `./tools/force_sop_sync.py` was failing because Google SOP had `## intent: collaboration` in legacy format (plain body line, no `answer:` key). User requested fixing SOP side then resync.
+- Files changed:
+  - `core/faq_markdown.py` — parser now accepts legacy intent body as answer when `aliases:`/`answer:` headers are absent.
+  - `agent_workspace/02_knowledge/faq/master_faq.md` — updated by successful force sync (Google merge/writeback).
+- Validation:
+  - `./tools/force_sop_sync.py` → `ok: true`, Google writeback `ok: true`, counts now include 40 intents.
+  - `pytest tests/test_faq_markdown.py -q` → 4 passed.
+- Note: resync introduced a large content diff in `master_faq.md` (Google-side content took precedence in merged region).
+
 ## 2026-03-29 — Live-agent handback FAQ learning + remove legacy Chatwoot FAQ candidates
 
 - Intent: Replace tag-poll `faq_candidates` / admin publish-to-`master_faq` with a **session-backed** flow: on `resume` after live handoff (or after AI escalation handover), pop the human-window transcript and append a **unified diff** suggestion to `agent_learnt_faq.md` (not compiled into KB). Align **AI escalation** with **frozen** + same segment capture.

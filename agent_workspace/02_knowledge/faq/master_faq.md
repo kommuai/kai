@@ -25,8 +25,16 @@ aliases:
 - bukapilot
 - open source
 - what code
+- business
+- internship
+- job offer
 answer:
 KommuAssist runs bukapilot, a fork of openpilot. You can read the open source software here: https://github.com/kommuai/bukapilot/tree/release
+
+## intent: collaboration
+aliases:
+answer:
+Contact us directly at support@kommu.ai
 
 ## intent: ka2_modes
 aliases:
@@ -72,20 +80,7 @@ aliases:
 - monthly price
 - installment
 answer:
-For most customers, the Rent to Own (RTO) plan is the easiest start: RM175/month + RM1,999 deposit, with 3-year warranty included. If you prefer a one-off purchase, I can share the one-off price too.
-
-## intent: full_cash_price
-aliases:
-- full price
-- cash price
-- outright price
-- one-off price
-- one-off payment
-- one time payment
-- buy outright
-- pay in full
-answer:
-If you prefer a one-off purchase, KA2 is RM4,999. If you'd like, I can also compare this with the RTO option (RM175/month + RM1,999 deposit) so you can pick what feels most comfortable.
+KommuAssist KA2 is RM4,999 (one-off) or RM175/month for 24 months + RM1,999 upfront deposit under our Rent to Own (RTO) plan. The monthly payment duration for RTO is 24 months. Check it out at: https://kommu.ai/product/
 
 ## intent: install_booking
 aliases:
@@ -103,7 +98,16 @@ aliases:
 - self install
 - diy install kommuassist
 answer:
-Kommu **encourages self-installation**: many customers fit KommuAssist themselves using the installation guide, product videos, and the **KommuAI** app. If you are comfortable with basic in-car wiring and following safety steps (engine off when plugging electronics, correct USB ports on the relay, etc.), you can install at home or wherever is convenient. **Optional HQ help:** if you prefer on-site support at Kommu, you can book an installation slot — customers often receive an **appointment link by email after checkout** for that option. When done at HQ, expect about **30 minutes** total (roughly **15 minutes** hardware + **15 minutes** briefing on using the device). If you get stuck during self-install, contact **support@kommu.ai** with photos or error details.
+Installation is by appointment after checkout. You will receive an appointment link in your email once payment has been made. The on-site process takes about 30 minutes (15 min installation + 15 min briefing on how to use the device).
+
+## intent: self_install
+aliases:
+- can i install it by myself
+- how to self install
+- hard to install
+- video guide
+answer:
+If you are not based in Selangor/Kuala Lumpur, you can opt for self-installation. Refer to this video guide: https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD
 
 ## intent: office_info
 aliases:
@@ -118,12 +122,7 @@ aliases:
 - office hours
 - opening hours
 answer:
-Kommu HQ: EmHub, Block B-03-31, Kota Damansara, 47810 Petaling Jaya, Selangor.
-Waze: https://waze.com/ul/hw281zr717
-Google Maps: https://maps.app.goo.gl/wbUA1fUzTxRxUiVK6
-For entrance access: we will provide 1 day prior your test drive/installation slot
-Video guide: https://youtu.be/63PJBqvxvsY
-Hours: Mon-Fri 10AM-6PM, Sat by appointment only.
+Kommu HQ: EmHub, Block B-03-31, Kota Damansara, 47810 Petaling Jaya, Selangor. Waze: https://waze.com/ul/hw281zr717 Google Maps: https://maps.app.goo.gl/wbUA1fUzTxRxUiVK6 For entrance access: we will provide 1 day prior your test drive/installation slot. Video guide: https://youtu.be/63PJBqvxvsY Hours: Mon-Fri 10AM-6PM, Sat by appointment only.
 
 ## intent: installation_time
 aliases:
@@ -132,89 +131,7 @@ aliases:
 - install takes how many minutes
 - how long does installation take
 answer:
-Plan about **30 minutes** end to end for hardware installation plus a first-time walkthrough of how to use KommuAssist — whether you **self-install** or have **optional** help at Kommu HQ. Times vary slightly with experience and vehicle access.
-
-## intent: kommuassist_installation_guide
-aliases:
-- how to install kommuassist
-- kommuassist installation steps
-- installation procedure
-- hardware installation kommuassist
-- relay setup kommu
-- kommu relay installation
-- kommu vision mount
-- windshield mount kommuassist
-- cable routing installation
-- obd kommu power
-- installation sop
-- car fingerprint kommuassist
-- vehicle fingerprint bukapilot
-- controls waiting to start
-- usb cable swapped relay
-answer:
-Standard KommuAssist installation (per Kommu Installation & Briefing SOP) uses the **Kommu Relay**, **Kommu Vision** camera, **Kommu Power** at the OBD port, and USB-C cabling. Kommu **encourages capable customers to self-install** using this procedure; the steps below are the same reference workflow used for training and optional on-site support. **Do not treat HQ installation as required** — it is an extra option if you want hands-on help. Work carefully around **airbags** and **high-voltage** areas; if anything is unclear, pause and ask **support@kommu.ai** before forcing connectors.
-
-**Video:** KommuAssist Installation Guide (internal training video title in SOP).
-
-**What’s in the box (conceptually):** Relay with brand-specific harness, long and short USB-C cables, Kommu Power (OBD), Kommu Vision on its mount, electrostatic windshield sticker, and related hardware as shipped for your vehicle.
-
-**A. Kommu Relay**
-- Remove the car’s ADAS cover with a plastic pry tool.
-- **Engine off** — unplug the **original ADAS connector**.
-- Plug in the **Kommu Relay** using the **brand-specific harness**.
-- **Engine on** — confirm **no ADAS/error warnings** on the instrument cluster.
-- Plug the **long USB-C** into the Relay port labeled **Vision**, and the **short USB-C** into the port labeled **Power** (do not swap these; swapped cables can cause “camera on but no control”).
-- Seat the relay assembly and refit the ADAS cover.
-
-**B. Cable management**
-- Partially remove the **door weather strip** on the routing side.
-- Loosen the **right A-pillar airbag plastic trim** (route safely around/below airbag as trained).
-- Run the **long USB-C** behind the airbag area if applicable, then along the weather-strip gap to the bottom of the steering-dash panel (side hole).
-- Route above the **steering rack** so the cable cannot tangle with the driver’s feet.
-- Connect the lower end to **Kommu Power**, then plug Kommu Power into the **OBD** port.
-- Slip the upper section into the **headliner**; tuck excess into the weather strip / A-pillar area.
-- Refit A-pillar trim, then the weather strip.
-
-**C. Kommu Vision**
-- Clean the windshield with an **alcohol swab**.
-- Apply the **electrostatic sticker** with face **“1”** to the glass **just below the ADAS cover**; no trapped air bubbles.
-- Stick the **mount (with Vision)** to face **“2”** of the sticker — **vertical and centered**.
-- Remove Vision momentarily, press the mount firmly so the **3M** fully contacts the sticker (check from outside the car).
-- **Engine off** — connect the **short cable’s L-shaped end** to the Vision port (always **engine off** when plugging electronics).
-- Remount Vision, then continue to terms briefing and user tutorial.
-
-**Briefing highlights for the customer**
-- Data collection improves software and support; drive logs and usage appear in the **mobile app**.
-- KommuAssist **enhances** factory **ACC + LKA**; it is **not** full autonomy — **Level 2**: the **driver stays responsible**.
-- **1 year** hardware warranty with ongoing software/firmware support; warranty may be void for **unauthorized** hardware tampering or unofficial software changes — **self-install following Kommu’s guide is fine**.
-- On-screen cues: **white** lane lines, **red** divider/border/grass, **thick path** = planned path; **yellow triangle** = lead vehicle (explains braking behavior).
-- Engagement/disengagement matches the **stock ACC** method (including brake or **CANCEL** to disengage). **Driver monitoring** replaces steering touch — distraction triggers visual/audio alerts.
-- Stock ADAS (AEB, PCW, LDP, etc.) remains; Kommu adds sensing to strengthen ACC/LKA. **Bukapilot** does **not** reliably detect traffic lights, potholes, or speed bumps.
-- **Device** page: **Dongle ID** for app pairing; **Reset calibration** if lane detection feels wrong. **Personalised**: follow distance, path skew, fan speed, auto power-off. **Network**: Wi‑Fi for log upload and updates. **Software**: check version, use **Check** until last update shows **now**, then **reboot** to apply downloads.
-
-**Common issues (quick fixes)**
-- **Cluster errors:** Reseat ADAS/Relay connector with **Vision unplugged** until cleared. On some **Perodua** cars the lamp may linger until Vision fully boots.
-- **Stuck on “getting ready” / no camera view:** Often **GPS not synced** yet — wait; it should come online.
-- **Device error / no camera view:** Possible **bad flash** — **reboot**; firmware often self-recovers.
-- **Camera malfunction:** Faulty Vision unit — warranty/service path.
-- **Calibration invalid:** Camera needs ~**50% road / 50% sky** — remount; if the **case is deformed**, return for case service.
-- **“Car unrecognized” / dashcam mode:** Set **Software → Fingerprint** to the exact string for the vehicle (see table). If the car is **not listed**, contact **support@kommu.ai**.
-- **“Controls waiting to start”:** **Typo in fingerprint** — re-check against the table.
-- **Camera on but no control:** **USB-C to Relay swapped** — Vision vs Power ports.
-
-**Car fingerprint names (Table 1)**
-- Perodua Alza → `Perodua Alza`
-- Perodua Ativa → `Perodua Ativa`
-- Perodua Myvi → `Perodua Myvi PSD`
-- Proton S70 → `Proton S70`
-- Proton X50 → `Proton X50`
-- Proton X90 → `Proton X90`
-- BYD Atto 3 → `BYD Atto 3`
-- Toyota Alphard / Vellfire → `Toyota Alphard 2020`
-- Toyota Corolla → `Toyota Corolla TSS2 2019`
-- Toyota Corolla Cross → `Toyota Corolla Hybrid TSS2 2019`
-
-**KA2 note:** Newer KA2 units use the **KommuAI** app for many settings, calibration, and diagnostics; always follow the **printed port labels** on the device (never apply **12V vehicle power** to the **diagnostic/data** USB). When in doubt, use app guidance and support.
+About 30 minutes total — 15 minutes for hardware installation and 15 minutes for briefing on how to use KommuAssist.
 
 ## intent: warranty
 aliases:
@@ -226,7 +143,7 @@ aliases:
 - is it under warranty
 - device warranty
 answer:
-Warranty is 1 year for one-off purchases, 3 years for RTO (Rent to Own). It covers manufacturing defects but excludes physical damage or misuse. If you want to check a specific device's warranty status, share your dongle ID and we can look it up.
+Warranty is 1 year for one-off purchase, 3 years for RTO (Rent to Own). It covers manufacturing defects but excludes physical damage or misuse. If you want to check a specific device's warranty status, share your dongle ID and we can look it up.
 
 ## intent: shipping
 aliases:
@@ -344,7 +261,7 @@ aliases:
 - installment plan
 - hire purchase
 answer:
-Our RTO plan is RM175/month with an RM1,999 deposit. Device ownership transfers to you after all payments are completed, and RTO includes a 3-year warranty. Read the terms here: https://kommu.ai/rto-terms/. If helpful, I can also share the one-off option for comparison.
+Our RTO plan is RM175/month for 24 months with an RM1,999 upfront deposit. Device ownership transfers to you after all payments are completed. The RTO plan is only applicable for Malaysian credit card. RTO includes a 3-year warranty. Read the terms here: https://kommu.ai/rto-terms/.
 
 ## intent: reset_procedure
 aliases:
@@ -378,7 +295,7 @@ aliases:
 - missing logs
 - log upload failed
 answer:
-Check your internet connection first. Logs require an active data connection (SIM or hotspot). If the connection is fine, the server may be temporarily down — try again later.
+Driving logs must be stored locally with an SD card inserted before it can be uploaded and viewed in the KommuAI app. After that, check your internet connection. Logs require an active data connection (SIM or hotspot). If the connection is fine, the server may be temporarily down — try again later.
 
 ## intent: overheating
 aliases:
@@ -414,7 +331,7 @@ aliases:
 - device won't start
 - no led at all
 answer:
-Check that the power connector is securely seated and that the car ignition is on. Look for any LED activity. If there is absolutely no LED response after confirmed power input, it may indicate a board-level power issue — we'll need to arrange service. Share your dongle ID so we can check your warranty.
+Check that the power connector is securely seated and that the car ignition is on. Look for any LED activity. If there is absolutely no LED response after confirmed power input, it may indicate a board-level power issue — we'll need to arrange for technical service. Share your dongle ID so we can check your warranty.
 
 ## intent: gps_issue
 aliases:
@@ -424,7 +341,7 @@ aliases:
 - location not found
 - gps fix
 answer:
-GPS needs clear sky view to get a fix. Try driving to an open area. If you're using the device indoors or in a covered parking structure, GPS won't lock on. A phone hotspot connection can help with assisted GPS.
+GPS needs a clear sky view to get a fix. Try driving to an open area. If you're using the device indoors or in a covered parking structure, GPS won't lock on. A phone hotspot connection can help with assisted GPS.
 
 ## intent: kommuai_app_overview
 aliases:
@@ -435,7 +352,7 @@ aliases:
 - app reboot format sd
 - recalibration app
 answer:
-For KA2, most settings, calibration, and diagnostics go through the **KommuAI** mobile app. From the app you can reboot the device, format the SD card, run recalibration, enable quiet mode, toggle assisted lane change, toggle lane departure warning (LDW), adjust ADAS-related options, open the **Visualization** tab (paths, lanes, distances, driver monitoring), and manage logs / feedback. If a user needs step-by-step guidance for settings or calibration, always point them to the KommuAI app first.
+For KA2, most settings, calibration, and diagnostics go through the *KommuAI* mobile app. From the app you can reboot the device, format the SD card, run recalibration, enable quiet mode, toggle assisted lane change, toggle lane departure warning (LDW), adjust ADAS-related options, open the *Visualization* tab (paths, lanes, distances, driver monitoring), and manage logs / feedback. If a user needs step-by-step guidance for settings or calibration, always point them to the KommuAI app first.
 
 ## intent: kommuai_app_visualization
 aliases:
@@ -444,7 +361,7 @@ aliases:
 - lane lines app
 - driver monitoring app
 answer:
-In the KommuAI app, the **Visualization** tab shows live driving visualization: paths, lane lines, distance settings, and driver monitoring state. It also surfaces **error information** that is very useful when debugging — ask the user to note or screenshot what appears there when reporting a problem to technical support.
+In the KommuAI app, the *Visualization* tab shows live driving visualization: paths, lane lines, distance settings, and driver monitoring state. It also surfaces *error information* that is very useful when debugging — ask the user to note or screenshot what appears there when reporting a problem to technical support.
 
 ## intent: kommuai_app_logs
 aliases:
@@ -452,7 +369,7 @@ aliases:
 - app logs feedback
 - driving logs app
 answer:
-The **Logs** section in the KommuAI app shows driving logs. Users can submit feedback from there and use **Submit full logs** when reporting an issue. Remind them to write a **clear, descriptive** summary of the problem (when it happens, what they were doing, error text if any) so support can act faster.
+The *Logs* section in the KommuAI app shows driving logs. Users can submit feedback from there and use *Submit full logs* when reporting an issue. Remind them to write a *clear, descriptive* summary of the problem (when it happens, what they were doing, error text if any) so support can act faster.
 
 ## intent: kommuai_app_settings
 aliases:
@@ -463,14 +380,14 @@ aliases:
 - wifi fingerprint app
 - ios app slow settings
 answer:
-The **Settings** page in the KommuAI app connects to KA2 over **Bluetooth**. If another phone or device is also using Bluetooth heavily, it can **contest the connection** and cause unstable or missing settings — disconnect extra Bluetooth devices when possible. On **iOS**, if the settings page does not show or is very slow, **force-quit (kill) the app** and reopen; connection often recovers. Settings may include **Experimental mode** (alpha / testing features), **Wi‑Fi** setup, and **fingerprint** selection. For the built-in SIM: **2G** in the app usually means **no usable data connection**; **4G** means there is connection. If logs seem empty, check whether data has already uploaded — the settings area shows **remaining upload** status. If problems persist after checking connectivity and uploads, escalate to technical support.
+The *Settings* page in the KommuAI app connects to KA2 over *Bluetooth*. If another phone or device is also using Bluetooth heavily, it can *contest the connection* and cause unstable or missing settings — disconnect extra Bluetooth devices when possible. On *iOS*, if the settings page does not show or is very slow, *force-quit (kill) the app* and reopen; connection often recovers. Settings may include *Experimental mode* (alpha / testing features), *Wi‑Fi* setup, and *fingerprint* selection. For the built-in SIM: *2G* in the app usually means *no usable data connection*; *4G* means there is connection. If logs seem empty, check whether data has already uploaded — the settings area shows *remaining upload* status. If problems persist after checking connectivity and uploads, escalate to technical support.
 
 ## intent: kommuai_app_bluetooth_issue
 aliases:
 - bluetooth unstable ka2
 - cannot connect app bluetooth
 answer:
-Unstable Bluetooth to KA2 is often caused by **other devices** competing for the same radio. Ask the user to turn off Bluetooth on other phones/wearables temporarily, move closer to the device, and retry. On **iOS**, killing and reopening the KommuAI app often fixes a stuck settings connection.
+Unstable Bluetooth to KA2 is often caused by *other devices* competing for the same radio. Ask the user to turn off Bluetooth on other phones/wearables temporarily, move closer to the device, and retry. On *iOS*, killing and reopening the KommuAI app often fixes a stuck settings connection.
 
 ## intent: ka2_usb_ports_warning
 aliases:
@@ -479,7 +396,7 @@ aliases:
 - wrong usb burned
 - silicone cover usb
 answer:
-**Important — warranty-critical:** KA2 has **two USB ports**. The **power port** is at the **edge** of the device and is the one meant for **in-car power**. The **diagnostic / data port** is separate and is usually covered with a **silicone plug**. **Never apply 12V vehicle power to the diagnostic port** — it can destroy the board. **Damage from wrong-port power is not covered under warranty.** If unsure, ask the user to send a photo of the ports before advising.
+*Important — warranty-critical:* KA2 has *two USB ports*. The *power port* is at the *edge* of the device and is the one meant for *in-car power*. The *diagnostic / data port* is separate and is usually covered with a *silicone plug*. *Never apply 12V vehicle power to the diagnostic port* — it can destroy the board. *Damage from wrong-port power is not covered under warranty.* If unsure, ask the user to send a photo of the ports before advising.
 
 ## intent: flash_kommu_restore
 aliases:
@@ -489,7 +406,7 @@ aliases:
 - recovery button ka2
 - bootloader ka2
 answer:
-To restore KA2 to **factory software**, use **https://flash.kommu.ai** and follow the on-screen steps. Typically you connect **5V non–Power Delivery** power **and** the **diagnostic** USB to a **PC or laptop**, then flash using **Chrome**. **Only Linux and macOS have been tested** as working environments for this flow. **Do not unplug** the device while flashing is in progress. If the device is badly bricked, you may need to remove the **top four screws**, press the **recovery** button **while** applying power to enter loader mode — but usually you can use the KommuAI app **Settings → Enter boot loader** instead.
+To restore KA2 to *factory software*, use *https://flash.kommu.ai* and follow the on-screen steps. Typically you connect *5V non–Power Delivery* power *and* the *diagnostic* USB to a *PC or laptop*, then flash using *Chrome*. *Only Linux and macOS have been tested* as working environments for this flow. *Do not unplug* the device while flashing is in progress. If the device is badly bricked, you may need to remove the *top four screws*, press the *recovery* button *while* applying power to enter loader mode — but usually you can use the KommuAI app *Settings → Enter boot loader* instead.
 
 ## intent: ativa_myvi_braking_sound
 aliases:
@@ -500,6 +417,112 @@ answer:
 The stock ACC on the Perodua Ativa and Perodua Myvi is not capable of braking the vehicle all the way to a standstill (0 km/h). Kommu addressed this limitation by transmitting repeated brake commands approximately every 3 seconds. This approach was necessary because the ABS brake pump would still release brake pressure even when commands were sent at a higher frequency. As a result, there is a slight nudge each time the pump releases and re-clamps the brake disc.
 
 # SECTION 5: DYNAMIC
+
+## intent: full_price
+aliases:
+- full price
+- one-off price
+- outright price
+- one time payment
+- buy outright
+- pay in full
+answer:
+If you prefer a one-off purchase, KA2 is RM4,999. If you'd like, I can also compare this with the RTO option (RM175/month + RM1,999 deposit) so you can pick what feels most comfortable. Check it out at: https://kommu.ai/product/
+
+## intent: full_cash_price
+aliases:
+- full price
+- cash price
+- outright price
+- one-off price
+- one-off payment
+- one time payment
+- buy outright
+- pay in full
+answer:
+If you prefer a one-off purchase, KA2 is RM4,999. If you'd like, I can also compare this with the RTO option (RM175/month + RM1,999 deposit) so you can pick what feels most comfortable.
+
+## intent: kommuassist_installation_guide
+aliases:
+- how to install kommuassist
+- kommuassist installation steps
+- installation procedure
+- hardware installation kommuassist
+- relay setup kommu
+- kommu relay installation
+- kommu vision mount
+- windshield mount kommuassist
+- cable routing installation
+- obd kommu power
+- installation sop
+- car fingerprint kommuassist
+- vehicle fingerprint bukapilot
+- controls waiting to start
+- usb cable swapped relay
+answer:
+Standard KommuAssist installation (per Kommu Installation & Briefing SOP) uses the **Kommu Relay**, **Kommu Vision** camera, **Kommu Power** at the OBD port, and USB-C cabling. Kommu **encourages capable customers to self-install** using this procedure; the steps below are the same reference workflow used for training and optional on-site support. **Do not treat HQ installation as required** — it is an extra option if you want hands-on help. Work carefully around **airbags** and **high-voltage** areas; if anything is unclear, pause and ask **support@kommu.ai** before forcing connectors.
+
+**Video:** KommuAssist Installation Guide (internal training video title in SOP).
+
+**What’s in the box (conceptually):** Relay with brand-specific harness, long and short USB-C cables, Kommu Power (OBD), Kommu Vision on its mount, electrostatic windshield sticker, and related hardware as shipped for your vehicle.
+
+**A. Kommu Relay**
+- Remove the car’s ADAS cover with a plastic pry tool.
+- **Engine off** — unplug the **original ADAS connector**.
+- Plug in the **Kommu Relay** using the **brand-specific harness**.
+- **Engine on** — confirm **no ADAS/error warnings** on the instrument cluster.
+- Plug the **long USB-C** into the Relay port labeled **Vision**, and the **short USB-C** into the port labeled **Power** (do not swap these; swapped cables can cause “camera on but no control”).
+- Seat the relay assembly and refit the ADAS cover.
+
+**B. Cable management**
+- Partially remove the **door weather strip** on the routing side.
+- Loosen the **right A-pillar airbag plastic trim** (route safely around/below airbag as trained).
+- Run the **long USB-C** behind the airbag area if applicable, then along the weather-strip gap to the bottom of the steering-dash panel (side hole).
+- Route above the **steering rack** so the cable cannot tangle with the driver’s feet.
+- Connect the lower end to **Kommu Power**, then plug Kommu Power into the **OBD** port.
+- Slip the upper section into the **headliner**; tuck excess into the weather strip / A-pillar area.
+- Refit A-pillar trim, then the weather strip.
+
+**C. Kommu Vision**
+- Clean the windshield with an **alcohol swab**.
+- Apply the **electrostatic sticker** with face **“1”** to the glass **just below the ADAS cover**; no trapped air bubbles.
+- Stick the **mount (with Vision)** to face **“2”** of the sticker — **vertical and centered**.
+- Remove Vision momentarily, press the mount firmly so the **3M** fully contacts the sticker (check from outside the car).
+- **Engine off** — connect the **short cable’s L-shaped end** to the Vision port (always **engine off** when plugging electronics).
+- Remount Vision, then continue to terms briefing and user tutorial.
+
+**Briefing highlights for the customer**
+- Data collection improves software and support; drive logs and usage appear in the **mobile app**.
+- KommuAssist **enhances** factory **ACC + LKA**; it is **not** full autonomy — **Level 2**: the **driver stays responsible**.
+- **1 year** hardware warranty with ongoing software/firmware support; warranty may be void for **unauthorized** hardware tampering or unofficial software changes — **self-install following Kommu’s guide is fine**.
+- On-screen cues: **white** lane lines, **red** divider/border/grass, **thick path** = planned path; **yellow triangle** = lead vehicle (explains braking behavior).
+- Engagement/disengagement matches the **stock ACC** method (including brake or **CANCEL** to disengage). **Driver monitoring** replaces steering touch — distraction triggers visual/audio alerts.
+- Stock ADAS (AEB, PCW, LDP, etc.) remains; Kommu adds sensing to strengthen ACC/LKA. **Bukapilot** does **not** reliably detect traffic lights, potholes, or speed bumps.
+- **Device** page: **Dongle ID** for app pairing; **Reset calibration** if lane detection feels wrong. **Personalised**: follow distance, path skew, fan speed, auto power-off. **Network**: Wi‑Fi for log upload and updates. **Software**: check version, use **Check** until last update shows **now**, then **reboot** to apply downloads.
+
+**Common issues (quick fixes)**
+- **Cluster errors:** Reseat ADAS/Relay connector with **Vision unplugged** until cleared. On some **Perodua** cars the lamp may linger until Vision fully boots.
+- **Stuck on “getting ready” / no camera view:** Often **GPS not synced** yet — wait; it should come online.
+- **Device error / no camera view:** Possible **bad flash** — **reboot**; firmware often self-recovers.
+- **Camera malfunction:** Faulty Vision unit — warranty/service path.
+- **Calibration invalid:** Camera needs ~**50% road / 50% sky** — remount; if the **case is deformed**, return for case service.
+- **“Car unrecognized” / dashcam mode:** Set **Software → Fingerprint** to the exact string for the vehicle (see table). If the car is **not listed**, contact **support@kommu.ai**.
+- **“Controls waiting to start”:** **Typo in fingerprint** — re-check against the table.
+- **Camera on but no control:** **USB-C to Relay swapped** — Vision vs Power ports.
+
+**Car fingerprint names (Table 1)**
+- Perodua Alza → `Perodua Alza`
+- Perodua Ativa → `Perodua Ativa`
+- Perodua Myvi → `Perodua Myvi PSD`
+- Proton S70 → `Proton S70`
+- Proton X50 → `Proton X50`
+- Proton X90 → `Proton X90`
+- BYD Atto 3 → `BYD Atto 3`
+- Toyota Alphard / Vellfire → `Toyota Alphard 2020`
+- Toyota Corolla → `Toyota Corolla TSS2 2019`
+- Toyota Corolla Cross → `Toyota Corolla Hybrid TSS2 2019`
+
+**KA2 note:** Newer KA2 units use the **KommuAI** app for many settings, calibration, and diagnostics; always follow the **printed port labels** on the device (never apply **12V vehicle power** to the **diagnostic/data** USB). When in doubt, use app guidance and support.
 
 ## workflow: repair_flow
 steps:
