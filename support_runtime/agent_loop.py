@@ -180,12 +180,15 @@ class ReActAgentLoop:
                     decision = str(parsed.get("decision", "direct_answer"))
                     confidence = float(parsed.get("confidence", 0.75) or 0.75)
                 else:
-                    answer = "I found some information but need one more detail to avoid guessing. Could you clarify your model/year or the exact error shown?"
+                    answer = (
+                        "What car is this (brand, model, year), and what exact error or symptom do you see "
+                        "(or paste the text from KommuAI → Visualization)?"
+                    )
                     decision = "clarifying_question"
                     confidence = 0.55
             else:
                 decision = "clarifying_question"
-                answer = "Could you share a bit more detail so I can help you better?"
+                answer = "What do you need help with — pricing, vehicle support, installation, warranty, or a device problem?"
                 fallback_reason = fallback_reason or "no_signal"
 
         has_tool_evidence = any(bool(obs.get("result", {}).get("ok")) for obs in observations)
@@ -195,7 +198,7 @@ class ReActAgentLoop:
                 decision = "clarifying_question"
                 confidence = 0.55
                 fallback_reason = fallback_reason or "ungrounded_answer_blocked"
-                answer = "I want to make sure I give you accurate info. Could you share one more detail so I can confirm the facts?"
+                answer = "Reply with your car brand, model, and year — or your dongle ID if this is a warranty check."
             else:
                 confidence = min(confidence, 0.55)
 

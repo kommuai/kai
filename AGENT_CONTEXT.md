@@ -1,5 +1,11 @@
 # Kai — Agent context
 
+## 2026-04-03 — Kai tone: direct clarifying questions (no “more info” hedging)
+
+- Intent: Stop vague openers (“can I get more info”, “could you share more detail”); ask one concrete question; align loop fallbacks.
+- Files changed: `support_runtime/agent_prompts.py` (personality + rules); `support_runtime/agent_loop.py` (no_signal / post-tool-parse / ungrounded fallback strings).
+- Validation: `pytest tests/test_agent_loop.py -q` → 4 passed.
+
 ## 2026-03-29 — Visitor pass: plain URL + fixed SmartServa name/phone
 
 - Intent: QR/visitor links stay tappable (strip markdown bold around https URLs in outbound replies); SmartServa visitor row uses fixed name `Kommu` and phone `1`.
