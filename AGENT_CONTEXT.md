@@ -1,5 +1,25 @@
 # Kai — Agent context
 
+## 2026-04-11 — Google Drive SOP sync (re-run)
+
+- Intent: Merge remote `sop-sync` region into `master_faq.md`, write back to Google Doc.
+- Actions: `cd /home/ting/workspace/kai && ./tools/force_sop_sync.py` → `ok: true`, writeback `ok: true` (doc `1Y80JRyFIQrb99XNgPIUA3p0cGy4KUyoAhG1vdJMO0fs`).
+- Diff vs previous commit (FAQ): same single-line wording as prior micro-sync — intent `kommuassist_installation_guide` answer **15 min briefing** → **15 min tutorial/briefing**.
+- Next: `compile_canonical_knowledge()` if runtime KB should match disk.
+
+## 2026-03-29 — Clarifying: schema `question`, validate → repair → compress → span → fallback
+
+- **Intent:** Stop soft preambles on `clarifying_question` (hedge phrases, “accurate info”, “one more detail”); user-visible ask must be a single concrete question ending in `?`.
+- **Files:** `support_runtime/clarify_validation.py` (hedge list, `is_valid_clarifying_text`, `last_question_span`, `compress_to_one_question`); `support_runtime/agent_loop.py` (`finalize_clarifying_answer`, `metadata["clarify_sanitize"]` tags: `clarify_repair`, `clarify_compress`, `clarify_last_question_span`, `clarify_fallback_generic`); `support_runtime/agent_prompts.py` (response format: prefer `question` for clarify); tests `tests/test_clarify_validation.py`, `tests/test_agent_loop.py` (incl. hedge repair), `tests/test_agentic_understanding.py` (mock includes `source_ids` so ungrounded clarify does not override `direct_answer`).
+- **Validation:** `pytest tests/test_clarify_validation.py tests/test_agent_loop.py -q` → pass; full `pytest tests/` → 92 passed (~3.5 min, includes `test_support_runtime.py`).
+
+## 2026-04-04 — Google Drive SOP sync (micro-diff)
+
+- Intent: Merge Google Doc `sop-sync` region into `master_faq.md` and write back; report diff vs local.
+- Actions: `./tools/force_sop_sync.py` → `ok: true`, Google writeback `ok: true` (doc `1Y80JRyFIQrb99XNgPIUA3p0cGy4KUyoAhG1vdJMO0fs`, `sync_region_only`).
+- Diff: single line in intent `kommuassist_installation_guide` — answer text **15 min briefing** → **15 min tutorial/briefing** (Google wins per merge rules).
+- Next: Run `compile_canonical_knowledge()` if runtime KB should match disk.
+
 ## 2026-04-03 — Kai tone: direct clarifying questions (no “more info” hedging)
 
 - Intent: Stop vague openers (“can I get more info”, “could you share more detail”); ask one concrete question; align loop fallbacks.

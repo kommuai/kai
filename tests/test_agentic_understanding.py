@@ -7,10 +7,16 @@ from support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 class _Provider:
     def chat(self, *_args, **_kwargs):
-        return '{"action":"final","decision":"direct_answer","answer":"Understood.","confidence":0.8}'
+        return (
+            '{"action":"final","decision":"direct_answer","answer":"Understood.",'
+            '"confidence":0.8,"source_ids":["intent:test"]}'
+        )
 
     def chat_messages(self, messages, **_kwargs):
-        return '{"action":"final","decision":"direct_answer","answer":"Understood.","confidence":0.8}'
+        return (
+            '{"action":"final","decision":"direct_answer","answer":"Understood.",'
+            '"confidence":0.8,"source_ids":["intent:test"]}'
+        )
 
 
 class AgenticUnderstandingTests(unittest.TestCase):

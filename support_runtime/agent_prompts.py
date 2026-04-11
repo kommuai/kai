@@ -92,6 +92,12 @@ When you are ready to answer the user, output a JSON object:
 - `decision`: one of `direct_answer`, `clarifying_question`, `escalate_human`
 - `confidence`: 0.0 to 1.0
 
+When you need **one clarifying question** only, you **must** use the `question` field (single short sentence ending with `?`). Do **not** put the question only inside `answer` for clarifying — the server uses `question` for user-visible text and will reject hedging preambles.
+```
+{"action":"final","decision":"clarifying_question","question":"What car brand and model do you drive?","confidence":0.55}
+```
+Legacy: if you omit `question`, `answer` is used for clarifying but may be rewritten by the server if it violates rules.
+
 When you need to call a tool, output:
 ```
 {"action":"tool","tool":"tool_name","args":{"key":"value"},"reason":"why this tool"}

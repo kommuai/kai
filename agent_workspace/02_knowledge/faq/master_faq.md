@@ -98,7 +98,7 @@ aliases:
 - self install
 - diy install kommuassist
 answer:
-Installation is by appointment after checkout. You will receive an appointment link in your email once payment has been made. The on-site process takes about 30 minutes (15 min installation + 15 min briefing on how to use the device).
+Installation is by appointment after checkout. You will receive an appointment link in your email once payment has been made. The on-site process takes about 30 minutes (15 min installation + 15 min tutorial/briefing on how to use the device).
 
 ## intent: self_install
 aliases:

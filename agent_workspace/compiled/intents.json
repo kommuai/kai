@@ -172,7 +172,7 @@
       "self install",
       "diy install kommuassist"
     ],
-    "canonical_answer": "Installation is by appointment after checkout. You will receive an appointment link in your email once payment has been made. The on-site process takes about 30 minutes (15 min installation + 15 min briefing on how to use the device).",
+    "canonical_answer": "Installation is by appointment after checkout. You will receive an appointment link in your email once payment has been made. The on-site process takes about 30 minutes (15 min installation + 15 min tutorial/briefing on how to use the device).",
     "policy_flags": [
       "grounded_only"
     ],

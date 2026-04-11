@@ -16,7 +16,7 @@ class _DummyProvider:
         self.calls += 1
         if self.calls == 1:
             return '{"action":"tool","tool":"search_faq","args":{"query":"install"}}'
-        return '{"action":"final","decision":"clarifying_question","answer":"Please share car model and year.","confidence":0.7}'
+        return '{"action":"final","decision":"clarifying_question","question":"What car model and year do you drive?","confidence":0.7}'
 
 
 class RouteAgentDebugTests(unittest.TestCase):

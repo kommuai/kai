@@ -7,6 +7,13 @@ from dataclasses import dataclass
 from typing import Any
 
 from support_runtime.agent_tools import AgentToolRegistry
+from support_runtime.clarify_validation import (
+    REPAIR_USER_PROMPT,
+    clarify_candidate_from_parsed,
+    compress_to_one_question,
+    is_valid_clarifying_text,
+    last_question_span,
+)
 from support_runtime.guardrails import safety_gate
 from support_runtime.models import RuntimeResult
 
@@ -45,6 +52,45 @@ def _looks_like_chitchat(text: str) -> bool:
         "good evening",
     )
     return short and any(m in t for m in markers)
+
+
+def finalize_clarifying_answer(deps: "AgentLoopDependencies", messages: list[dict[str, str]], parsed: dict[str, Any]) -> tuple[str, str]:
+    cand = clarify_candidate_from_parsed(parsed)
+    ok, reason = is_valid_clarifying_text(cand)
+    if ok:
+        return cand, ""
+
+    log.debug("clarify invalid (%s): %s...", reason, cand[:120])
+
+    repair_messages = messages + [
+        {"role": "assistant", "content": json.dumps(parsed, ensure_ascii=False)},
+        {"role": "user", "content": REPAIR_USER_PROMPT},
+    ]
+    try:
+        raw = deps.provider.chat_messages(repair_messages, temperature=0.0, max_tokens=MAX_RESPONSE_TOKENS)
+        p2 = _extract_json(raw)
+        if p2:
+            c2 = clarify_candidate_from_parsed(p2)
+            ok2, _ = is_valid_clarifying_text(c2)
+            if ok2:
+                return c2, "clarify_repair"
+    except Exception as exc:  # noqa: BLE001
+        log.warning("clarify repair failed: %s", exc)
+
+    try:
+        comp = compress_to_one_question(deps.provider, cand)
+        ok3, _ = is_valid_clarifying_text(comp)
+        if ok3:
+            return comp, "clarify_compress"
+    except Exception as exc:  # noqa: BLE001
+        log.warning("clarify compress failed: %s", exc)
+
+    span = last_question_span(cand)
+    ok4, _ = is_valid_clarifying_text(span)
+    if ok4:
+        return span, "clarify_last_question_span"
+
+    return "What car brand, model, and year are you asking about?", "clarify_fallback_generic"
 
 
 @dataclass
@@ -99,6 +145,8 @@ class ReActAgentLoop:
         confidence = 0.5
         fallback_reason = ""
         user_chitchat = _looks_like_chitchat(text)
+        last_parsed: dict[str, Any] | None = None
+        clarify_meta = ""
 
         for step in range(MAX_AGENT_STEPS):
             raw = self.deps.provider.chat_messages(
@@ -143,6 +191,7 @@ class ReActAgentLoop:
                 continue
 
             if action == "final":
+                last_parsed = parsed
                 answer = str(parsed.get("answer", "")).strip()
                 decision = str(parsed.get("decision", "direct_answer")).strip()
                 if decision not in ("direct_answer", "clarifying_question", "escalate_human"):
@@ -156,10 +205,16 @@ class ReActAgentLoop:
 
             answer_text = parsed.get("answer", "")
             if answer_text:
+                last_parsed = parsed
                 answer = str(answer_text).strip()
                 decision = str(parsed.get("decision", "direct_answer")).strip()
                 confidence = float(parsed.get("confidence", 0.75) or 0.75)
                 break
+
+        if decision == "clarifying_question" and last_parsed is not None:
+            answer, clarify_meta = finalize_clarifying_answer(self.deps, messages, last_parsed)
+            if clarify_meta:
+                fallback_reason = fallback_reason or clarify_meta
 
         if not answer:
             if any(obs.get("result", {}).get("escalate") for obs in observations):
@@ -198,9 +253,15 @@ class ReActAgentLoop:
                 decision = "clarifying_question"
                 confidence = 0.55
                 fallback_reason = fallback_reason or "ungrounded_answer_blocked"
-                answer = "Reply with your car brand, model, and year — or your dongle ID if this is a warranty check."
+                answer = (
+                    "Reply with your car brand, model, and year — or your dongle ID if this is a warranty check?"
+                )
             else:
                 confidence = min(confidence, 0.55)
+
+        extra_meta: dict[str, Any] = {"agentic_route": {"steps": tool_trace}, "evidence": {"observations": observations}}
+        if clarify_meta:
+            extra_meta["clarify_sanitize"] = clarify_meta
 
         return {
             "result": RuntimeResult(
@@ -212,9 +273,6 @@ class ReActAgentLoop:
                 escalate_needed=(decision == "escalate_human"),
                 capability_used="react_agent_loop",
                 fallback_reason=fallback_reason,
-                metadata={
-                    "agentic_route": {"steps": tool_trace},
-                    "evidence": {"observations": observations},
-                },
+                metadata=extra_meta,
             )
         }

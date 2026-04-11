@@ -18,7 +18,7 @@ class _FakeProvider:
     def chat_messages(self, messages, temperature=0.2, max_tokens=1200):
         if self.responses:
             return self.responses.pop(0)
-        return '{"action":"final","decision":"clarifying_question","answer":"Need more info","confidence":0.5}'
+        return '{"action":"final","decision":"clarifying_question","question":"What do you need?","confidence":0.5}'
 
 
 class AgentLoopTests(unittest.TestCase):
@@ -75,6 +75,35 @@ class AgentLoopTests(unittest.TestCase):
         out = loop.run(text="Can I walk in for install?", lang="EN", user_id="u4")["result"]
         self.assertEqual(out.decision, "direct_answer")
         self.assertGreaterEqual(out.confidence, 0.8)
+
+
+    def test_clarify_hedge_triggers_repair(self):
+        class _RepairProvider:
+            def __init__(self):
+                self.calls = 0
+
+            def chat_messages(self, messages, temperature=0.2, max_tokens=1200):
+                self.calls += 1
+                if self.calls == 1:
+                    return (
+                        '{"action":"final","decision":"clarifying_question",'
+                        '"answer":"I want to make sure I give you accurate info. What car?",'
+                        '"confidence":0.5}'
+                    )
+                return (
+                    '{"action":"final","decision":"clarifying_question",'
+                    '"question":"What car brand and model do you drive?",'
+                    '"confidence":0.55}'
+                )
+
+        prov = _RepairProvider()
+        registry = AgentToolRegistry(HybridRetriever(provider=None), SimpleReranker(provider=None))
+        loop = ReActAgentLoop(AgentLoopDependencies(provider=prov, tools=registry, system_prompt="test"))
+        out = loop.run(text="help", lang="EN", user_id="u_hedge")["result"]
+        self.assertEqual(out.decision, "clarifying_question")
+        self.assertNotIn("accurate info", out.answer.lower())
+        self.assertIn("car", out.answer.lower())
+        self.assertEqual(out.metadata.get("clarify_sanitize"), "clarify_repair")
 
 
 if __name__ == "__main__":

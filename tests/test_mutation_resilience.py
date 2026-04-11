@@ -16,7 +16,7 @@ class _FailingProvider:
         self.calls += 1
         if self.calls == 1:
             return '{"action":"tool","tool":"search_web","args":{"query":"vehicle specs"}}'
-        return '{"action":"final","decision":"clarifying_question","answer":"Web search unavailable, please share your exact model and year.","confidence":0.66}'
+        return '{"action":"final","decision":"clarifying_question","question":"What is your exact vehicle model and year?","confidence":0.66}'
 
 
 class MutationResilienceTests(unittest.TestCase):
