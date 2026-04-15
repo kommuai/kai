@@ -24,6 +24,15 @@ class SupportRuntimeTests(unittest.TestCase):
         self.assertIn(out.decision, {"clarifying_question", "tool_use", "escalate_human", "direct_answer"})
         self.assertIsInstance(out.answer, str)
 
+    def test_faq_first_returns_video_link_when_available(self):
+        svc = SupportRuntimeService()
+        svc.startup()
+        uid = f"vid_{uuid4().hex[:6]}"
+        _ = svc.execute("Hey, how do I install the kommu assist on my own?", lang="EN", user_id=uid)
+        out = svc.execute("Is there any video for this?", lang="EN", user_id=uid)
+        self.assertEqual(out.capability_used, "canonical_answer")
+        self.assertIn("youtu", out.answer.lower())
+
     def test_install_and_warranty_routes_unaffected(self):
         svc = SupportRuntimeService()
         svc.startup()
