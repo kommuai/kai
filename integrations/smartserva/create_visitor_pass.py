@@ -248,6 +248,58 @@ def create_visitor(
     return data
 
 
+def extract_visitor_id_from_add_response(data: Dict[str, object]) -> Optional[str]:
+    """If add_vi JSON includes the new row id, use it (avoids picking an older duplicate name)."""
+    if not isinstance(data, dict):
+        return None
+    for key in ("visitor_id", "vi_id", "vid", "vi", "id"):
+        val = data.get(key)
+        if val is None:
+            continue
+        s = str(val).strip()
+        if s.isdigit():
+            return s
+    return None
+
+
+def find_visitor_status_by_id(s: requests.Session, visitor_id: str) -> str:
+    resp = request(
+        s,
+        "POST",
+        f"{BASE_URL}/process3.php",
+        data={"fs": "0", "action": "get_vi", "t": "vi_reg", "pg": "1", "pid": "-1", "auth": "2"},
+    )
+    data = resp.json()
+    html = str(data.get("v", ""))
+    rows = re.findall(
+        r'<tr class="vi_r_c vi_r" v="(\d+)">[\s\S]*?<div class="vi_nm">([^<]+)</div>[\s\S]*?<td class="vi_r_status"[^>]*>([^<]+)</td>',
+        html,
+        re.I,
+    )
+    for rid, _nm, status in rows:
+        if rid == visitor_id:
+            return status.strip()
+    return ""
+
+
+def pick_newest_matching_visitor(
+    rows: list[tuple[str, str, str]], visitor_name: str
+) -> Optional[Tuple[str, str]]:
+    """
+    All passes use fixed display name \"Kommu\"; the list may contain many rows.
+    Always pick the newest registration by highest numeric visitor id so we never
+    return a stale/expired pass link from an older row.
+    """
+    matches: list[tuple[str, str]] = []
+    target = visitor_name.strip().lower()
+    for rid, nm, status in rows:
+        if nm.strip().lower() == target:
+            matches.append((rid, status.strip()))
+    if not matches:
+        return None
+    return max(matches, key=lambda x: int(x[0]) if x[0].isdigit() else 0)
+
+
 def find_created_visitor_id(s: requests.Session, visitor_name: str) -> Optional[Tuple[str, str]]:
     resp = request(
         s,
@@ -262,10 +314,7 @@ def find_created_visitor_id(s: requests.Session, visitor_name: str) -> Optional[
         html,
         re.I,
     )
-    for rid, nm, status in rows:
-        if nm.strip().lower() == visitor_name.strip().lower():
-            return rid, status.strip()
-    return None
+    return pick_newest_matching_visitor(rows, visitor_name)
 
 
 def get_visitor_link(s: requests.Session, visitor_id: str) -> Optional[str]:
@@ -306,7 +355,7 @@ def main() -> int:
     login_with_captcha(session, username, password, args.max_login_attempts)
 
     unit_id = args.unit_id or discover_unit_id(session)
-    create_visitor(
+    add_data = create_visitor(
         s=session,
         unit_id=unit_id,
         appoint_date_dd_mmm=appoint_date_dd_mmm,
@@ -315,10 +364,15 @@ def main() -> int:
         visitor_phone=visitor_phone,
     )
 
-    created = find_created_visitor_id(session, visitor_name)
-    if not created:
-        raise RuntimeError("Created visitor row not found in registrations list.")
-    visitor_id, status = created
+    preferred_id = extract_visitor_id_from_add_response(add_data)
+    if preferred_id:
+        status = find_visitor_status_by_id(session, preferred_id) or "Approved"
+        visitor_id = preferred_id
+    else:
+        created = find_created_visitor_id(session, visitor_name)
+        if not created:
+            raise RuntimeError("Created visitor row not found in registrations list.")
+        visitor_id, status = created
 
     link = None
     for _ in range(8):

@@ -1,5 +1,11 @@
 # Kai — Agent context
 
+## 2026-05-13 — SmartServa QR: always use newest visitor row (fix stale/expired links)
+
+- **Intent:** Visitor passes use fixed display name `Kommu`; listing lookup returned the **first** HTML match, so Kai could surface an **old/expired** `visitor_pass.php` link after a new `add_vi`.
+- **Change:** `integrations/smartserva/create_visitor_pass.py` — prefer visitor id from `add_vi` JSON when present; else pick **highest numeric** `v="..."` row among name matches. `tests/test_smartserva_visitor_pick.py` covers selection.
+- **Validation:** `pytest tests/test_smartserva_visitor_pick.py tests/test_agent_tools.py -q` → pass.
+
 ## 2026-04-11 — Google Drive SOP sync (re-run)
 
 - Intent: Merge remote `sop-sync` region into `master_faq.md`, write back to Google Doc.
