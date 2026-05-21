@@ -1,5 +1,17 @@
 # Kai — Agent context
 
+## 2026-05-21 — Anti-annoyance pass: intent-aware clarify + footer discipline + chitchat expansion
+
+- **Intent (P0 from chat-history analysis):** Stop the "Reply with your car brand, model, and year — or your dongle ID..." line from leaking into office/pricing/warranty/QR/greeting turns; stop the `For Live Agent, type LA` footer from nagging every reply after turn 7 (incl. on grounded canonical answers and visitor-pass links); make chitchat detection catch `test`, `howdy`, `hai`, emoji, Malay greetings.
+- **New module:** `support_runtime/clarify_intent.py` — pure-function `pick_clarify_for_intent(text, lang)` routes ungrounded clarify by keyword family: office/hours, pricing/RTO, supported list (→ kommu.ai/support), warranty/dongle, install/video, QR/visitor pass, order/payment, diagnostic, vehicle (only when query is actually vehicle-y), else a friendly multi-option menu. BM phrasing for each branch.
+- **agent_loop.py:** wires `pick_clarify_for_intent` into the `ungrounded_answer_blocked` path so the substitute clarify matches the *user's* topic; `_looks_like_chitchat` markers expanded (`test`, `testing`, `howdy`, `hai`, `helo`, `okie`, `noted`, `terima kasih`, `selamat pagi/petang/malam`, single-emoji ≤3 chars).
+- **services/kai_service.py:** `add_footer(..., *, suppress: bool = False)`; turn threshold raised `7 → 10`. Default behavior unchanged for `pre_router` callers.
+- **api/v2/agent_message.py:** sets `suppress_footer = (capability_used == "canonical_answer") or (decision == "direct_answer" and source_ids)` and passes it through. This kills LA-footer spam on FAQ-first answers and grounded tool replies without touching the unhappy paths.
+- **Tests:** `tests/test_clarify_intent.py` (13 cases: every branch + chitchat expansion).
+- **Validation:** `pytest tests/test_clarify_intent.py -q` → 13 passed; fast suite `pytest tests/ --ignore=tests/test_support_runtime.py -q` → 96 passed (98 subtests); slow live-LLM `pytest tests/test_support_runtime.py -q` → 12 passed in 88 s. Total 121/121 with no regressions.
+- **Architectural note:** Two responsibilities stay separate — `clarify_validation.py` validates/repairs LLM-emitted clarify text; `clarify_intent.py` chooses which clarify to ask when grounding is missing. The footer suppression signal is computed at the API boundary (the only place that has `RuntimeResult`), so service-layer callers (`pre_router`) keep their current footer behavior.
+- **Deferred (P1+ from analysis):** broaden FAQ-first beyond video/link; WhatsApp message debouncing; honest-escalation prompt; regression eval set.
+
 ## 2026-05-13 — SmartServa QR: always use newest visitor row (fix stale/expired links)
 
 - **Intent:** Visitor passes use fixed display name `Kommu`; listing lookup returned the **first** HTML match, so Kai could surface an **old/expired** `visitor_pass.php` link after a new `add_vi`.

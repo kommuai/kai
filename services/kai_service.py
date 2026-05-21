@@ -272,9 +272,13 @@ class KaiService:
             else "\n\nPS: We’re currently outside office hours. A live agent will follow up later."
         )
 
-    def add_footer(self, conversation_id, answer: str, lang: str) -> str:
+    def add_footer(self, conversation_id, answer: str, lang: str, *, suppress: bool = False) -> str:
+        # Higher turn threshold (was 7) so the LA footer only appears when the user
+        # has clearly stuck around for a while. Callers can also pass `suppress=True`
+        # for turns where the bot already gave a grounded answer (FAQ canonical /
+        # tool-backed direct answer) so the footer does not nag every reply.
         footer = ""
-        if len(get_history(conversation_id)) >= 7:
+        if not suppress and len(get_history(conversation_id)) >= 10:
             footer = FOOTER_BM if lang == "BM" else FOOTER_EN
         body = strip_bold_markdown_wrapping_around_urls((answer or "").rstrip())
         return body + footer

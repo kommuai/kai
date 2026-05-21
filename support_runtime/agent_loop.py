@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from support_runtime.agent_tools import AgentToolRegistry
+from support_runtime.clarify_intent import pick_clarify_for_intent
 from support_runtime.clarify_validation import (
     REPAIR_USER_PROMPT,
     clarify_candidate_from_parsed,
@@ -38,18 +39,17 @@ def _looks_like_chitchat(text: str) -> bool:
     t = (text or "").strip().lower()
     if not t:
         return False
+    # Single emoji / very short ack
+    if len(t) <= 3 and not any(ch.isalnum() for ch in t):
+        return True
     short = len(t.split()) <= 6
     markers = (
-        "hi",
-        "hello",
-        "hey",
-        "thanks",
-        "thank you",
-        "ok",
-        "okay",
-        "good morning",
-        "good afternoon",
-        "good evening",
+        "hi", "hai", "hello", "helo", "hey", "howdy",
+        "thanks", "thank you", "terima kasih",
+        "ok", "okay", "okie", "noted",
+        "test", "testing",
+        "good morning", "good afternoon", "good evening", "good night",
+        "selamat pagi", "selamat petang", "selamat malam",
     )
     return short and any(m in t for m in markers)
 
@@ -253,9 +253,7 @@ class ReActAgentLoop:
                 decision = "clarifying_question"
                 confidence = 0.55
                 fallback_reason = fallback_reason or "ungrounded_answer_blocked"
-                answer = (
-                    "Reply with your car brand, model, and year — or your dongle ID if this is a warranty check?"
-                )
+                answer = pick_clarify_for_intent(text, lang)
             else:
                 confidence = min(confidence, 0.55)
 

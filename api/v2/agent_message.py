@@ -122,9 +122,17 @@ def _process_agent_message_data(data: dict) -> dict:
         freeze(user_id, True)
         payload = {"type": "handover", "message": result.answer, "next_state": "human", "handover_applied": True}
     else:
+        # Suppress the "type LA" footer when the bot is clearly helping:
+        #   - FAQ canonical answers (`canonical_answer` capability), or
+        #   - direct answers backed by sources / tool evidence.
+        # This stops the long-thread LA-nag pattern visible in chat history.
+        suppress_footer = (
+            result.capability_used == "canonical_answer"
+            or (result.decision == "direct_answer" and bool(result.source_ids))
+        )
         payload = {
             "type": "reply",
-            "message": kai_service.add_footer(user_id, result.answer, lang),
+            "message": kai_service.add_footer(user_id, result.answer, lang, suppress=suppress_footer),
             "next_state": "bot",
             "confidence": result.confidence,
             "source_ids": result.source_ids,
