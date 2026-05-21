@@ -100,8 +100,11 @@ def _load_service_account_info() -> dict:
     # 1) direct JSON string
     if raw.startswith("{"):
         return json.loads(raw)
-    # 2) file path in env var
-    if os.path.isfile(raw):
+    # 2) file path in env var (relative paths resolve from cwd, usually /app in Docker)
+    if raw.endswith(".json") or "/" in raw or raw.startswith("."):
+        if not os.path.isfile(raw):
+            print(f"[WARRANTY] GOOGLE_SHEETS_CREDENTIALS_JSON file not found: {raw}")
+            return {}
         with open(raw, "r", encoding="utf-8") as fh:
             return json.load(fh)
     # 3) base64-encoded JSON

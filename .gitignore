@@ -17,7 +17,8 @@ Thumbs.db
 # Secrets
 .env
 .env.*
-secrets/
+secrets/*
+!secrets/README.md
 *.pem
 *.key
 sessions.db

@@ -11,6 +11,8 @@ services:
       - ./media:/app/media
       - ./logs:/app/logs
       - ./agent_workspace:/app/agent_workspace
+      # Service account JSON path from GOOGLE_SHEETS_CREDENTIALS_JSON (e.g. ./secrets/google_service_account.json)
+      - ./secrets:/app/secrets:ro
     environment:
       - TZ=Asia/Kuala_Lumpur
       - TZ_REGION=Asia/Kuala_Lumpur
