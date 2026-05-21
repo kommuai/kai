@@ -149,6 +149,34 @@ def get_session_summary(user_id: str) -> str:
     return (get_session(user_id).get("session_summary") or "").strip()
 
 
+def build_short_term_context(user_id: str) -> str:
+    """Compact session memory for the ReAct loop (summary + durable facts).
+
+    Injected on follow-up turns so the agent sees what was already discussed
+    without re-asking for car/year/dongle facts from earlier in the thread.
+    """
+    if not user_id:
+        return ""
+    parts: list[str] = []
+    summary = get_session_summary(user_id)
+    if summary:
+        parts.append(f"### Session summary (this chat)\n{summary}")
+    facts = get_memory_facts(user_id)
+    if facts:
+        lines = [
+            f"- {f['fact_type']}/{f['fact_key']}: {f['fact_value']}"
+            for f in facts[:20]
+        ]
+        parts.append("### Remembered facts (do not re-ask if already known)\n" + "\n".join(lines))
+    if not parts:
+        return ""
+    return (
+        "## Short-term session memory\n"
+        "Use this with the recent turns below. Do not repeat questions the user already answered.\n\n"
+        + "\n\n".join(parts)
+    )
+
+
 def prune_expired_memory_facts(user_id: str | None = None):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()

@@ -15,6 +15,7 @@ from support_runtime.clarify_validation import (
     is_valid_clarifying_text,
     last_question_span,
 )
+from config import MEMORY_DEPTH
 from support_runtime.guardrails import safety_gate
 from support_runtime.models import RuntimeResult
 
@@ -111,6 +112,7 @@ class ReActAgentLoop:
         lang: str = "EN",
         user_id: str = "",
         conversation_history: list[dict] | None = None,
+        session_context: str = "",
     ) -> dict[str, Any]:
         ok, reason = safety_gate(text)
         if not ok:
@@ -126,16 +128,31 @@ class ReActAgentLoop:
             }
 
         messages: list[dict[str, str]] = [{"role": "system", "content": self.deps.system_prompt}]
+        ctx = (session_context or "").strip()
+        if ctx:
+            messages.append({"role": "system", "content": ctx})
 
-        if conversation_history:
-            for turn in conversation_history[-10:]:
-                role = turn.get("role", "user")
-                content = turn.get("text", "")
-                if role in ("user", "assistant") and content:
-                    messages.append({"role": role, "content": content})
+        history = conversation_history or []
+        for turn in history[-MEMORY_DEPTH:]:
+            role = turn.get("role", "user")
+            if role == "bot":
+                role = "assistant"
+            content = (turn.get("text") or "").strip()
+            if role in ("user", "assistant") and content:
+                messages.append({"role": role, "content": content})
 
         lang_hint = " (User writes in Malay)" if lang == "BM" else ""
-        messages.append({"role": "user", "content": f"{text}{lang_hint}"})
+        current = (text or "").strip()
+        last = history[-1] if history else {}
+        last_role = last.get("role", "")
+        if last_role == "bot":
+            last_role = "assistant"
+        already_last_user = (
+            last_role == "user"
+            and (last.get("text") or "").strip() == current
+        )
+        if current and not already_last_user:
+            messages.append({"role": "user", "content": f"{current}{lang_hint}"})
 
         source_ids: list[str] = []
         tool_trace: list[dict[str, Any]] = []

@@ -1,5 +1,11 @@
 # Kai — Agent context
 
+## 2026-05-22 — Follow-up turns: always ReAct + short-term memory in LLM context
+
+- **Intent:** From the **second message** in a session onward, always route through `ReActAgentLoop` (skip FAQ-first shortcut) so multi-turn threads keep tool use + prior context. Inject **session summary** and **memory_facts** into the agent (same data `run_rag_dual` used in legacy path but was missing from support runtime).
+- **Files:** `session_state.py` (`build_short_term_context`); `support_runtime/service.py` (`is_follow_up = bool(history)`, FAQ-first only when history empty, record user turn before `graph.run`, pass `session_context`); `support_runtime/agent_loop.py` (`session_context` system message, `MEMORY_DEPTH` history window, map `bot`→`assistant`, avoid duplicate current user line); `support_runtime/agent_prompts.py` (session memory rules); `tests/test_session_react_context.py`; `tests/test_support_runtime.py` (FAQ-first first message only).
+- **Validation:** `pytest tests/test_session_react_context.py tests/test_memory_extension.py -q` → 8 passed; `pytest tests/test_support_runtime.py::SupportRuntimeTests::test_faq_first_returns_video_link_on_first_message_only -q` → 1 passed; fast suite `pytest tests/ --ignore=tests/test_support_runtime.py -q` → 99 passed.
+
 ## 2026-05-21 — Anti-annoyance pass: intent-aware clarify + footer discipline + chitchat expansion
 
 - **Intent (P0 from chat-history analysis):** Stop the "Reply with your car brand, model, and year — or your dongle ID..." line from leaking into office/pricing/warranty/QR/greeting turns; stop the `For Live Agent, type LA` footer from nagging every reply after turn 7 (incl. on grounded canonical answers and visitor-pass links); make chitchat detection catch `test`, `howdy`, `hai`, emoji, Malay greetings.
