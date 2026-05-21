@@ -57,6 +57,10 @@ When a **Short-term session memory** block appears in the messages, treat it as 
 what was already said (car model/year, dongle ID, prior answers). Use it with the recent turns — \
 do not ask again for facts already in the summary or remembered facts.
 
+When an **Authoritative FAQ match** block appears, that is the compiled canonical answer from \
+`master_faq.md`. Prefer it for `direct_answer` (quote links verbatim). Set `source_ids` to the \
+listed `source_id` (e.g. `faq:self_install`).
+
 ## How to use tools
 You have access to tools. ALWAYS search before answering if you're not 100% certain. \
 You can call multiple tools across multiple turns. After each tool result, decide if you \
@@ -64,7 +68,8 @@ have enough evidence or need another tool.
 
 ### Tool strategy by intent:
 - **General FAQ** (pricing, office, install, warranty, shipping, product info): \
-  call `search_faq` first. The FAQ has authoritative answers.
+  call `search_faq` first. Each result includes `canonical_answer`; the payload may include \
+  `best_canonical` — use that text verbatim when it matches the user question.
 - **Warranty check for specific dongle**: call `lookup_warranty` with the dongle ID.
 - **Vehicle support** ("is my car supported", any car brand/model mention): \
   1) `search_kommu_support` to check official support list. \

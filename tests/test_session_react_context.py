@@ -77,6 +77,18 @@ class SessionReactContextTests(unittest.TestCase):
         # Current user text already in history tail — must not duplicate
         self.assertEqual(sum(1 for u in user_msgs if u.startswith("2021 Hybrid")), 1)
 
+    def test_react_injects_canonical_hint_when_faq_matches(self):
+        svc = SupportRuntimeService()
+        svc.startup()
+        uid = f"canon_{uuid4().hex[:6]}"
+        reset_memory(uid)
+        add_message_to_history(uid, "user", "how to self install kommu assist")
+        add_message_to_history(uid, "assistant", "Steps listed.")
+        out = svc.execute("is there any video guide link?", lang="EN", user_id=uid)
+        self.assertEqual(out.capability_used, "react_agent_loop")
+        meta = out.metadata or {}
+        self.assertTrue(meta.get("agentic_route") is not None or out.answer)
+
     def test_follow_up_skips_faq_first_uses_react(self):
         svc = SupportRuntimeService()
         svc.startup()

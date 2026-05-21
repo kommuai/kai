@@ -20,6 +20,7 @@ from config import (
     VEHICLE_SUPPORT_OFFICIAL_URL,
 )
 from google_sheets import warranty_lookup_by_dongle, warranty_text_from_row
+from support_runtime.canonical_faq import extract_answer_from_chunk, pick_best_canonical
 from support_runtime.retrieval import HybridRetriever, SimpleReranker
 from support_runtime.tech_backlog import (
     append_backlog_issue,
@@ -338,10 +339,21 @@ class AgentToolRegistry:
     def search_faq(self, query: str) -> dict[str, Any]:
         items = self.retriever.retrieve(query, top_k=8)
         ranked = self.reranker.rerank(query, items, top_k=4)
-        return {
-            "ok": True,
-            "results": [{"source_id": r.source_id, "text": r.text, "score": r.score, "metadata": r.metadata} for r in ranked],
-        }
+        rows: list[dict[str, Any]] = []
+        for r in ranked:
+            canonical = extract_answer_from_chunk(r.text)
+            rows.append({
+                "source_id": r.source_id,
+                "text": r.text,
+                "canonical_answer": canonical,
+                "score": r.score,
+                "metadata": r.metadata,
+            })
+        payload: dict[str, Any] = {"ok": True, "results": rows}
+        best = pick_best_canonical({"results": rows})
+        if best:
+            payload["best_canonical"] = best
+        return payload
 
     def search_web(self, query: str) -> dict[str, Any]:
         if not BING_API_KEY:

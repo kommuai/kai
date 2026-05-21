@@ -1,5 +1,12 @@
 # Kai — Agent context
 
+## 2026-05-22 — ReAct access to canonical FAQ answers
+
+- **Intent:** ReAct loop can use the same compiled FAQ canonical answers as the FAQ-first shelf (not only via blind LLM paraphrase).
+- **Files:** `support_runtime/canonical_faq.py` (shared pick/extract/hint); `agent_tools.search_faq` adds `canonical_answer` per row + `best_canonical`; `service.execute` injects **Authoritative FAQ match** into `session_context` before every `graph.run`; `agent_prompts.py` documents `best_canonical` + injected block.
+- **Paths:** FAQ-first (first message, link/video) unchanged; ReAct gets preloaded canonical hint + richer `search_faq` tool output.
+- **Validation:** `pytest tests/test_canonical_faq.py tests/test_session_react_context.py -q` (unit parts) pass.
+
 ## 2026-05-22 — Follow-up turns: always ReAct + short-term memory in LLM context
 
 - **Intent:** From the **second message** in a session onward, always route through `ReActAgentLoop` (skip FAQ-first shortcut) so multi-turn threads keep tool use + prior context. Inject **session summary** and **memory_facts** into the agent (same data `run_rag_dual` used in legacy path but was missing from support runtime).

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-import re
 
 from google_sheets import fetch_warranty_all
 from session_state import (
@@ -9,6 +8,12 @@ from session_state import (
     build_short_term_context,
     get_history,
     update_session_summary,
+)
+from support_runtime.canonical_faq import (
+    enrich_query_with_history,
+    format_canonical_hint,
+    pick_best_canonical,
+    pick_faq_first_runtime,
 )
 from support_runtime.compiler import compile_canonical_knowledge
 from support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
@@ -45,16 +50,6 @@ class SupportRuntimeService:
     def refresh_knowledge(self) -> dict:
         return self.startup()
 
-    @staticmethod
-    def _extract_answer_from_faq_chunk_text(text: str) -> str:
-        t = (text or "").strip()
-        if not t:
-            return ""
-        m = re.search(r"(?:^|\n)A:\s*(.*)\s*$", t, flags=re.S)
-        if m:
-            return (m.group(1) or "").strip()
-        return t
-
     def execute(self, text: str, lang: str = "EN", user_id: str = "") -> RuntimeResult:
         if not self.graph:
             self.startup()
@@ -73,66 +68,23 @@ class SupportRuntimeService:
                 wants_video = any(k in ql for k in ("video", "youtube", "youtu"))
                 wants_link = wants_video or any(k in ql for k in ("guide", "link"))
 
-                query = text
-                faq = self.agent_tools.search_faq(query=query)
-                results = (faq or {}).get("results") or []
-
-                def _try_pick(res: list[dict]) -> RuntimeResult | None:
-                    if not wants_link:
-                        return None
-                    for r in res[:4]:
-                        if not isinstance(r, dict):
-                            continue
-                        meta = (r.get("metadata") or {}) if isinstance(r.get("metadata"), dict) else {}
-                        if meta.get("category") != "known_faq_intent":
-                            continue
-                        score = float(r.get("score") or 0.0)
-                        ans = self._extract_answer_from_faq_chunk_text(str(r.get("text") or ""))
-                        has_url = "http://" in ans.lower() or "https://" in ans.lower()
-                        if wants_video and ("youtu" not in ans.lower()) and ("video" not in ans.lower()):
-                            continue
-                        if has_url and score >= 0.45 and ans:
-                            return RuntimeResult(
-                                decision="direct_answer",
-                                answer=ans,
-                                confidence=0.9,
-                                source_ids=[str(r.get("source_id") or "faq")],
-                                tool_needed=False,
-                                escalate_needed=False,
-                                capability_used="canonical_answer",
-                                fallback_reason="",
-                                metadata={
-                                    "faq_first": True,
-                                    "faq_top_score": score,
-                                    "faq_source_id": str(r.get("source_id") or ""),
-                                    "faq_wants_link": True,
-                                    "faq_wants_video": wants_video,
-                                },
-                            )
-                    return None
-
-                if (faq or {}).get("ok") and results:
-                    picked = _try_pick(results)
-                    if picked:
-                        if user_id:
-                            add_message_to_history(user_id, "user", text)
-                            update_session_summary(user_id, "user", text)
-                            add_message_to_history(user_id, "assistant", picked.answer)
-                            update_session_summary(user_id, "assistant", picked.answer)
-                        return picked
+                faq = self.agent_tools.search_faq(query=text)
+                hit = pick_faq_first_runtime(faq, wants_video=wants_video, wants_link=wants_link)
+                if hit:
+                    ans = hit["canonical_answer"]
+                    return self._return_canonical_answer(
+                        user_id, text, ans, hit, wants_video=wants_video
+                    )
 
                 if wants_video:
                     faq2 = self.agent_tools.search_faq(query="self install video guide")
-                    results2 = (faq2 or {}).get("results") or []
-                    if (faq2 or {}).get("ok") and results2:
-                        picked2 = _try_pick(results2)
-                        if picked2:
-                            if user_id:
-                                add_message_to_history(user_id, "user", text)
-                                update_session_summary(user_id, "user", text)
-                                add_message_to_history(user_id, "assistant", picked2.answer)
-                                update_session_summary(user_id, "assistant", picked2.answer)
-                            return picked2
+                    hit2 = pick_faq_first_runtime(
+                        faq2, wants_video=True, wants_link=True
+                    )
+                    if hit2:
+                        return self._return_canonical_answer(
+                            user_id, text, hit2["canonical_answer"], hit2, wants_video=True
+                        )
             except Exception:
                 pass
 
@@ -142,6 +94,15 @@ class SupportRuntimeService:
             history = get_history(user_id)
 
         session_context = build_short_term_context(user_id) if user_id else ""
+        try:
+            faq_query = enrich_query_with_history(text, history)
+            faq_for_react = self.agent_tools.search_faq(query=faq_query)
+            canon = pick_best_canonical(faq_for_react)
+            if canon:
+                hint = format_canonical_hint(canon)
+                session_context = f"{session_context}\n\n{hint}".strip() if session_context else hint
+        except Exception:
+            pass
 
         state = self.graph.run(
             text=text,
@@ -165,6 +126,40 @@ class SupportRuntimeService:
             escalate_needed=True,
             capability_used="runtime_service",
             fallback_reason="invalid_result",
+        )
+
+    def _return_canonical_answer(
+        self,
+        user_id: str,
+        text: str,
+        answer: str,
+        hit: dict,
+        *,
+        wants_video: bool = False,
+    ) -> RuntimeResult:
+        if user_id:
+            add_message_to_history(user_id, "user", text)
+            update_session_summary(user_id, "user", text)
+            add_message_to_history(user_id, "assistant", answer)
+            update_session_summary(user_id, "assistant", answer)
+        score = float(hit.get("score") or 0.0)
+        sid = str(hit.get("source_id") or "faq")
+        return RuntimeResult(
+            decision="direct_answer",
+            answer=answer,
+            confidence=0.9,
+            source_ids=[sid],
+            tool_needed=False,
+            escalate_needed=False,
+            capability_used="canonical_answer",
+            fallback_reason="",
+            metadata={
+                "faq_first": True,
+                "faq_top_score": score,
+                "faq_source_id": sid,
+                "faq_intent_id": hit.get("intent_id"),
+                "faq_wants_video": wants_video,
+            },
         )
 
     @staticmethod
