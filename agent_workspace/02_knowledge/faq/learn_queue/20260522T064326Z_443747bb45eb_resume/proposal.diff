@@ -1,0 +1,24 @@
+--- a/master_faq.md
++++ b/master_faq.md
+@@ -1,3 +1,5 @@
++<!-- trigger=resume -->
++<!-- user_id=seg_user -->
+ # KOMMU MASTER FAQ (FULL REBUILD - SINGLE SOURCE OF TRUTH)
+ 
+ Last updated: 29 Mar 2026 (install positioning: self-install encouraged)
+@@ -5,6 +7,14 @@
+ # SECTION 1: INTENTS (CUSTOMER-FACING)
+ 
+ <!-- sop-sync:start -->
++## intent: help_generic
++aliases:
++- help
++- i need help
++- can you help me
++- need assistance
++answer:
++I'd be happy to help! Could you tell me a bit more about what you need? For example, are you looking for product info, installation help, troubleshooting, or something else? Let me know and I'll point you to the right information.
++
+ ## intent: product_overview
+ aliases:
+ - what is kommuassist

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import json
 import logging
-import threading
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -14,14 +15,15 @@ from config import (
     KAI_CHATWOOT_ACCOUNT_ID,
     KAI_CHATWOOT_API_BASE,
     KAI_CHATWOOT_API_TOKEN,
-    KAI_FAQ_LEARN_ASYNC,
     KAI_FAQ_LEARN_ENABLED,
     KAI_FAQ_LEARN_FETCH_CHATWOOT,
+    KAI_FAQ_LEARN_LEGACY_APPEND,
     KAI_FAQ_LEARN_MASTER_FAQ_MAX_CHARS,
+    KAI_FAQ_LEARN_USE_QUEUE,
     KAI_LLM_API_KEY,
     resolve_master_faq_path,
 )
-from kai.lib.session_state import pop_human_segment_for_learn
+from kai.support_runtime.faq_learn_queue import make_proposal_id, write_proposal
 from kai.support_runtime.providers import build_provider
 
 log = logging.getLogger("kai.faq_learn")
@@ -55,6 +57,40 @@ def is_plausible_unified_diff(text: str) -> bool:
     if not t:
         return False
     return "--- " in t and "+++ " in t and "@@" in t
+
+
+def _extract_json_proposal(raw_out: str) -> dict[str, Any] | None:
+    text = raw_out or ""
+    m = re.search(r"```json\s*([\s\S]*?)\s*```", text, re.IGNORECASE)
+    if not m:
+        m = re.search(r"```\s*([\s\S]*?)\s*```", text)
+    if not m:
+        return None
+    try:
+        data = json.loads(m.group(1).strip())
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def _extract_diff_from_output(raw_out: str) -> str:
+    text = raw_out or ""
+    for block in re.finditer(r"```(?:diff)?\s*([\s\S]*?)\s*```", text, re.IGNORECASE):
+        candidate = _strip_markdown_fences(block.group(0))
+        if is_plausible_unified_diff(candidate):
+            return candidate
+    stripped = _strip_markdown_fences(text)
+    if is_plausible_unified_diff(stripped):
+        return stripped
+    for line in text.splitlines():
+        if line.startswith("--- "):
+            idx = text.find(line)
+            tail = text[idx:]
+            if is_plausible_unified_diff(tail):
+                return _strip_markdown_fences(tail)
+    return ""
 
 
 def fetch_chatwoot_conversation_messages(conversation_id: str) -> list[dict[str, Any]]:
@@ -127,6 +163,8 @@ def run_faq_learn(
     user_id: str,
     segment_messages: list[dict[str, Any]],
     cw_conversation_id: str,
+    *,
+    trigger: str = "resume",
 ) -> dict[str, Any]:
     if not _env_truthy("KAI_FAQ_LEARN_ENABLED", KAI_FAQ_LEARN_ENABLED):
         return {"ok": False, "skipped": "disabled"}
@@ -149,52 +187,82 @@ def run_faq_learn(
 
     provider = build_provider()
     system = (
-        "You propose minimal edits to master_faq.md so the support bot answers better next time. "
-        "Output ONLY a valid unified diff (git style) that would apply to the file master_faq.md. "
-        "Use --- a/master_faq.md and +++ b/master_faq.md headers and @@ hunks. "
-        "Do not add commentary outside the patch. Prefer small, targeted changes to existing intents "
-        "or one new ## intent: block if needed. Stay faithful to facts from the transcript; do not invent policy."
+        "You improve master_faq.md for a support bot after a human handoff session. "
+        "Respond with TWO parts in order:\n"
+        "1) A JSON object in a ```json fenced block with keys:\n"
+        "   - summary (string): what the human/agent resolved\n"
+        "   - intent_updates (array): each item has intent_id (required), and any of "
+        "aliases, aliases_add, answer, answer_append, answer_replace\n"
+        "   - pitfalls (array of strings): mistakes the bot should avoid\n"
+        "2) A valid unified diff (git style) for master_faq.md with --- a/master_faq.md "
+        "+++ b/master_faq.md and @@ hunks.\n"
+        "Stay faithful to the transcript; do not invent policy. Prefer small targeted edits."
     )
     user_prompt = (
+        f"trigger={trigger}\n"
         f"user_id={user_id}\n"
         f"chatwoot_conversation_id={cw_conversation_id or 'none'}\n"
         f"transcript:\n{transcript}\n\n"
         f"Current master_faq.md (schema: ## intent: id, aliases:, answer:):\n{master_body}\n"
     )
     raw_out = provider.chat(system, user_prompt, temperature=0.1, max_tokens=4096)
-    diff_text = _strip_markdown_fences(raw_out)
-    if not is_plausible_unified_diff(diff_text):
-        log.warning("FAQ learn rejected non-diff output for user_id=%s", user_id)
-        return {"ok": False, "error": "invalid_diff_shape"}
+    proposal_json = _extract_json_proposal(raw_out)
+    diff_text = _extract_diff_from_output(raw_out)
 
-    out_path = _learnt_faq_path()
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    header = (
-        f"\n\n<!-- learn: ts={ts} user_id={user_id} cw_conv={cw_conversation_id or '-'} "
-        f"truncated_master={truncated} -->\n"
-    )
-    with out_path.open("a", encoding="utf-8") as f:
-        f.write(header)
-        f.write(diff_text.rstrip() + "\n")
+    has_json = isinstance(proposal_json, dict) and bool(proposal_json.get("intent_updates"))
+    has_diff = bool(diff_text) and is_plausible_unified_diff(diff_text)
+    if not has_json and not has_diff:
+        log.warning("FAQ learn rejected output for user_id=%s trigger=%s", user_id, trigger)
+        return {"ok": False, "error": "invalid_learn_output"}
 
-    return {"ok": True, "path": str(out_path)}
+    proposal_id = make_proposal_id(user_id, trigger)
+    ts = datetime.now(timezone.utc).isoformat()
+    meta = {
+        "proposal_id": proposal_id,
+        "status": "pending",
+        "trigger": trigger,
+        "user_id": user_id,
+        "chatwoot_conversation_id": cw_conversation_id or "",
+        "created_at": ts,
+        "truncated_master": truncated,
+        "has_diff": has_diff,
+        "has_structured": has_json,
+    }
+    queue_path: str | None = None
+    if _env_truthy("KAI_FAQ_LEARN_USE_QUEUE", KAI_FAQ_LEARN_USE_QUEUE):
+        qdir = write_proposal(
+            proposal_id,
+            meta=meta,
+            transcript=transcript,
+            diff_text=diff_text if has_diff else "",
+            proposal=proposal_json if has_json else None,
+        )
+        queue_path = str(qdir)
+
+    legacy_path: str | None = None
+    if _env_truthy("KAI_FAQ_LEARN_LEGACY_APPEND", KAI_FAQ_LEARN_LEGACY_APPEND) and has_diff:
+        out_path = _learnt_faq_path()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        header = (
+            f"\n\n<!-- learn: ts={ts} proposal={proposal_id} user_id={user_id} "
+            f"cw_conv={cw_conversation_id or '-'} trigger={trigger} "
+            f"truncated_master={truncated} -->\n"
+        )
+        with out_path.open("a", encoding="utf-8") as f:
+            f.write(header)
+            f.write(diff_text.rstrip() + "\n")
+        legacy_path = str(out_path)
+
+    return {
+        "ok": True,
+        "proposal_id": proposal_id,
+        "queue_path": queue_path,
+        "legacy_path": legacy_path,
+    }
 
 
+# Back-compat: scheduling lives in background_review
 def schedule_faq_learn_after_handback(user_id: str) -> None:
-    """Pop segment from session and run FAQ learn (async by default)."""
-    messages, cw_id = pop_human_segment_for_learn(user_id)
-    if not messages and not cw_id:
-        return
+    from kai.support_runtime.background_review import schedule_faq_learn_after_handback as _sched
 
-    def job() -> None:
-        try:
-            out = run_faq_learn(user_id, messages, cw_id)
-            log.info("faq_learn result user_id=%s %s", user_id, out)
-        except Exception as exc:  # noqa: BLE001
-            log.exception("faq_learn failed user_id=%s: %s", user_id, exc)
-
-    if _env_truthy("KAI_FAQ_LEARN_ASYNC", KAI_FAQ_LEARN_ASYNC):
-        threading.Thread(target=job, daemon=True).start()
-    else:
-        job()
+    _sched(user_id)

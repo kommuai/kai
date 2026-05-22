@@ -113,6 +113,8 @@ class ReActAgentLoop:
         user_id: str = "",
         conversation_history: list[dict] | None = None,
         session_context: str = "",
+        turn_memory: str = "",
+        session_topics: dict[str, str] | None = None,
     ) -> dict[str, Any]:
         ok, reason = safety_gate(text)
         if not ok:
@@ -128,11 +130,14 @@ class ReActAgentLoop:
             }
 
         messages: list[dict[str, str]] = [{"role": "system", "content": self.deps.system_prompt}]
+        # Legacy: session_context as system message (prefer turn_memory on user turn).
         ctx = (session_context or "").strip()
-        if ctx:
+        mem = (turn_memory or "").strip()
+        if ctx and not mem:
             messages.append({"role": "system", "content": ctx})
 
         history = conversation_history or []
+        topics = session_topics or {}
         for turn in history[-MEMORY_DEPTH:]:
             role = turn.get("role", "user")
             if role == "bot":
@@ -152,7 +157,10 @@ class ReActAgentLoop:
             and (last.get("text") or "").strip() == current
         )
         if current and not already_last_user:
-            messages.append({"role": "user", "content": f"{current}{lang_hint}"})
+            user_body = current
+            if mem:
+                user_body = f"{mem}\n\n{user_body}"
+            messages.append({"role": "user", "content": f"{user_body}{lang_hint}"})
 
         source_ids: list[str] = []
         tool_trace: list[dict[str, Any]] = []
@@ -218,6 +226,36 @@ class ReActAgentLoop:
                     if isinstance(sid, str) and sid:
                         source_ids.append(sid)
                 fallback_reason = str(parsed.get("fallback_reason", "")).strip()
+                last_vehicle = (topics.get("last_vehicle") or "").strip()
+                vehicle_nudge = (
+                    decision == "direct_answer"
+                    and not user_chitchat
+                    and not source_ids
+                    and not any(bool(o.get("result", {}).get("ok")) for o in observations)
+                    and confidence >= 0.65
+                    and last_vehicle
+                    and (
+                        topics.get("last_topic") == "vehicle_support"
+                        or any(
+                            b in (text or "").lower()
+                            for b in ("corolla", "myvi", "vios", "supported", "acc", "lka", "tss")
+                        )
+                    )
+                    and step < MAX_AGENT_STEPS - 1
+                )
+                if vehicle_nudge:
+                    messages.append({"role": "assistant", "content": json.dumps(parsed)})
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            f"[System] Vehicle already in context: {last_vehicle}. "
+                            "You MUST call search_kommu_support (and search_faq if needed) "
+                            "before answering support status. Output a JSON tool call next."
+                        ),
+                    })
+                    fallback_reason = fallback_reason or "ungrounded_vehicle_tool_nudge"
+                    answer = ""
+                    continue
                 break
 
             answer_text = parsed.get("answer", "")
@@ -270,7 +308,7 @@ class ReActAgentLoop:
                 decision = "clarifying_question"
                 confidence = 0.55
                 fallback_reason = fallback_reason or "ungrounded_answer_blocked"
-                answer = pick_clarify_for_intent(text, lang)
+                answer = pick_clarify_for_intent(text, lang, session_topics=topics)
             else:
                 confidence = min(confidence, 0.55)
 

@@ -34,6 +34,11 @@ KAI_FAQ_LEARN_ENABLED = os.getenv("KAI_FAQ_LEARN_ENABLED", "1")
 KAI_FAQ_LEARN_ASYNC = os.getenv("KAI_FAQ_LEARN_ASYNC", "1")
 KAI_FAQ_LEARN_FETCH_CHATWOOT = os.getenv("KAI_FAQ_LEARN_FETCH_CHATWOOT", "1")
 KAI_FAQ_LEARN_MASTER_FAQ_MAX_CHARS = int(os.getenv("KAI_FAQ_LEARN_MASTER_FAQ_MAX_CHARS", "120000"))
+# Phase 2: write proposals to learn_queue/ (default on). Legacy append to agent_learnt_faq.md optional.
+KAI_FAQ_LEARN_USE_QUEUE = os.getenv("KAI_FAQ_LEARN_USE_QUEUE", "1")
+KAI_FAQ_LEARN_LEGACY_APPEND = os.getenv("KAI_FAQ_LEARN_LEGACY_APPEND", "0")
+# Schedule learn on bot escalate/handover without popping segment (off by default; resume is primary).
+KAI_FAQ_LEARN_ON_HANDOVER = os.getenv("KAI_FAQ_LEARN_ON_HANDOVER", "0")
 KAI_SOP_WRITEBACK_ENABLED = os.getenv("KAI_SOP_WRITEBACK_ENABLED", "0")
 KAI_SOP_MERGE_SYNC_ENABLED = os.getenv("KAI_SOP_MERGE_SYNC_ENABLED", "0")
 KAI_SOP_MERGE_SYNC_HOUR = int(os.getenv("KAI_SOP_MERGE_SYNC_HOUR", "8"))
@@ -75,6 +80,9 @@ MASTER_FAQ_PATH = os.getenv("MASTER_FAQ_PATH") or os.path.join(
 )
 AGENT_LEARNT_FAQ_PATH = os.getenv("AGENT_LEARNT_FAQ_PATH") or os.path.join(
     AGENT_WORKSPACE, "02_knowledge", "faq", "agent_learnt_faq.md"
+)
+FAQ_LEARN_QUEUE_DIR = os.getenv("FAQ_LEARN_QUEUE_DIR") or os.path.join(
+    AGENT_WORKSPACE, "02_knowledge", "faq", "learn_queue"
 )
 CONTEXT_REGISTRY_YAML = os.getenv("CONTEXT_REGISTRY_YAML") or os.path.join(
     AGENT_WORKSPACE, "04_context", "context_registry.yaml"

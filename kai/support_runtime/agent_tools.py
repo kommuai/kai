@@ -180,7 +180,12 @@ class AgentToolRegistry:
         self.retriever = retriever
         self.reranker = reranker
         self._tools: dict[str, ToolDef] = {}
+        self._context_user_id: str = ""
         self._register_defaults()
+
+    def set_context(self, *, user_id: str = "") -> None:
+        """Per-turn scope for tools (e.g. session search limited to this user)."""
+        self._context_user_id = (user_id or "").strip()
 
     def list_schemas(self) -> list[dict[str, Any]]:
         return [{"name": t.name, "description": t.description, "schema": t.schema} for t in self._tools.values()]
@@ -206,6 +211,25 @@ class AgentToolRegistry:
                 description="Semantic FAQ lookup over compiled knowledge chunks",
                 schema={"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
                 handler=self.search_faq,
+            )
+        )
+        self._register(
+            ToolDef(
+                name="search_session_memory",
+                description=(
+                    "Search this user's earlier messages in the current support history (FTS). "
+                    "Use when the user refers to something said before, or you need car/year/dongle "
+                    "from a prior turn. Scoped to this user only."
+                ),
+                schema={
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string"},
+                        "limit": {"type": "integer", "description": "Max hits (default 5)"},
+                    },
+                    "required": ["query"],
+                },
+                handler=self.search_session_memory,
             )
         )
         self._register(
@@ -335,6 +359,11 @@ class AgentToolRegistry:
                 handler=self.create_visitor_pass,
             )
         )
+
+    def search_session_memory(self, query: str, limit: int = 5) -> dict[str, Any]:
+        from kai.lib.session_search import search_user_messages
+
+        return search_user_messages(self._context_user_id, query, limit=int(limit or 5))
 
     def search_faq(self, query: str) -> dict[str, Any]:
         items = self.retriever.retrieve(query, top_k=8)

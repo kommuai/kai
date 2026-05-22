@@ -3,11 +3,13 @@ from __future__ import annotations
 from dataclasses import asdict
 
 from kai.lib.google_sheets import fetch_warranty_all
+from kai.lib.context_memory import build_turn_memory_block
 from kai.lib.session_state import (
     add_message_to_history,
-    build_short_term_context,
     get_history,
+    get_session_topics,
     update_session_summary,
+    update_session_topics,
 )
 from kai.support_runtime.canonical_faq import (
     enrich_query_with_history,
@@ -89,27 +91,32 @@ class SupportRuntimeService:
                 pass
 
         if user_id:
+            update_session_topics(user_id, text)
             add_message_to_history(user_id, "user", text)
             update_session_summary(user_id, "user", text)
             history = get_history(user_id)
 
-        session_context = build_short_term_context(user_id) if user_id else ""
+        self.agent_tools.set_context(user_id=user_id)
+        extra_memory = ""
         try:
             faq_query = enrich_query_with_history(text, history)
             faq_for_react = self.agent_tools.search_faq(query=faq_query)
             canon = pick_best_canonical(faq_for_react)
             if canon:
-                hint = format_canonical_hint(canon)
-                session_context = f"{session_context}\n\n{hint}".strip() if session_context else hint
+                extra_memory = format_canonical_hint(canon)
         except Exception:
             pass
+
+        turn_memory = build_turn_memory_block(user_id, extra=extra_memory) if user_id else extra_memory
+        session_topics = get_session_topics(user_id) if user_id else {}
 
         state = self.graph.run(
             text=text,
             lang=lang,
             user_id=user_id,
             conversation_history=history,
-            session_context=session_context,
+            turn_memory=turn_memory,
+            session_topics=session_topics,
         )
         result = state.get("result")
         if isinstance(result, RuntimeResult):

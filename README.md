@@ -181,6 +181,18 @@ cd /home/ting/workspace/kai
 
 ### C) Test message route manually
 
+**CLI (recommended):**
+
+```bash
+python3 tools/kai_api_cli.py message "Hi, what cars are supported?"
+python3 tools/kai_api_cli.py chat --phone +6000000000
+python3 tools/kai_api_cli.py query "What is KommuAssist?" --api-key internal-key
+```
+
+Set `KAI_API_BASE_URL` if the server is not on `http://127.0.0.1:6090`.
+
+**curl:**
+
 ```bash
 curl -X POST http://127.0.0.1:6090/agent/message \
   -H "Content-Type: application/json" \

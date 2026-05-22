@@ -1,5 +1,24 @@
 # Kai — Agent context
 
+## 2026-05-22 — API test CLI
+
+- **Tool:** `tools/kai_api_cli.py` — `message`, `chat`, `query`, `search`, `admin` against `KAI_API_BASE_URL` (default `http://127.0.0.1:6090`).
+- **Example:** `python3 tools/kai_api_cli.py chat --phone test-user`
+
+## 2026-05-22 — Phase 2 FAQ learning queue (Hermes-inspired)
+
+- **Intent:** Post-handoff FAQ learn writes **reviewable proposals** under `learn_queue/` (JSON + diff + transcript) instead of only appending `agent_learnt_faq.md`. Admin merges via CLI into `master_faq.md`.
+- **Files:** `kai/support_runtime/faq_learn_queue.py`, `faq_merge.py`, `background_review.py`; refactored `faq_learn.py`; `tools/merge_learn_queue.py`; `config.py` (`KAI_FAQ_LEARN_USE_QUEUE`, `KAI_FAQ_LEARN_LEGACY_APPEND`, `KAI_FAQ_LEARN_ON_HANDOVER`, `FAQ_LEARN_QUEUE_DIR`); `session_state.snapshot_human_segment_for_learn`; `docs/architecture/hermes-phase2-learning.md`.
+- **Triggers:** `resume` pops human segment and schedules async learn (default). `handover`/`escalate` snapshot only if `KAI_FAQ_LEARN_ON_HANDOVER=1`.
+- **Validation:** `pytest tests/test_faq_learn.py tests/test_learn_queue.py -q` → 8 passed.
+- **Next:** Optional bridge Permission UI; Phase 3 folder layout; enable `KAI_FAQ_LEARN_ON_HANDOVER` if mid-session learns are desired.
+
+## 2026-05-22 — Phase 1 context (Hermes-inspired)
+
+- **Intent:** User-turn `<kai-session-context>` (summary, facts, topic, vehicle, canonical FAQ); topic stickiness; `search_session_memory` FTS tool; vehicle ungrounded → nudge `search_kommu_support`.
+- **Files:** `kai/lib/context_memory.py`, `kai/lib/session_search.py`, `kai/lib/session_state.py`, `kai/support_runtime/agent_loop.py`, `service.py`, `agent_tools.py`, `clarify_intent.py`, `docs/architecture/hermes-phase1-context.md`, `tests/test_phase1_context.py`.
+- **Validation:** `pytest tests/test_phase1_context.py -q` → 6 passed.
+
 ## 2026-05-22 — ReAct access to canonical FAQ answers
 
 - **Intent:** ReAct loop can use the same compiled FAQ canonical answers as the FAQ-first shelf (not only via blind LLM paraphrase).

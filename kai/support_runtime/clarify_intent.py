@@ -41,7 +41,11 @@ def _is_vehicle_query(text: str) -> bool:
     return bool(re.search(r"\b(car|vehicle|kereta)\b", t))
 
 
-def pick_clarify_for_intent(user_text: str, lang: str = "EN") -> str:
+def pick_clarify_for_intent(
+    user_text: str,
+    lang: str = "EN",
+    session_topics: dict[str, str] | None = None,
+) -> str:
     """Return one short clarifying question that matches the user's apparent intent.
 
     Falls back to a friendly menu when intent is unclear (not a vehicle question).
@@ -49,6 +53,25 @@ def pick_clarify_for_intent(user_text: str, lang: str = "EN") -> str:
     """
     t = _lower(user_text)
     bm = (lang or "EN").upper() == "BM"
+    topics = session_topics or {}
+    last_vehicle = (topics.get("last_vehicle") or "").strip()
+    last_year = (topics.get("last_vehicle_year") or "").strip()
+    last_topic = (topics.get("last_topic") or "").strip()
+
+    # Vehicle thread with model already known — do not re-ask year/ACC
+    if last_vehicle and (
+        last_topic == "vehicle_support"
+        or _is_vehicle_query(user_text)
+        or len((user_text or "").split()) <= 8
+    ):
+        veh = last_vehicle
+        if last_year and last_year not in veh:
+            veh = f"{veh} ({last_year})"
+        return (
+            f"Saya semak senarai sokongan rasmi untuk {veh} — sebentar."
+            if bm else
+            f"I'll check our official support list for {veh} now."
+        )
 
     # Office / hours / location
     if _has_any(t, (

@@ -26,7 +26,7 @@ from kai.lib.session_state import (
     update_session_summary,
 )
 from kai.services.chatwoot_handover import extract_chatwoot_conversation_id
-from kai.support_runtime.faq_learn import schedule_faq_learn_after_handback
+from kai.support_runtime.background_review import schedule_faq_learn_after_handback
 
 log = logging.getLogger("kai")
 
