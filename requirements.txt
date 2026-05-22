@@ -1,4 +1,4 @@
-# Core
+# Core runtime (chat API + workspace-driven ReAct)
 fastapi==0.111.0
 uvicorn[standard]==0.30.1
 pytz==2024.1
@@ -6,23 +6,8 @@ python-dotenv==1.0.1
 PyYAML>=6.0.1
 requests==2.32.3
 
-# NLP / ML
-numpy==1.26.4
+# NLP
 langdetect==1.0.9
 
-# Integrations
+# LLM
 openai>=1.30.0
-haystack-ai>=2.4.0
-qdrant-client>=1.10.0
-flashrank>=0.2.10
-langfuse>=2.40.0
-google-auth>=2.35.0
-google-api-python-client>=2.151.0
-
-# Document parsing / scraping
-fastapi-utils==0.7.0
-colorama==0.4.6
-typing-inspect
-
-deep-translator==1.11.4
-ddddocr>=1.5.6

@@ -1,5 +1,6 @@
-import os
 from enum import Enum
+
+from kai.settings import get_settings
 
 
 class RouteMode(str, Enum):
@@ -8,19 +9,11 @@ class RouteMode(str, Enum):
 
 
 def get_route_mode() -> RouteMode:
-    raw = os.getenv("KAI_ROUTE_MODE", RouteMode.HYBRID.value).strip().lower()
+    raw = get_settings().kai_route_mode.strip().lower()
     # Backward compat: map removed stable_only to hybrid
     if raw == "stable_only":
         return RouteMode.HYBRID
     if raw in {m.value for m in RouteMode}:
         return RouteMode(raw)
     return RouteMode.HYBRID
-
-
-def get_default_timeout_ms() -> int:
-    return int(os.getenv("KAI_TOOL_TIMEOUT_MS", "8000"))
-
-
-def get_default_retry_count() -> int:
-    return int(os.getenv("KAI_TOOL_RETRY_COUNT", "1"))
 

@@ -11,10 +11,11 @@ from pathlib import Path
 def _load_create_visitor_pass_module():
     mod_path = (
         Path(__file__).resolve().parents[1]
-        / "kai"
-        / "integrations"
-        / "smartserva"
-        / "create_visitor_pass.py"
+        / "agent_workspace"
+        / "03_tools"
+        / "plugins"
+        / "smartserva_visitor_pass"
+        / "main.py"
     )
     spec = importlib.util.spec_from_file_location("smartserva_create_visitor_pass", mod_path)
     if spec is None or spec.loader is None:

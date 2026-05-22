@@ -13,15 +13,20 @@ ENV PIP_DEFAULT_TIMEOUT=1000
 ENV PIP_RETRIES=10
 
 # Install backend dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
+COPY requirements.txt requirements-optional.txt ./
+RUN pip install --no-cache-dir --default-timeout=1000 \
+    -r requirements.txt -r requirements-optional.txt
 
 # Copy backend source
 COPY . .
 
+# Pre-compile FAQ so runtime can use KAI_STARTUP_COMPILE=auto
+RUN python3 -m kai.cli compile
+
+ENV KAI_STARTUP_COMPILE=auto
 
 # Create persistent dirs
-RUN mkdir -p /app/media /app/logs
+RUN mkdir -p /app/media /app/logs /app/data
 
 # Internal FastAPI port
 EXPOSE 8000

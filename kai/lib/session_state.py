@@ -1,15 +1,17 @@
 import sqlite3, json, os, re
 from datetime import datetime, timedelta, timezone
-from config import (
-    MEMORY_SUMMARY_MAX_CHARS,
-    MEMORY_TTL_PREFERENCES_DAYS,
-    MEMORY_TTL_DEVICE_ACCOUNT_DAYS,
-    MEMORY_TTL_TEMP_ISSUE_DAYS,
-    SESSION_IDLE_HOURS,
-    SESSION_MAX_HISTORY_MESSAGES,
-)
 
-DB_PATH = os.getenv("SESSION_DB_PATH", "data/sessions.db")
+from kai.settings import get_settings
+
+_s = get_settings()
+MEMORY_SUMMARY_MAX_CHARS = _s.memory_summary_max_chars
+MEMORY_TTL_PREFERENCES_DAYS = _s.memory_ttl_preferences_days
+MEMORY_TTL_DEVICE_ACCOUNT_DAYS = _s.memory_ttl_device_account_days
+MEMORY_TTL_TEMP_ISSUE_DAYS = _s.memory_ttl_temp_issue_days
+SESSION_IDLE_HOURS = _s.session_idle_hours
+SESSION_MAX_HISTORY_MESSAGES = _s.session_max_history_messages
+
+DB_PATH = _s.session_db_path
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 # ----------------- Database Init -----------------
@@ -61,9 +63,6 @@ def get_session(user_id: str):
     return {
         "lang": None,
         "frozen": False,
-        "reply_count": 0,
-        "greeted": False,
-        "last_intent": None,
         "history": [],
         "session_summary": "",
         "session_started_at": None,
@@ -102,9 +101,6 @@ def _default_session_fields() -> dict:
     return {
         "lang": None,
         "frozen": False,
-        "reply_count": 0,
-        "greeted": False,
-        "last_intent": None,
         "history": [],
         "session_summary": "",
         "session_started_at": None,
@@ -188,27 +184,6 @@ def auto_unfreeze_stale_handoff(user_id: str, *, idle_hours: int | None = None) 
     save_session(user_id, sess)
     return True
 
-def update_reply_state(user_id: str):
-    sess = get_session(user_id)
-    sess["reply_count"] = sess.get("reply_count", 0) + 1
-    save_session(user_id, sess)
-
-def log_qna(user_id: str, q: str, a: str):
-    sess = get_session(user_id)
-    logs = sess.get("logs", [])
-    logs.append({"q": q, "a": a, "t": datetime.utcnow().isoformat()})
-    sess["logs"] = logs[-50:]  # Keep last 50 pairs
-    save_session(user_id, sess)
-
-def set_last_intent(user_id: str, intent: str | None):
-    sess = get_session(user_id)
-    sess["last_intent"] = intent
-    save_session(user_id, sess)
-
-def get_last_intent(user_id: str):
-    sess = get_session(user_id)
-    return sess.get("last_intent")
-
 # ----------------- Multi-Turn Memory -----------------
 def add_message_to_history(user_id: str, role: str, text: str):
     """Append message to session history (full session window, capped at SESSION_MAX_HISTORY_MESSAGES)."""
@@ -258,34 +233,6 @@ def update_session_summary(user_id: str, role: str, text: str):
 
 def get_session_summary(user_id: str) -> str:
     return (get_session(user_id).get("session_summary") or "").strip()
-
-
-def build_short_term_context(user_id: str) -> str:
-    """Compact session memory for the ReAct loop (summary + durable facts).
-
-    Injected on follow-up turns so the agent sees what was already discussed
-    without re-asking for car/year/dongle facts from earlier in the thread.
-    """
-    if not user_id:
-        return ""
-    parts: list[str] = []
-    summary = get_session_summary(user_id)
-    if summary:
-        parts.append(f"### Session summary (this chat)\n{summary}")
-    facts = get_memory_facts(user_id)
-    if facts:
-        lines = [
-            f"- {f['fact_type']}/{f['fact_key']}: {f['fact_value']}"
-            for f in facts[:20]
-        ]
-        parts.append("### Remembered facts (do not re-ask if already known)\n" + "\n".join(lines))
-    if not parts:
-        return ""
-    return (
-        "## Short-term session memory\n"
-        "Use this with the recent turns below. Do not repeat questions the user already answered.\n\n"
-        + "\n\n".join(parts)
-    )
 
 
 def prune_expired_memory_facts(user_id: str | None = None):

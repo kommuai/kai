@@ -1,0 +1,21 @@
+active_profile: minimal
+
+profiles:
+  minimal:
+    - search_faq
+    - search_session_memory
+    - escalate_to_human
+
+tools:
+  - id: search_faq
+    builtin: search_faq
+    enabled: true
+  - id: search_session_memory
+    builtin: search_session_memory
+    enabled: true
+  - id: search_web
+    builtin: search_web
+    enabled: false
+  - id: escalate_to_human
+    builtin: escalate_to_human
+    enabled: true

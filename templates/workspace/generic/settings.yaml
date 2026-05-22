@@ -1,0 +1,10 @@
+session:
+  idle_hours: 24
+  max_history_messages: 50
+
+agent:
+  max_steps: 6
+  footer_history_threshold: 8
+
+compile:
+  extra_artifacts: false

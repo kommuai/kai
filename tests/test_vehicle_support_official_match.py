@@ -7,7 +7,7 @@ from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 class VehicleSupportOfficialMatchTests(unittest.TestCase):
     @patch(
-        "kai.support_runtime.agent_tools._official_supported_vehicles",
+        "kai.support_runtime.tools.site_search._load_vehicle_catalog",
         return_value=[
             {
                 "name": "Toyota Alphard",
@@ -20,7 +20,7 @@ class VehicleSupportOfficialMatchTests(unittest.TestCase):
             }
         ],
     )
-    def test_search_kommu_support_matches_alphard_2020(self, _mock_vehicles):
+    def test_search_official_site_matches_alphard_2020(self, _mock_vehicles):
         reg = AgentToolRegistry(HybridRetriever(provider=None), SimpleReranker(provider=None))
         out = reg.call("search_kommu_support", {"query": "do you support toyota alphard 2020?"})
         self.assertTrue(out["ok"])

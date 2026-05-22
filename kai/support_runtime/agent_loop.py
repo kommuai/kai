@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from kai.support_runtime.agent_tools import AgentToolRegistry
+from kai.support_runtime.tools.registry import AgentToolRegistry
 from kai.support_runtime.clarify_validation import (
     REPAIR_USER_PROMPT,
     clarify_candidate_from_parsed,
@@ -14,12 +14,15 @@ from kai.support_runtime.clarify_validation import (
     is_valid_clarifying_text,
     last_question_span,
 )
+from kai.content.channels import get_channel_config
+from kai.workspace.runtime_settings import get_runtime_settings
 from kai.support_runtime.guardrails import safety_gate
 from kai.support_runtime.models import RuntimeResult
 
 log = logging.getLogger("kai.agent_loop")
 
-MAX_AGENT_STEPS = 8
+def _max_agent_steps() -> int:
+    return get_runtime_settings().agent_max_steps
 MAX_RESPONSE_TOKENS = 1200
 
 
@@ -159,7 +162,8 @@ class ReActAgentLoop:
         last_parsed: dict[str, Any] | None = None
         clarify_meta = ""
 
-        for step in range(MAX_AGENT_STEPS):
+        ch = get_channel_config()
+        for step in range(_max_agent_steps()):
             raw = self.deps.provider.chat_messages(
                 messages, temperature=0.15, max_tokens=MAX_RESPONSE_TOKENS
             )
@@ -190,7 +194,7 @@ class ReActAgentLoop:
                     source_ids.append(f"tool:{tool_name}")
 
                 result_summary = json.dumps(result, ensure_ascii=False, default=str)
-                max_tool_chars = 80_000 if tool_name == "read_bukapilot_file" else 2000
+                max_tool_chars = 80_000 if tool_name in {"read_github_file", "read_bukapilot_file"} else 2000
                 if len(result_summary) > max_tool_chars:
                     result_summary = result_summary[:max_tool_chars] + "..."
 
@@ -246,15 +250,12 @@ class ReActAgentLoop:
                     decision = str(parsed.get("decision", "direct_answer"))
                     confidence = float(parsed.get("confidence", 0.75) or 0.75)
                 else:
-                    answer = (
-                        "What car is this (brand, model, year), and what exact error or symptom do you see "
-                        "(or paste the text from KommuAI → Visualization)?"
-                    )
+                    answer = ch.clarify_post_tool_en if lang == "EN" else ch.clarify_post_tool_bm
                     decision = "clarifying_question"
                     confidence = 0.55
             else:
                 decision = "clarifying_question"
-                answer = "What do you need help with — pricing, vehicle support, installation, warranty, or a device problem?"
+                answer = ch.clarify_no_signal_en if lang == "EN" else ch.clarify_no_signal_bm
                 fallback_reason = fallback_reason or "no_signal"
 
         extra_meta: dict[str, Any] = {"agentic_route": {"steps": tool_trace}, "evidence": {"observations": observations}}

@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from uuid import uuid4
 
-from kai.lib.context_memory import build_turn_memory_block
+from kai.content.faq import master_faq_system_block
 from kai.lib.session_search import index_message, search_user_messages
 from kai.lib.session_state import (
     add_message_to_history,
@@ -17,7 +17,6 @@ from kai.lib.session_state import (
 )
 from kai.support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
 from kai.support_runtime.agent_tools import AgentToolRegistry
-from kai.support_runtime.faq_context import master_faq_system_block
 from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 
@@ -29,9 +28,6 @@ class Phase1ContextTests(unittest.TestCase):
         init_db()
         self.uid = f"p1_{uuid4().hex[:8]}"
         reset_memory(self.uid)
-
-    def test_turn_memory_block_deprecated_empty(self):
-        self.assertEqual(build_turn_memory_block(self.uid, extra="FAQ hint"), "")
 
     def test_full_session_history_not_capped_at_10(self):
         for i in range(15):

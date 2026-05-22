@@ -9,13 +9,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from config import BASE_DIR, FAQ_LEARN_QUEUE_DIR
+from kai.settings import get_settings
 
 
 def learn_queue_root() -> Path:
-    p = Path(FAQ_LEARN_QUEUE_DIR)
+    s = get_settings()
+    p = Path(s.faq_learn_queue_dir)
     if not p.is_absolute():
-        p = Path(BASE_DIR) / FAQ_LEARN_QUEUE_DIR
+        p = s.base_dir / p
     p.mkdir(parents=True, exist_ok=True)
     return p
 

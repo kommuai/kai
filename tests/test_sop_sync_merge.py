@@ -59,9 +59,9 @@ class SopSyncMergeTests(unittest.TestCase):
         self.assertEqual(parsed["data"][0]["name"], "bank")
         self.assertEqual(parsed["dynamic"][0]["name"], "batch_status")
 
-    @patch("core.sop_sync_merge.push_master_faq_to_google_doc", return_value={"ok": True})
-    @patch("core.sop_sync_merge.pull_google_region")
-    @patch("core.sop_sync_merge.read_local_region")
+    @patch("kai.core.sop_sync_merge.push_master_faq_to_google_doc", return_value={"ok": True})
+    @patch("kai.core.sop_sync_merge.pull_google_region")
+    @patch("kai.core.sop_sync_merge.read_local_region")
     def test_sync_sop_regions_updates_local_and_calls_writeback(self, local_mock, google_mock, writeback_mock):
         local_mock.return_value = (
             "## intent: t\naliases:\n- test drive\nanswer:\nLocal\n"
@@ -76,7 +76,9 @@ class SopSyncMergeTests(unittest.TestCase):
             from pathlib import Path
 
             state_path = Path(td) / "sop_sync_state.json"
-            with patch("core.sop_sync_merge.MASTER_FAQ_PATH", faq_path), patch("core.sop_sync_merge.STATE_PATH", state_path):
+            with patch("kai.core.sop_sync_merge.MASTER_FAQ_PATH", faq_path), patch(
+                "kai.core.sop_sync_merge.STATE_PATH", state_path
+            ):
                 out = sync_sop_regions()
             self.assertTrue(out["ok"])
             updated = open(faq_path, "r", encoding="utf-8").read()

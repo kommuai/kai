@@ -1,141 +1,118 @@
-import os
-from pathlib import Path
-import re
-from dotenv import load_dotenv
-load_dotenv()
+"""Backward-compatible config surface. Prefer kai.settings.get_settings() for new code."""
+
+from __future__ import annotations
+
+from kai.settings.loader import (
+    BASE_DIR,
+    Settings,
+    _manifest_rag_source,
+    get_settings,
+    load_settings,
+    reload_settings,
+)
+
+_s = get_settings()
 
 # App / time
-PORT = int(os.getenv("PORT", 8000))
-TZ_REGION = os.getenv("TZ_REGION", "Asia/Kuala_Lumpur")
-OFFICE_START = int(os.getenv("OFFICE_START", 10))
-OFFICE_END   = int(os.getenv("OFFICE_END", 18))
+PORT = _s.port
+TZ_REGION = _s.tz_region
+OFFICE_START = _s.office_start
+OFFICE_END = _s.office_end
 
 # LLM
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
-DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL") or os.getenv("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1")
-DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
-KAI_LLM_PROVIDER = os.getenv("KAI_LLM_PROVIDER", "deepseek")
-KAI_LLM_MODEL = os.getenv("KAI_LLM_MODEL", DEEPSEEK_MODEL)
-KAI_LLM_BASE_URL = os.getenv("KAI_LLM_BASE_URL", DEEPSEEK_BASE_URL)
-KAI_LLM_API_KEY = os.getenv("KAI_LLM_API_KEY", DEEPSEEK_API_KEY)
-KAI_QDRANT_ENABLED = os.getenv("KAI_QDRANT_ENABLED", "0")
-KAI_QDRANT_URL = os.getenv("KAI_QDRANT_URL", "http://127.0.0.1:6333")
-KAI_QDRANT_COLLECTION = os.getenv("KAI_QDRANT_COLLECTION", "kai_support")
-KAI_RERANKER_BACKEND = os.getenv("KAI_RERANKER_BACKEND", "provider")
-KAI_GUARDRAILS_ENABLED = os.getenv("KAI_GUARDRAILS_ENABLED", "0")
-KAI_TRACING_ENABLED = os.getenv("KAI_TRACING_ENABLED", "0")
-KAI_DIAGNOSTIC_EXACT_THRESHOLD = float(os.getenv("KAI_DIAGNOSTIC_EXACT_THRESHOLD", "0.78"))
-KAI_CHATWOOT_API_BASE = os.getenv("KAI_CHATWOOT_API_BASE", "")
-KAI_CHATWOOT_API_TOKEN = os.getenv("KAI_CHATWOOT_API_TOKEN", "")
-KAI_CHATWOOT_ACCOUNT_ID = os.getenv("KAI_CHATWOOT_ACCOUNT_ID", "")
-KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER = os.getenv("KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER", "0")
-# Post live-agent handback: append unified-diff suggestions (not used in retrieval).
-KAI_FAQ_LEARN_ENABLED = os.getenv("KAI_FAQ_LEARN_ENABLED", "1")
-KAI_FAQ_LEARN_ASYNC = os.getenv("KAI_FAQ_LEARN_ASYNC", "1")
-KAI_FAQ_LEARN_FETCH_CHATWOOT = os.getenv("KAI_FAQ_LEARN_FETCH_CHATWOOT", "1")
-KAI_FAQ_LEARN_MASTER_FAQ_MAX_CHARS = int(os.getenv("KAI_FAQ_LEARN_MASTER_FAQ_MAX_CHARS", "120000"))
-# Phase 2: write proposals to learn_queue/ (default on). Legacy append to agent_learnt_faq.md optional.
-KAI_FAQ_LEARN_USE_QUEUE = os.getenv("KAI_FAQ_LEARN_USE_QUEUE", "1")
-KAI_FAQ_LEARN_LEGACY_APPEND = os.getenv("KAI_FAQ_LEARN_LEGACY_APPEND", "0")
-# Schedule learn on bot escalate/handover without popping segment (off by default; resume is primary).
-KAI_FAQ_LEARN_ON_HANDOVER = os.getenv("KAI_FAQ_LEARN_ON_HANDOVER", "0")
-KAI_SOP_WRITEBACK_ENABLED = os.getenv("KAI_SOP_WRITEBACK_ENABLED", "0")
-KAI_SOP_MERGE_SYNC_ENABLED = os.getenv("KAI_SOP_MERGE_SYNC_ENABLED", "0")
-KAI_SOP_MERGE_SYNC_HOUR = int(os.getenv("KAI_SOP_MERGE_SYNC_HOUR", "8"))
-KAI_SOP_MERGE_SYNC_MINUTE = int(os.getenv("KAI_SOP_MERGE_SYNC_MINUTE", "0"))
-GOOGLE_DOCS_SOP_DOC_ID = os.getenv("GOOGLE_DOCS_SOP_DOC_ID", "")
-TECH_BACKLOG_SHEET_ID = os.getenv("TECH_BACKLOG_SHEET_ID", "")
-TECH_BACKLOG_TAB_NAME = os.getenv("TECH_BACKLOG_TAB_NAME", "Chatbot Backlog")
-TECH_ACTIVE_TAB_NAME = os.getenv("TECH_ACTIVE_TAB_NAME", "Active")
-BUKAPILOT_REPO = os.getenv("BUKAPILOT_REPO", "bukapilot/bukapilot")
-BUKAPILOT_BRANCH = os.getenv("BUKAPILOT_BRANCH", "release_ka2")
-BUKAPILOT_LOCAL_PATH = os.getenv("BUKAPILOT_LOCAL_PATH", "")
+DEEPSEEK_API_KEY = _s.deepseek_api_key
+DEEPSEEK_BASE_URL = _s.deepseek_base_url
+DEEPSEEK_MODEL = _s.deepseek_model
+KAI_LLM_PROVIDER = _s.kai_llm_provider
+KAI_LLM_MODEL = _s.kai_llm_model
+KAI_LLM_BASE_URL = _s.kai_llm_base_url
+KAI_LLM_API_KEY = _s.kai_llm_api_key
 
-def _split_list(name, default=""):
-    return [s.strip() for s in os.getenv(name, default).split(",") if s.strip()]
+# Retrieval
+KAI_QDRANT_ENABLED = "1" if _s.kai_qdrant_enabled else "0"
+KAI_QDRANT_URL = _s.kai_qdrant_url
+KAI_QDRANT_COLLECTION = _s.kai_qdrant_collection
+KAI_RERANKER_BACKEND = _s.kai_reranker_backend
+KAI_GUARDRAILS_ENABLED = "1" if _s.kai_guardrails_enabled else "0"
 
-CS_RECIPIENTS = _split_list("CS_RECIPIENTS")
-AGENT_NUMBERS = set(_split_list("AGENT_NUMBERS"))
+# Chatwoot
+KAI_CHATWOOT_API_BASE = _s.kai_chatwoot_api_base
+KAI_CHATWOOT_API_TOKEN = _s.kai_chatwoot_api_token
+KAI_CHATWOOT_ACCOUNT_ID = _s.kai_chatwoot_account_id
+KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER = "1" if _s.kai_chatwoot_enforce_live_handover else "0"
 
-# Admin
-ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "changeme-strong")
+# FAQ learn
+KAI_FAQ_LEARN_ENABLED = "1" if _s.kai_faq_learn_enabled else "0"
+KAI_FAQ_LEARN_ASYNC = "1" if _s.kai_faq_learn_async else "0"
+KAI_FAQ_LEARN_FETCH_CHATWOOT = "1" if _s.kai_faq_learn_fetch_chatwoot else "0"
+KAI_FAQ_LEARN_MASTER_FAQ_MAX_CHARS = _s.kai_faq_learn_master_faq_max_chars
+KAI_FAQ_LEARN_USE_QUEUE = "1" if _s.kai_faq_learn_use_queue else "0"
+KAI_FAQ_LEARN_LEGACY_APPEND = "1" if _s.kai_faq_learn_legacy_append else "0"
+KAI_FAQ_LEARN_ON_HANDOVER = "1" if _s.kai_faq_learn_on_handover else "0"
 
-# Sources
-SOP_DOC_URL = os.getenv("SOP_DOC_URL", "")
-WARRANTY_CSV_URL = os.getenv("WARRANTY_CSV_URL", "")
-GOOGLE_SHEETS_WARRANTY_SHEET_ID = os.getenv("GOOGLE_SHEETS_WARRANTY_SHEET_ID", "")
-GOOGLE_SHEETS_WARRANTY_GID = os.getenv("GOOGLE_SHEETS_WARRANTY_GID", "")
-GOOGLE_SHEETS_WARRANTY_EXTRA_GID = os.getenv("GOOGLE_SHEETS_WARRANTY_EXTRA_GID", "")
-SOP_POLL_SECONDS = int(os.getenv("SOP_POLL_SECONDS", "0"))
+# SOP
+KAI_SOP_WRITEBACK_ENABLED = "1" if _s.kai_sop_writeback_enabled else "0"
+KAI_SOP_MERGE_SYNC_ENABLED = "1" if _s.kai_sop_merge_sync_enabled else "0"
+KAI_SOP_MERGE_SYNC_HOUR = _s.kai_sop_merge_sync_hour
+KAI_SOP_MERGE_SYNC_MINUTE = _s.kai_sop_merge_sync_minute
+GOOGLE_DOCS_SOP_DOC_ID = _s.google_docs_sop_doc_id
 
-BASE_DIR = os.path.dirname(__file__)
-# SOP merge-sync state (was under legacy kai/rag/)
-SOP_SYNC_STATE_PATH = os.path.join(BASE_DIR, "data", "sop", "sop_sync_state.json")
+# Sheets
+TECH_BACKLOG_SHEET_ID = _s.tech_backlog_sheet_id
+TECH_BACKLOG_TAB_NAME = _s.tech_backlog_tab_name
+TECH_ACTIVE_TAB_NAME = _s.tech_active_tab_name
+GITHUB_REPO = _s.github_repo or _s.bukapilot_repo
+GITHUB_BRANCH = _s.github_branch or _s.bukapilot_branch
+BUKAPILOT_REPO = GITHUB_REPO
+BUKAPILOT_BRANCH = GITHUB_BRANCH
 
-# agent_workspace (content root: core MD, FAQ, skills metadata)
-_agent_ws = os.getenv("AGENT_WORKSPACE", "agent_workspace")
-AGENT_WORKSPACE = _agent_ws if os.path.isabs(_agent_ws) else os.path.join(BASE_DIR, _agent_ws)
-MASTER_FAQ_PATH = os.getenv("MASTER_FAQ_PATH") or os.path.join(
-    AGENT_WORKSPACE, "02_knowledge", "faq", "master_faq.md"
-)
-AGENT_LEARNT_FAQ_PATH = os.getenv("AGENT_LEARNT_FAQ_PATH") or os.path.join(
-    AGENT_WORKSPACE, "02_knowledge", "faq", "agent_learnt_faq.md"
-)
-FAQ_LEARN_QUEUE_DIR = os.getenv("FAQ_LEARN_QUEUE_DIR") or os.path.join(
-    AGENT_WORKSPACE, "02_knowledge", "faq", "learn_queue"
-)
-CONTEXT_REGISTRY_YAML = os.getenv("CONTEXT_REGISTRY_YAML") or os.path.join(
-    AGENT_WORKSPACE, "04_context", "context_registry.yaml"
-)
-WORKSPACE_MANIFEST_PATH = os.path.join(AGENT_WORKSPACE, "00_manifest.md")
+CS_RECIPIENTS = list(_s.cs_recipients)
+AGENT_NUMBERS = set(_s.agent_numbers)
+ADMIN_TOKEN = _s.admin_token
 
+SOP_DOC_URL = _s.sop_doc_url
+WARRANTY_CSV_URL = _s.warranty_csv_url
+GOOGLE_SHEETS_WARRANTY_SHEET_ID = _s.google_sheets_warranty_sheet_id
+GOOGLE_SHEETS_WARRANTY_GID = _s.google_sheets_warranty_gid
+GOOGLE_SHEETS_WARRANTY_EXTRA_GID = _s.google_sheets_warranty_extra_gid
 
-def _manifest_rag_source(manifest_path: str) -> str:
-    try:
-        raw = Path(manifest_path).read_text(encoding="utf-8")
-    except Exception:
-        return ""
-    # Parse YAML-frontmatter-like key line: rag_source: <relative/path.md>
-    m = re.search(r"(?m)^\s*rag_source\s*:\s*([^\n#]+?)\s*$", raw)
-    if not m:
-        return ""
-    return m.group(1).strip().strip('"').strip("'")
+SOP_SYNC_STATE_PATH = str(_s.sop_sync_state_path)
+AGENT_WORKSPACE = str(_s.agent_workspace)
+MASTER_FAQ_PATH = str(_s.master_faq_path)
+AGENT_LEARNT_FAQ_PATH = str(_s.agent_learnt_faq_path)
+FAQ_LEARN_QUEUE_DIR = str(_s.faq_learn_queue_dir)
+WORKSPACE_MANIFEST_PATH = str(_s.workspace_manifest_path)
+# tools/new_context.py
+CONTEXT_REGISTRY_YAML = str(_s.agent_workspace / "04_context" / "context_registry.yaml")
+
+BING_API_KEY = _s.bing_api_key
+VEHICLE_SUPPORT_OFFICIAL_URL = _s.vehicle_support_official_url
+VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS = _s.vehicle_support_http_timeout_seconds
+VEHICLE_SUPPORT_MIN_EVIDENCE_SCORE = _s.vehicle_support_min_evidence_score
+
+KAI_ROUTE_AGENT_MAX_STEPS = _s.kai_route_agent_max_steps
+KAI_ROUTE_AGENT_DEBUG_ENABLED = "1" if _s.kai_route_agent_debug_enabled else "0"
+KAI_COMPILE_EXTRA_ARTIFACTS = "1" if _s.kai_compile_extra_artifacts else "0"
+
+MIN_SUPPORTED_YEAR = _s.min_supported_year
+SESSION_IDLE_HOURS = _s.session_idle_hours
+SESSION_MAX_HISTORY_MESSAGES = _s.session_max_history_messages
+MEMORY_DEPTH = _s.session_max_history_messages
+MEMORY_SUMMARY_MAX_CHARS = _s.memory_summary_max_chars
+MEMORY_TTL_PREFERENCES_DAYS = _s.memory_ttl_preferences_days
+MEMORY_TTL_DEVICE_ACCOUNT_DAYS = _s.memory_ttl_device_account_days
+MEMORY_TTL_TEMP_ISSUE_DAYS = _s.memory_ttl_temp_issue_days
 
 
 def resolve_master_faq_path() -> str:
-    # Explicit env always wins.
-    explicit = os.getenv("MASTER_FAQ_PATH", "").strip()
-    if explicit:
-        return explicit if os.path.isabs(explicit) else os.path.join(BASE_DIR, explicit)
-    rag_rel = _manifest_rag_source(WORKSPACE_MANIFEST_PATH)
-    if rag_rel:
-        candidate = os.path.join(AGENT_WORKSPACE, rag_rel)
-        if os.path.isfile(candidate):
-            return candidate
-    return MASTER_FAQ_PATH
+    return str(_s.resolve_master_faq_path())
 
-# Optional web search
-BING_API_KEY = os.getenv("BING_API_KEY", "")
-VEHICLE_SUPPORT_OFFICIAL_URL = os.getenv("VEHICLE_SUPPORT_OFFICIAL_URL", "https://kommu.ai/support/")
-VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS = int(os.getenv("VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS", "8"))
-VEHICLE_SUPPORT_MIN_EVIDENCE_SCORE = float(os.getenv("VEHICLE_SUPPORT_MIN_EVIDENCE_SCORE", "0.65"))
-KAI_ROUTE_AGENT_CONFIDENCE_TARGET = float(os.getenv("KAI_ROUTE_AGENT_CONFIDENCE_TARGET", "0.95"))
-KAI_ROUTE_AGENT_MAX_STEPS = int(os.getenv("KAI_ROUTE_AGENT_MAX_STEPS", "8"))
-KAI_ROUTE_AGENT_DEBUG_ENABLED = os.getenv("KAI_ROUTE_AGENT_DEBUG_ENABLED", "0")
-KAI_ROUTE_AGENT_TRACE_MAX_STEPS = int(os.getenv("KAI_ROUTE_AGENT_TRACE_MAX_STEPS", "8"))
-KAI_ROUTE_AGENT_VEHICLE_MIN_SCORE = float(os.getenv("KAI_ROUTE_AGENT_VEHICLE_MIN_SCORE", "0.62"))
-KAI_BEST_EFFORT_MAX_ASSISTANT_TURNS = int(os.getenv("KAI_BEST_EFFORT_MAX_ASSISTANT_TURNS", "2"))
-KAI_FAQ_BEAUTIFY_ENABLED = os.getenv("KAI_FAQ_BEAUTIFY_ENABLED", "1")
 
-# Minimum supported car year 
-MIN_SUPPORTED_YEAR = 2016
-
-# Session chat window (WhatsApp): idle timeout starts a new session; history kept within window
-SESSION_IDLE_HOURS = int(os.getenv("SESSION_IDLE_HOURS", "24"))
-SESSION_MAX_HISTORY_MESSAGES = int(os.getenv("SESSION_MAX_HISTORY_MESSAGES", "100"))
-# Deprecated: use SESSION_MAX_HISTORY_MESSAGES. Kept for older env files.
-MEMORY_DEPTH = int(os.getenv("MEMORY_DEPTH", str(SESSION_MAX_HISTORY_MESSAGES)))
-MEMORY_SUMMARY_MAX_CHARS = int(os.getenv("MEMORY_SUMMARY_MAX_CHARS", "1200"))
-MEMORY_TTL_PREFERENCES_DAYS = int(os.getenv("MEMORY_TTL_PREFERENCES_DAYS", "365"))
-MEMORY_TTL_DEVICE_ACCOUNT_DAYS = int(os.getenv("MEMORY_TTL_DEVICE_ACCOUNT_DAYS", "90"))
-MEMORY_TTL_TEMP_ISSUE_DAYS = int(os.getenv("MEMORY_TTL_TEMP_ISSUE_DAYS", "7"))
+__all__ = [
+    "Settings",
+    "_manifest_rag_source",
+    "get_settings",
+    "load_settings",
+    "reload_settings",
+    "resolve_master_faq_path",
+]

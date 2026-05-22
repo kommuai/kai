@@ -36,7 +36,7 @@ class FaqLearnTests(unittest.TestCase):
             with patch("kai.lib.session_state.DB_PATH", db_path):
                 init_db()
             raw = _SAMPLE_JSON + "\n" + _SAMPLE_DIFF
-            with patch("kai.support_runtime.faq_learn_queue.FAQ_LEARN_QUEUE_DIR", str(qroot)):
+            with patch("kai.support_runtime.faq_learn_queue.learn_queue_root", return_value=qroot):
                 with patch("kai.support_runtime.faq_learn.resolve_master_faq_path", return_value=str(master)):
                     with patch("kai.support_runtime.faq_learn.KAI_LLM_API_KEY", "fake"):
                         with patch("kai.support_runtime.faq_learn.KAI_FAQ_LEARN_ENABLED", "1"):

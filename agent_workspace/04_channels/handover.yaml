@@ -1,0 +1,38 @@
+# Channel behavior (office hours, handover, media). User-visible strings stay in 05_copy/chat_copy.yaml.
+
+office:
+  timezone: Asia/Kuala_Lumpur
+  weekdays: [0, 1, 2, 3, 4]
+  start_hour: 10
+  end_hour: 18
+
+handover:
+  dropoff_keyword: DROPOFF
+  live_agent_keywords:
+    - LA
+  resume_keywords:
+    - resume
+    - unfreeze
+    - sambung
+
+frozen:
+  idle_hours: 24
+
+media:
+  blocked_types:
+    - image
+    - video
+    - audio
+    - voice
+
+fallbacks:
+  no_signal_en: >-
+    What do you need help with — pricing, vehicle support, installation, warranty, or a device problem?
+  post_tool_en: >-
+    What car is this (brand, model, year), and what exact error or symptom do you see?
+  install_head_en: "KommuAssist installation summary:"
+  install_head_bm: "Ringkasan pemasangan KommuAssist:"
+  install_tail_en: "Type LA if you need a step-by-step walkthrough with an agent."
+  install_tail_bm: "Taip LA jika anda perlukan panduan langkah demi langkah dengan ejen."
+  whatsapp_short_en: "\n\n(Message shortened for WhatsApp. Type LA for full details.)"
+  whatsapp_short_bm: "\n\n(Mesej dipendekkan untuk WhatsApp. Taip LA untuk butiran penuh.)"

@@ -44,7 +44,7 @@ class LearnQueueTests(unittest.TestCase):
     def test_write_and_list_proposal(self):
         with tempfile.TemporaryDirectory() as td:
             qroot = Path(td) / "learn_queue"
-            with patch("kai.support_runtime.faq_learn_queue.FAQ_LEARN_QUEUE_DIR", str(qroot)):
+            with patch("kai.support_runtime.faq_learn_queue.learn_queue_root", return_value=qroot):
                 pid = make_proposal_id("u1", "resume")
                 write_proposal(
                     pid,
@@ -81,7 +81,7 @@ class LearnQueueTests(unittest.TestCase):
             master = td_path / "master_faq.md"
             master.write_text("## intent: test\naliases:\n- hi\nanswer:\nhello\n", encoding="utf-8")
             raw = "```json\n" + json.dumps(_SAMPLE_JSON) + "\n```\n" + _SAMPLE_DIFF
-            with patch("kai.support_runtime.faq_learn_queue.FAQ_LEARN_QUEUE_DIR", str(qroot)):
+            with patch("kai.support_runtime.faq_learn_queue.learn_queue_root", return_value=qroot):
                 with patch("kai.support_runtime.faq_learn.resolve_master_faq_path", return_value=str(master)):
                     with patch("kai.support_runtime.faq_learn.KAI_LLM_API_KEY", "fake"):
                         with patch("kai.support_runtime.faq_learn.KAI_FAQ_LEARN_ENABLED", "1"):

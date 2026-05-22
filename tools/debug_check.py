@@ -140,9 +140,11 @@ def main():
     header("FAQ / compiled knowledge")
     ok(f"master_faq.md       : {'EXISTS' if Path(MASTER_FAQ_PATH).exists() else 'MISSING'}")
     compiled = Path(AGENT_WORKSPACE) / "compiled"
-    for name in ("intents.json", "kb_chunks.jsonl"):
-        p = compiled / name
-        ok(f"compiled/{name}  : {'EXISTS' if p.exists() else 'MISSING'}")
+    kb = compiled / "kb_chunks.jsonl"
+    ok(f"compiled/kb_chunks.jsonl : {'EXISTS' if kb.exists() else 'MISSING'}")
+    intents = compiled / "intents.json"
+    if intents.exists():
+        ok("compiled/intents.json   : EXISTS (optional debug artifact)")
     ok(f"sop_sync_state.json : {'EXISTS' if Path(SOP_SYNC_STATE_PATH).exists() else 'MISSING'}")
 
     # ---------- Local server ----------

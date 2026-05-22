@@ -7,7 +7,7 @@ import re
 
 from openai import OpenAI
 
-from config import DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL
+from kai.settings import get_settings
 
 
 class ChatProvider(Protocol):
@@ -18,9 +18,6 @@ class ChatProvider(Protocol):
         ...
 
     def embed(self, texts: list[str]) -> list[list[float]]:
-        ...
-
-    def classify(self, text: str, labels: list[str]) -> tuple[str, float]:
         ...
 
     def rerank(self, query: str, docs: list[str]) -> list[float]:
@@ -64,7 +61,7 @@ class DeepSeekProvider:
             return []
         if self.cfg.api_key:
             try:
-                model = self.cfg.embedding_model or os.getenv("KAI_EMBED_MODEL", "text-embedding-3-small")
+                model = self.cfg.embedding_model or get_settings().kai_embed_model
                 resp = self.client.embeddings.create(model=model, input=texts)
                 vecs = [list(d.embedding) for d in resp.data]
                 if vecs:
@@ -72,43 +69,6 @@ class DeepSeekProvider:
             except Exception:
                 pass
         return [_cheap_embed(t) for t in texts]
-
-    def classify(self, text: str, labels: list[str]) -> tuple[str, float]:
-        if self.cfg.api_key and labels:
-            try:
-                prompt = (
-                    "Choose the single best label for the message.\n"
-                    f"Labels: {', '.join(labels)}\n"
-                    "Return only JSON: {\"label\":\"...\",\"confidence\":0.0-1.0}\n"
-                    f"Message: {text}"
-                )
-                resp = self.client.chat.completions.create(
-                    model=self.cfg.model,
-                    messages=[
-                        {"role": "system", "content": "You are a strict intent classifier."},
-                        {"role": "user", "content": prompt},
-                    ],
-                    temperature=0.0,
-                    max_tokens=120,
-                )
-                raw = (resp.choices[0].message.content or "").strip()
-                m = re.search(r"\{.*\}", raw, flags=re.S)
-                if m:
-                    parsed = __import__("json").loads(m.group(0))
-                    label = str(parsed.get("label", "")).strip()
-                    conf = float(parsed.get("confidence", 0.0))
-                    if label in labels:
-                        return label, max(0.0, min(1.0, conf))
-            except Exception:
-                pass
-        t = text.lower()
-        best = labels[0] if labels else "unknown"
-        best_score = 0.0
-        for label in labels:
-            score = _overlap_score(t, label.lower())
-            if score > best_score:
-                best, best_score = label, score
-        return best, min(0.99, 0.5 + best_score)
 
     def rerank(self, query: str, docs: list[str]) -> list[float]:
         q = query.lower()
@@ -145,7 +105,7 @@ class OpenAICompatibleProvider:
             return []
         if self.cfg.api_key:
             try:
-                model = self.cfg.embedding_model or os.getenv("KAI_EMBED_MODEL", "text-embedding-3-small")
+                model = self.cfg.embedding_model or get_settings().kai_embed_model
                 resp = self.client.embeddings.create(model=model, input=texts)
                 vecs = [list(d.embedding) for d in resp.data]
                 if vecs:
@@ -153,43 +113,6 @@ class OpenAICompatibleProvider:
             except Exception:
                 pass
         return [_cheap_embed(t) for t in texts]
-
-    def classify(self, text: str, labels: list[str]) -> tuple[str, float]:
-        if self.cfg.api_key and labels:
-            try:
-                prompt = (
-                    "Choose the single best label for the message.\n"
-                    f"Labels: {', '.join(labels)}\n"
-                    "Return only JSON: {\"label\":\"...\",\"confidence\":0.0-1.0}\n"
-                    f"Message: {text}"
-                )
-                resp = self.client.chat.completions.create(
-                    model=self.cfg.model,
-                    messages=[
-                        {"role": "system", "content": "You are a strict intent classifier."},
-                        {"role": "user", "content": prompt},
-                    ],
-                    temperature=0.0,
-                    max_tokens=120,
-                )
-                raw = (resp.choices[0].message.content or "").strip()
-                m = re.search(r"\{.*\}", raw, flags=re.S)
-                if m:
-                    parsed = __import__("json").loads(m.group(0))
-                    label = str(parsed.get("label", "")).strip()
-                    conf = float(parsed.get("confidence", 0.0))
-                    if label in labels:
-                        return label, max(0.0, min(1.0, conf))
-            except Exception:
-                pass
-        t = text.lower()
-        best = labels[0] if labels else "unknown"
-        best_score = 0.0
-        for label in labels:
-            score = _overlap_score(t, label.lower())
-            if score > best_score:
-                best, best_score = label, score
-        return best, min(0.99, 0.5 + best_score)
 
     def rerank(self, query: str, docs: list[str]) -> list[float]:
         q = query.lower()
@@ -217,22 +140,23 @@ def _cheap_embed(text: str, dims: int = 32) -> list[float]:
 
 
 def build_provider() -> ChatProvider:
-    provider_name = os.getenv("KAI_LLM_PROVIDER", "deepseek").strip().lower()
+    s = get_settings()
+    provider_name = s.kai_llm_provider.strip().lower()
     if provider_name == "deepseek":
         cfg = ProviderConfig(
             provider="deepseek",
-            model=os.getenv("KAI_LLM_MODEL", DEEPSEEK_MODEL),
-            base_url=os.getenv("KAI_LLM_BASE_URL", DEEPSEEK_BASE_URL),
-            api_key=os.getenv("KAI_LLM_API_KEY", DEEPSEEK_API_KEY),
-            embedding_model=os.getenv("KAI_EMBED_MODEL", "text-embedding-3-small"),
+            model=s.kai_llm_model,
+            base_url=s.kai_llm_base_url,
+            api_key=s.kai_llm_api_key,
+            embedding_model=s.kai_embed_model,
         )
         return DeepSeekProvider(cfg)
 
     cfg = ProviderConfig(
         provider=provider_name,
-        model=os.getenv("KAI_LLM_MODEL", "gpt-4o-mini"),
-        base_url=os.getenv("KAI_LLM_BASE_URL", ""),
-        api_key=os.getenv("KAI_LLM_API_KEY", ""),
-        embedding_model=os.getenv("KAI_EMBED_MODEL", "text-embedding-3-small"),
+        model=s.kai_llm_model or "gpt-4o-mini",
+        base_url=s.kai_llm_base_url,
+        api_key=s.kai_llm_api_key,
+        embedding_model=s.kai_embed_model,
     )
     return OpenAICompatibleProvider(cfg)

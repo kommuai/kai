@@ -1,0 +1,28 @@
+keywords:
+  dropoff: "END"
+  live_agent:
+    - "LA"
+    - "live agent"
+    - "human"
+
+footer:
+  history_threshold: 8
+  en: "\n\nFor a human agent, type LA."
+  bm: "\n\nUntuk ejen manusia, taip LA."
+
+after_hours:
+  en: "\n\n(We are currently outside office hours.)"
+  bm: "\n\n(Kami di luar waktu pejabat.)"
+
+handover:
+  dropoff_en: "Connecting you to a team member. Please wait."
+  dropoff_bm: "Menghubungkan anda kepada pasukan kami. Sila tunggu."
+  live_agent_en: "Connecting you to a live agent."
+  live_agent_bm: "Menghubungkan anda kepada ejen langsung."
+
+resume:
+  en: "Welcome back. How can I help?"
+  bm: "Selamat kembali. Apa yang boleh saya bantu?"
+
+media_guard:
+  en: "Please send your question as text. Images and voice notes are not supported yet."

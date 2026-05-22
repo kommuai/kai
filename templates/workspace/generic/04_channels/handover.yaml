@@ -1,0 +1,28 @@
+office:
+  timezone: Asia/Kuala_Lumpur
+  weekdays: [0, 1, 2, 3, 4]
+  start_hour: 9
+  end_hour: 18
+
+handover:
+  dropoff_keyword: END
+  live_agent_keywords:
+    - LA
+    - live agent
+  resume_keywords:
+    - resume
+
+frozen:
+  idle_hours: 24
+
+media:
+  blocked_types:
+    - image
+    - video
+    - audio
+    - voice
+  guard_en: Please describe your question in text. Images and voice notes are not supported yet.
+
+fallbacks:
+  no_signal_en: What can I help you with today?
+  post_tool_en: What detail should I look up for you (order ID, product name, or issue)?

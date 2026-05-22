@@ -1,6 +1,9 @@
 .git
 .gitignore
+.cursor
 .pytest_cache
+tests
+docs
 __pycache__
 *.pyc
 *.pyo
@@ -17,3 +20,6 @@ agent_workspace/compiled
 secrets
 *.sqlite
 *.db
+.env
+.env.*
+!.env.example

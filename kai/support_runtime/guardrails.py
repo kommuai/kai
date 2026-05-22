@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import os
-
+from kai.settings import get_settings
 
 UNSAFE_TERMS = {"self-harm", "suicide", "hate", "bomb", "kill"}
 
 
 def safety_gate(text: str) -> tuple[bool, str]:
-    if os.getenv("KAI_GUARDRAILS_ENABLED", "0").strip().lower() not in {"1", "true", "yes", "on"}:
+    if not get_settings().kai_guardrails_enabled:
         return True, ""
     lower = (text or "").lower()
     for token in UNSAFE_TERMS:

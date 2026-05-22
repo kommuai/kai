@@ -4,7 +4,7 @@ Production chat (`POST /agent/message`) does **not** load workspace skill handle
 
 1. `KaiService.pre_router` — handover / frozen / resume
 2. `SupportRuntimeService.execute` — FAQ-first (first message) → `ReActAgentLoop` + `AgentToolRegistry`
-3. `prepare_outbound_message` — WhatsApp length cap
+3. `KaiService.finalize_reply` → `prepare_outbound_reply` — WhatsApp length cap
 
 ## Capability nodes
 

@@ -1,13 +1,14 @@
-# Kai Kommu ChatBot  
+# Kai — workspace-driven support agent
 
-An AI-powered assistant for **Kommu**.  
-Designed to handle customer and internal support queries with **speed, accuracy, and bilingual support (English & Malay)**.
+Multi-tenant support runtime: configure each business via `agent_workspace/` (FAQ, tools, channels) without forking Python. This repo ships the **Kommu** workspace as the reference tenant.
+
+Operator guides: [docs/SETUP.md](docs/SETUP.md), [docs/PORTING.md](docs/PORTING.md).
 
 ---
 
 ##  Features
 
-- **Router-first Haystack runtime:** Canonical FAQ/workflow data compiled from `agent_workspace/02_knowledge/faq/master_faq.md` into `agent_workspace/compiled/*`  
+- **FAQ compiler + ReAct runtime:** Canonical FAQ/workflow data compiled from `agent_workspace/02_knowledge/faq/master_faq.md` into `agent_workspace/compiled/kb_chunks.jsonl`  
 - **Agent workspace:** Markdown-first core prompts, FAQ, and v2 skill metadata under `agent_workspace/` (see `agent_workspace/README.md` and `00_manifest.md`)  
 - **Google Sheets Integration:** Warranty & stock lookups  
 - **Multi-language:** English ↔ Bahasa Melayu auto-switching  
@@ -100,23 +101,22 @@ Model backend (default DeepSeek, model-agnostic adapter):
 - `KAI_LLM_BASE_URL=<openai_compatible_base_url>`
 - `KAI_LLM_API_KEY=<provider_api_key>`
 
-Canonical runtime artifacts are compiled at startup into `agent_workspace/compiled/` (`intents.json`, `workflows.json`, `kb_chunks.jsonl`, `tool_policies.json`).
+Canonical runtime artifact: `agent_workspace/compiled/kb_chunks.jsonl` (from `master_faq.md` at startup). Optional debug JSON (`intents.json`, `workflows.json`, `tool_policies.json`) when `KAI_COMPILE_EXTRA_ARTIFACTS=1`.
 
-Haystack/Qdrant/rerank/observability toggles:
+Retrieval / safety toggles:
 
 - `KAI_QDRANT_ENABLED=1`
 - `KAI_QDRANT_URL=http://127.0.0.1:6333`
 - `KAI_QDRANT_COLLECTION=kai_support`
 - `KAI_RERANKER_BACKEND=provider`
 - `KAI_GUARDRAILS_ENABLED=1`
-- `KAI_TRACING_ENABLED=1`
 - `KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER=1` (on escalation, force Chatwoot conversation switch to live-agent mode; fail-closed on switch failure)
 - `KAI_SOP_WRITEBACK_ENABLED=1` (on approved SOP/FAQ writeback paths, write updated `master_faq.md` back to Google Docs)
 - `KAI_SOP_MERGE_SYNC_ENABLED=1` (enable scheduled bidirectional SOP merge-sync at 8:00 local time)
 - `KAI_SOP_MERGE_SYNC_HOUR=8`
 - `KAI_SOP_MERGE_SYNC_MINUTE=0`
 - `GOOGLE_DOCS_SOP_DOC_ID=<google_doc_id>` (target SOP/FAQ Google Doc for writeback)
-- `KAI_SMARTSERVA_TOOL_PATH=/app/integrations/smartserva/create_visitor_pass.py` (optional explicit path override for visitor-pass tool)
+- Visitor pass plugin: `agent_workspace/03_tools/plugins/smartserva_visitor_pass/main.py` (enable in `03_tools/tools.yaml`)
 
 Machine-agent auth for `/v2/agent/*`:
 
@@ -133,7 +133,22 @@ Admin endpoint auth for `/admin/*`:
 
 ##  Debug & Health Checks
 
-### A) One-shot full system check (CLI)
+### A) Workspace health (recommended)
+
+```bash
+python3 tools/kai doctor
+python3 tools/kai compile
+```
+
+Scaffold a new tenant workspace:
+
+```bash
+python3 tools/kai init --workspace ./agent_workspace
+```
+
+See [`docs/SETUP.md`](docs/SETUP.md) (non-technical steps) and [`docs/architecture/workspace_v2.md`](docs/architecture/workspace_v2.md).
+
+### B) One-shot full system check (CLI)
 
 ```bash
 python tools/debug_check.py
@@ -243,7 +258,7 @@ flowchart TD
     F -->|Yes| G[FAQ-first canonical answer]
     F -->|No| H[ReAct agent loop]
     G -->|Miss| H
-    H --> I[prepare_outbound_message length cap]
+    H --> I[finalize_reply WhatsApp 4096 cap]
     I --> D
 ```
 
@@ -262,7 +277,9 @@ flowchart TD
 │   ├── core/                 # SOP sync, policies, outbound delivery
 │   ├── lib/                  # session, LLM client, sheets, media
 │   └── integrations/         # SmartServa visitor pass, etc.
-├── agent_workspace/          # FAQ + compiled knowledge (Docker volume)
+├── agent_workspace/          # Tenant pack: manifest, FAQ, tools.yaml, copy (Docker volume)
+├── templates/workspace/      # `kai init` scaffolds
+├── tools/kai                 # doctor | init | compile | validate
 ├── data/sop/                 # SOP merge-sync state (not legacy FAISS)
 ├── data/                     # SQLite sessions, SOP assets
 ├── secrets/                  # Google service account JSON

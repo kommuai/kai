@@ -1,5 +1,83 @@
 # Kai — Agent context
 
+## 2026-05-22 — Lightweight pass 4 (boot path + porting polish)
+
+- **Intent:** One FAQ compile per boot; faster `/ready`; generic GitHub env names; smaller Docker context.
+- **Fix:** `run_startup` validates structure only; compile runs once in `SupportRuntimeService.startup`.
+- **Added:** `cached_readiness_issues()` for `/ready`; `github_repo_agentic_search` (+ legacy aliases); `TOOL_PROFILES`; CLI `paths`; `requirements-dev.txt`; generic template README.
+- **Removed:** Unused `KAI_SMARTSERVA_TOOL_PATH` settings; duplicate compile on startup.
+- **Validation:** pytest fast suite; `tools/kai doctor`.
+
+## 2026-05-22 — Lightweight pass 3 (lazy runtime + tenant pack hygiene)
+
+- **Intent:** Further reduce import/boot cost; single canonical plugin path; Docker-friendly startup.
+- **Lazy:** `SupportRuntimeService` builds provider/retriever on first use; `container.py` proxies defer instantiation.
+- **Removed:** Duplicate `kai/integrations/smartserva/*` (canonical: `agent_workspace/03_tools/plugins/smartserva_visitor_pass/`).
+- **Docker:** `kai compile` at image build + `KAI_STARTUP_COMPILE=auto`. `KAI_SCHEDULER_ENABLED=0` for dev.
+- **Added:** `kai/engine/features.py`, `packs/kommu/README.md`, `tests/test_engine_startup.py`.
+- **Validation:** pytest fast suite; `tools/kai doctor`.
+
+## 2026-05-22 — Lightweight startup + porting pass
+
+- **Intent:** Smaller default install, faster boot, clearer multi-tenant porting without changing chat flow.
+- **Structure:** `kai/app_factory.py` + thin `app.py`; `kai/engine/startup.py` (conditional compile + warranty warm); `kai/engine/scheduler.py` (lifespan tasks, no `fastapi-utils`).
+- **Deps:** `requirements.txt` core only; `requirements-optional.txt` for Sheets/Qdrant/OCR. Docker installs both.
+- **Behavior:** Warranty cache warmed only when sheet lookup tools enabled; lazy imports in `handlers.py`; plugin runner workspace-only (no `kai/integrations` fallback). `KAI_STARTUP_COMPILE=0|auto`. CLI `port-check`.
+- **Docs:** `docs/PORTING.md`, SETUP optional-deps note.
+- **Validation:** `tools/kai doctor` OK; `port-check` OK; pytest 112 passed (excl. live LLM).
+
+## 2026-05-22 — Aggressive generalization pass (engine vs tenant pack)
+
+- **Intent:** Generic engine; Kommu is workspace-only config (profile + plugins + params).
+- **Structure:** `kai/support_runtime/tools/` — `catalog.py` (generic builtins + aliases), `handlers.py`, `registry.py`, `site_search.py`. Deleted monolithic `tool_catalog.py` / fat `agent_tools.py`.
+- **Tools:** Canonical ids (`search_official_site`, `search_github_repo`, `lookup_sheet_record`, …); legacy ids via `BUILTIN_ALIASES`. Kommu `03_tools/tools.yaml` uses `active_profile: kommu` + `profile_overrides` + `tools: []`. Visitor pass = plugin `smartserva_visitor_pass` under `agent_workspace/03_tools/plugins/`.
+- **Defaults:** Engine default `inject_mode: retrieval_first`; Kommu manifest keeps `full_context` + custom `faq_preamble`. Settings no longer default Kommu URLs/repos.
+- **Validation:** `tools/kai doctor` OK; pytest 112 passed (excl. live LLM).
+
+## 2026-05-22 — Production pass (workspace phase 2)
+
+- **Intent:** Production-grade general-purpose bot: channels YAML, runtime settings merge, health/ready, plugins, reload on refresh.
+- **Files:** `kai/content/channels.py`, `kai/workspace/runtime_settings.py`, `kai/workspace/reload.py`, `kai/api/health.py`, `kai/tools_plugins/runner.py`, `agent_workspace/04_channels/handover.yaml`, `docs/SETUP.md`, `.env.example`, tests `test_channels_config.py`, `test_health_api.py`, `test_tool_profiles.py`.
+- **Behavior:** Office/handover/media from `04_channels/`; `settings.yaml` drives session/agent limits; `/ready` reports tenant health; admin refresh reloads caches + rebuilds tool registry; optional `KAI_STRICT_STARTUP=1`.
+- **Validation:** `tools/kai doctor` OK (admin_token_weak warn); pytest fast suite 113 passed.
+- **Next:** Externalize Kommu builtins to generic names + workspace-only packs; Postgres session option.
+
+## 2026-05-22 — Workspace v2 + declarative tools (phase 0–1)
+
+- **Intent:** General-purpose workspace contract: manifest YAML, tools YAML, `kai doctor` / `kai init`, catalog-driven `AgentToolRegistry`.
+- **Files:** `kai/workspace/`, `kai/support_runtime/tool_catalog.py`, `agent_workspace/00_manifest.yaml`, `agent_workspace/03_tools/tools.yaml`, `templates/workspace/generic/`, `kai/cli/`, `tools/kai`, `docs/architecture/workspace_v2.md`.
+- **Behavior:** Tools load from `03_tools/tools.yaml`; paths from `00_manifest.yaml`; `knowledge.inject_mode` (`full_context` Kommu, `retrieval_first` in generic template).
+- **Validation:** `python3 tools/kai doctor` OK; `pytest tests/ --ignore=tests/test_support_runtime.py -q` → 107 passed.
+- **Next:** Phase 2 channel YAML; optional plugins; trim Kommu-only builtins behind workspace flags.
+
+## 2026-05-22 — Dead code pass 4 (full crawl)
+
+- **Removed:** Top-level stale dirs (`api/`, `core/`, `services/`, `support_runtime/`, `rag/`, `integrations/`) — only `__pycache__`, no `.py`; legacy `sop_doc_loader` HTML/Q&A parser + `fetch_sop_doc_text`; `warranty_lookup`; `diagnostic_exact_score`; unused `infer_possible_solution_from_bukapilot` import in `agent_tools.py`; unimplemented `docs/architecture/turn_orchestrator.md`.
+- **Deps trimmed:** `requirements.txt` dropped unused `haystack-ai`, `langfuse`, `flashrank`, `deep-translator`, `numpy`, `typing-inspect`.
+- **Fixed:** `tests/test_sop_sync_merge.py` patches `kai.core.sop_sync_merge` (was broken `core.*` after top-level `core/` removal).
+- **Validation:** `pytest tests/ --ignore=tests/test_support_runtime.py -q` → 103 passed.
+- **Next:** Optional README/CHANGELOG sweep; run live-LLM `test_support_runtime.py` if API key available.
+
+## 2026-05-22 — Dead code removal pass 3
+
+- **Removed:** `kai/runtime/`, `kai/knowledge/`, `core/context/registry.py`, unused `01_core/identity.md` + `safety_guidelines.md`, `tools/test_bot.py`, `IntentRecord`/`RouteType`, duplicate `schedule_faq_learn` in `faq_learn.py`; dead session helpers (`update_reply_state`, `log_qna`, `set_last_intent`, `get_last_intent`) and unused session keys (`reply_count`, `greeted`, `last_intent`).
+- **Wired:** `outbound_delivery.prepare_outbound_reply` via `KaiService.finalize_reply` on all user-visible replies.
+- **Compiler:** production writes `kb_chunks.jsonl` only; `intents.json` / `workflows.json` / `tool_policies.json` when `KAI_COMPILE_EXTRA_ARTIFACTS=1`.
+- **Settings trimmed:** removed unused tracing/tool-timeout/vehicle-min-score fields from `Settings`.
+- **Validation:** `pytest tests/ --ignore=tests/test_support_runtime.py --ignore=tests/test_sop_sync_merge.py -q` → 99 passed; `tests/test_outbound_delivery.py` added.
+
+## 2026-05-22 — Dead code removal pass
+
+- **Removed:** `context_memory.py`, `faq_context.py`, `agent_prompts.py` (use `kai/content/`), `core/context/contracts.py`, `core/context/providers.py`, `observability.py` (prior), unused `canonical_faq` helpers (`pick_faq_first_runtime`, `format_canonical_hint`, `enrich_query_with_history`), `providers.classify`, `build_short_term_context`, `KaiService.prepare_outbound_message`, `tests/test_vehicle_support_matching.py`; trimmed stale session/canonical tests.
+- **Validation:** `pytest tests/ --ignore=tests/test_support_runtime.py --ignore=tests/test_sop_sync_merge.py -q` → 98 passed.
+
+## 2026-05-22 — Maintainability refactor (behavior-preserving)
+
+- **Intent:** Few operator contact points — `agent_workspace/` for prompts, FAQ, copy; `kai/settings/` for env; `kai/content/` loaders.
+- **Files:** `kai/settings/`, `kai/content/`, `agent_workspace/01_core/system_prompt.md`, `05_copy/chat_copy.yaml`, `kai/services/turn_ingest.py`, `docs/OPERATOR.md`; removed `prompt_loader.py`, `observability.py`; `config.py` thin re-export; `kai/runtime/`, `kai/knowledge/` shims.
+- **Validation:** `pytest tests/test_chat_copy_parity.py tests/test_prompt_assembly_snapshot.py tests/test_api_contracts.py -q` → pass; fast suite (excl. live LLM + broken vehicle test) → pass.
+- **Next:** Fix or drop `tests/test_vehicle_support_matching.py` (missing `_extract_support_evidence`).
+
 ## 2026-05-22 — API test CLI
 
 - **Tool:** `tools/kai_api_cli.py` — `message`, `chat`, `query`, `search`, `admin` against `KAI_API_BASE_URL` (default `http://127.0.0.1:6090`).

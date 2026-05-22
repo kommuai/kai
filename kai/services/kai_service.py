@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 import logging
 import re
 
-import pytz
-
-from config import OFFICE_END, OFFICE_START, SESSION_IDLE_HOURS, TZ_REGION
+from kai.content.channels import get_channel_config
+from kai.content.copy import get_chat_copy
 from kai.lib.lang_detect import is_malay
 from kai.lib.media_handler import init_media_log
 from kai.lib.session_state import (
@@ -16,7 +14,6 @@ from kai.lib.session_state import (
     append_human_segment_turn,
     auto_unfreeze_stale_handoff,
     ensure_active_session,
-    extract_and_store_facts,
     freeze,
     get_history,
     get_session,
@@ -28,14 +25,11 @@ from kai.lib.session_state import (
     update_session_summary,
 )
 from kai.services.chatwoot_handover import extract_chatwoot_conversation_id
+from kai.services.turn_ingest import ingest_user_turn
+from kai.settings import get_settings
 from kai.support_runtime.background_review import schedule_faq_learn_after_handback
 
 log = logging.getLogger("kai")
-
-DROPOFF = "DROPOFF"
-LIVEAGENT = ["LA"]
-FOOTER_EN = "\n\nFor Live Agent, type LA"
-FOOTER_BM = "\n\nJika anda mahu bercakap dengan ejen yang sedia ada, taip LA"
 
 
 def strip_bold_markdown_wrapping_around_urls(text: str) -> str:
@@ -49,34 +43,33 @@ class KaiService:
     def __init__(self) -> None:
         init_db()
         init_media_log()
+        self._copy = get_chat_copy()
+        self._channels = get_channel_config()
+        self._settings = get_settings()
 
     def is_office_hours(self, now=None):
-        tz = pytz.timezone(TZ_REGION)
-        now = now or datetime.now(tz)
-        return now.weekday() < 5 and OFFICE_START <= now.hour < OFFICE_END
+        return self._channels.is_office_hours(now)
 
     def after_hours_suffix(self, lang="EN"):
-        return (
-            "\n\nPS: Sekarang di luar waktu pejabat."
-            if lang == "BM"
-            else "\n\nPS: We’re currently outside office hours. A live agent will follow up later."
-        )
+        return self._copy.after_hours_suffix(lang)
 
     def add_footer(self, conversation_id, answer: str, lang: str, *, suppress: bool = False) -> str:
         footer = ""
-        if not suppress and len(get_history(conversation_id)) >= 10:
-            footer = FOOTER_BM if lang == "BM" else FOOTER_EN
+        from kai.workspace.runtime_settings import get_runtime_settings
+
+        threshold = get_runtime_settings().footer_history_threshold
+        if not suppress and len(get_history(conversation_id)) >= threshold:
+            footer = self._copy.footer(lang)
         body = strip_bold_markdown_wrapping_around_urls((answer or "").rstrip())
         return body + footer
 
-    def prepare_outbound_message(
-        self, conversation_id, answer: str, lang: str, *, suppress: bool = False
-    ) -> tuple[str, dict]:
+    def finalize_reply(self, conversation_id, answer: str, lang: str, *, suppress: bool = False) -> str:
         """Footer + WhatsApp-safe length (Twilio text.body ≤ 4096)."""
         from kai.core.outbound_delivery import prepare_outbound_reply
 
         body = self.add_footer(conversation_id, answer, lang, suppress=suppress)
-        return prepare_outbound_reply(body, lang)
+        msg, _meta = prepare_outbound_reply(body, lang)
+        return msg
 
     def admin_reset_memory(self, user_id: str | None):
         reset_memory(user_id)
@@ -98,59 +91,65 @@ class KaiService:
         lang = "BM" if is_malay(text) else "EN"
         set_lang(conversation_id, lang)
         aft = not self.is_office_hours()
-        update_session_summary(conversation_id, "user", text)
-        extract_and_store_facts(conversation_id, text, source="user")
+        ingest_user_turn(conversation_id, text, record_history=False)
         cw_id = extract_chatwoot_conversation_id(data) or None
+        cp = self._copy
+        ch = self._channels
 
-        if text == DROPOFF and not sess.get("frozen") and not sess.get("handover"):
+        if text == ch.dropoff_keyword and not sess.get("frozen") and not sess.get("handover"):
             add_message_to_history(conversation_id, "user", text)
             start_human_segment(conversation_id, cw_id)
             append_human_segment_turn(conversation_id, "user", text)
             sess["frozen"] = True
             save_session(conversation_id, sess)
-            msg_out = (
-                "Please provide the date and time for the dropoff. Our staff will assist you soon. Type *resume* to continue with the bot."
-                if lang == "EN"
-                else "Sila berikan tarikh dan masa untuk penghantaran. Ejen kami akan membantu anda sebentar lagi. Taip *resume* untuk teruskan."
-            )
+            msg_out = cp.handover_dropoff_en if lang == "EN" else cp.handover_dropoff_bm
             if aft:
                 msg_out += self.after_hours_suffix(lang)
             append_human_segment_turn(conversation_id, "assistant", msg_out)
-            return {"type": "handover", "message": msg_out, "next_state": "human"}
+            return {
+                "type": "handover",
+                "message": self.finalize_reply(conversation_id, msg_out, lang, suppress=True),
+                "next_state": "human",
+            }
 
-        if text in LIVEAGENT and not sess.get("frozen") and not sess.get("handover"):
+        if ch.is_live_agent_keyword(text) and not sess.get("frozen") and not sess.get("handover"):
             add_message_to_history(conversation_id, "user", text)
             start_human_segment(conversation_id, cw_id)
             append_human_segment_turn(conversation_id, "user", text)
             sess["frozen"] = True
             save_session(conversation_id, sess)
-            msg_out = (
-                "A live agent will assist you soon. Type *resume* to continue with the bot."
-                if lang == "EN"
-                else "Ejen kami akan membantu anda. Taip *resume* untuk teruskan."
-            )
+            msg_out = cp.handover_live_agent_en if lang == "EN" else cp.handover_live_agent_bm
             if aft:
                 msg_out += self.after_hours_suffix(lang)
             append_human_segment_turn(conversation_id, "assistant", msg_out)
-            return {"type": "handover", "message": msg_out, "next_state": "human"}
+            return {
+                "type": "handover",
+                "message": self.finalize_reply(conversation_id, msg_out, lang, suppress=True),
+                "next_state": "human",
+            }
 
         if sess.get("frozen"):
-            if auto_unfreeze_stale_handoff(conversation_id):
-                log.info("[Kai] auto-unfreeze after %sh handoff idle conv=%s", SESSION_IDLE_HOURS, conversation_id)
+            idle_h = ch.frozen_idle_hours or self._settings.session_idle_hours
+            if auto_unfreeze_stale_handoff(conversation_id, idle_hours=idle_h):
+                log.info(
+                    "[Kai] auto-unfreeze after %sh handoff idle conv=%s",
+                    idle_h,
+                    conversation_id,
+                )
                 schedule_faq_learn_after_handback(conversation_id)
                 sess = get_session(conversation_id)
-            elif lower in {"resume", "unfreeze", "sambung"}:
+            elif ch.is_resume_keyword(text):
                 add_message_to_history(conversation_id, "user", text)
                 schedule_faq_learn_after_handback(conversation_id)
                 freeze(conversation_id, False)
-                msg_out = (
-                    "Bot resumed. How can I help?"
-                    if lang == "EN"
-                    else "Bot disambung semula. Ada apa saya boleh bantu?"
-                )
+                msg_out = cp.resume_en if lang == "EN" else cp.resume_bm
                 add_message_to_history(conversation_id, "assistant", msg_out)
                 update_session_summary(conversation_id, "assistant", msg_out)
-                return {"type": "reply", "message": msg_out, "next_state": "bot"}
+                return {
+                    "type": "reply",
+                    "message": self.finalize_reply(conversation_id, msg_out, lang, suppress=True),
+                    "next_state": "bot",
+                }
             else:
                 add_message_to_history(conversation_id, "user", text)
                 append_human_segment_turn(conversation_id, "user", text)

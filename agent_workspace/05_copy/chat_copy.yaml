@@ -1,0 +1,28 @@
+# User-visible chat strings (EN/BM). Edit here — loaded by kai.content.copy
+
+keywords:
+  dropoff: DROPOFF
+  live_agent:
+    - LA
+
+footer:
+  en: "\n\nFor Live Agent, type LA"
+  bm: "\n\nJika anda mahu bercakap dengan ejen yang sedia ada, taip LA"
+  history_threshold: 10
+
+after_hours:
+  en: "\n\nPS: We’re currently outside office hours. A live agent will follow up later."
+  bm: "\n\nPS: Sekarang di luar waktu pejabat."
+
+handover:
+  dropoff_en: "Please provide the date and time for the dropoff. Our staff will assist you soon. Type *resume* to continue with the bot."
+  dropoff_bm: "Sila berikan tarikh dan masa untuk penghantaran. Ejen kami akan membantu anda sebentar lagi. Taip *resume* untuk teruskan."
+  live_agent_en: "A live agent will assist you soon. Type *resume* to continue with the bot."
+  live_agent_bm: "Ejen kami akan membantu anda. Taip *resume* untuk teruskan."
+
+resume:
+  en: "Bot resumed. How can I help?"
+  bm: "Bot disambung semula. Ada apa saya boleh bantu?"
+
+media_guard:
+  en: "I am a front-line diagnostic AI and do not support image/video/audio analysis yet. Please describe the issue in text and tell me what car you are driving (brand/model/year)."

@@ -1,0 +1,28 @@
+version: "2"
+
+tenant:
+  id: my-support-bot
+  display_name: Support Bot
+  default_lang: en
+  timezone: Asia/Kuala_Lumpur
+
+paths:
+  system_prompt: 01_core/system_prompt.md
+  knowledge_primary: 02_knowledge/faq/master_faq.md
+  knowledge_compiled_dir: compiled
+  chat_copy: 05_copy/chat_copy.yaml
+  channels_handover: 04_channels/handover.yaml
+  settings: settings.yaml
+  tools: 03_tools/tools.yaml
+
+knowledge:
+  format: master_faq_v1
+  compile: kb_chunks.jsonl
+  inject_mode: retrieval_first
+
+tools:
+  enabled: []
+
+channels:
+  whatsapp:
+    max_reply_chars: 4096

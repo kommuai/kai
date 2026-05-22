@@ -3,7 +3,16 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ACTIVE_DIRS = ("kai/api", "kai/support_runtime", "kai/services", "kai/core", "kai/lib")
+ACTIVE_DIRS = (
+    "kai/api",
+    "kai/support_runtime",
+    "kai/services",
+    "kai/core",
+    "kai/lib",
+    "kai/content",
+    "kai/settings",
+)
+# context/registry.py removed — YAML edited via tools/new_context.py only
 DISALLOWED_IMPORT_SNIPPETS = (
     "archive_legacy.",
     "from archive_legacy",

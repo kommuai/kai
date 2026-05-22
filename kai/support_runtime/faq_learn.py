@@ -259,10 +259,3 @@ def run_faq_learn(
         "queue_path": queue_path,
         "legacy_path": legacy_path,
     }
-
-
-# Back-compat: scheduling lives in background_review
-def schedule_faq_learn_after_handback(user_id: str) -> None:
-    from kai.support_runtime.background_review import schedule_faq_learn_after_handback as _sched
-
-    _sched(user_id)

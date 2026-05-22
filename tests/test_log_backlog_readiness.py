@@ -10,7 +10,7 @@ class LogBacklogReadinessTests(unittest.TestCase):
         self.reg = AgentToolRegistry(HybridRetriever(provider=None), SimpleReranker(provider=None))
 
     def test_log_backlog_refuses_when_device_unknown(self):
-        out = self.reg.log_backlog(
+        out = self.reg.log_sheet_backlog(
             issue="KA2 error 1003 logs missing",
             device="Unknown",
             car="Unknown",
@@ -19,7 +19,7 @@ class LogBacklogReadinessTests(unittest.TestCase):
         self.assertEqual(out["error"], "log_backlog_not_ready_missing_device_car")
 
     def test_log_backlog_refuses_when_car_unknown(self):
-        out = self.reg.log_backlog(
+        out = self.reg.log_sheet_backlog(
             issue="KA2 error 1003 logs missing",
             device="KA2",
             car="Unknown",
@@ -28,12 +28,12 @@ class LogBacklogReadinessTests(unittest.TestCase):
         self.assertEqual(out["error"], "log_backlog_not_ready_missing_device_car")
 
     @patch(
-        "kai.support_runtime.agent_tools.deepseek_chat_completion",
+        "kai.lib.deepseek_client.chat_completion",
         return_value='{"problem_description":"DEEPSEEK PROBLEM","reproduction_steps":"Step 1 then Step 2."}',
     )
-    @patch("kai.support_runtime.agent_tools.append_backlog_issue", return_value={"ok": True, "updatedRange": "A1:E1"})
+    @patch("kai.support_runtime.tech_backlog.append_backlog_issue", return_value={"ok": True, "updatedRange": "A1:E1"})
     def test_log_backlog_calls_append_when_ready(self, append_mock, _deepseek_mock):
-        out = self.reg.log_backlog(
+        out = self.reg.log_sheet_backlog(
             issue="KA2 error 1003 logs missing",
             device="KA2",
             car="Honda City 2021",

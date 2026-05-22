@@ -245,9 +245,6 @@ def fetch_warranty_all():
     print(f"[WARRANTY] Loaded total rows: {total_rows}; "
           f"{len(WARRANTY_BY_DONGLE)} unique dongle ids; {len(WARRANTY_DB)} phone/serial keys.")
 
-def warranty_lookup(identifier: str):
-    """Legacy lookup by normalized phone/serial key."""
-    return WARRANTY_DB.get(_norm_key(identifier))
 
 def warranty_lookup_by_dongle(dongle_id: str):
     """Primary lookup by Dongle ID (merged)."""

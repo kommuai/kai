@@ -7,28 +7,38 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
 from kai.core.policy.settings import RouteMode, get_route_mode
-from config import ADMIN_TOKEN, KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER, KAI_ROUTE_AGENT_DEBUG_ENABLED
+from kai.content.channels import get_channel_config
+from kai.content.copy import get_chat_copy
+from config import KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER, KAI_ROUTE_AGENT_DEBUG_ENABLED
+from kai.settings import get_settings
+
+# Module-level names for tests that patch these attributes.
 from kai.lib.lang_detect import is_malay
-from kai.services.chatwoot_handover import enforce_live_agent_handover
+from kai.services.chatwoot_handover import (
+    enforce_live_agent_handover,
+    extract_chatwoot_conversation_id,
+)
 from kai.services.container import kai_service, support_runtime_service
 from kai.lib.session_state import append_human_segment_turn, freeze, start_human_segment
-from kai.services.chatwoot_handover import extract_chatwoot_conversation_id
-from kai.support_runtime.tech_backlog import list_backlog_sheet_tabs
-
 log = logging.getLogger("kai.v2")
 router = APIRouter()
 
 
 def _require_admin(x_admin_token: str | None) -> None:
     token = x_admin_token.strip() if isinstance(x_admin_token, str) else ""
-    expected = str(ADMIN_TOKEN or "").strip()
+    expected = str(get_settings().admin_token or "").strip()
     if not expected or not hmac.compare_digest(token, expected):
         raise HTTPException(status_code=401, detail="Unauthorized admin client")
 
 
 def _refresh_all_knowledge() -> dict:
     """Single refresh path for active support runtime knowledge."""
+    from kai.workspace.reload import reload_workspace_caches
+
+    reload_workspace_caches()
     runtime_out = support_runtime_service.refresh_knowledge()
+    kai_service._copy = get_chat_copy()
+    kai_service._channels = get_channel_config()
     return {"ok": True, "runtime_refresh": runtime_out}
 
 
@@ -59,13 +69,13 @@ def _process_agent_message_data(data: dict) -> dict:
     if not data:
         raise ValueError("Invalid n8n payload")
     msg_type = (data.get("type") or data.get("message_type") or "").strip().lower()
-    if msg_type in {"image", "video", "audio", "voice"}:
+    ch = get_channel_config()
+    if ch.is_blocked_media_type(msg_type):
+        lang_early = "BM" if is_malay((data.get("content") or "")) else "EN"
+        guard = ch.media_guard_bm if lang_early == "BM" else ch.media_guard_en
         payload = {
             "type": "reply",
-            "message": (
-                "I am a front-line diagnostic AI and do not support image/video/audio analysis yet. "
-                "Please describe the issue in text and tell me what car you are driving (brand/model/year)."
-            ),
+            "message": guard,
             "next_state": "bot",
         }
         return _merge_trace(
@@ -92,11 +102,21 @@ def _process_agent_message_data(data: dict) -> dict:
         return _merge_trace(pre, trace_id=trace_id, mode=mode, capability_used="pre_router", start=start)
 
     result = support_runtime_service.execute(text=text, lang=lang, user_id=user_id)
-    debug_enabled = str(KAI_ROUTE_AGENT_DEBUG_ENABLED).strip().lower() in {"1", "true", "yes", "on"}
+    debug_enabled = str(KAI_ROUTE_AGENT_DEBUG_ENABLED).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
     debug_requested = bool(data.get("debug_route_agent"))
     include_debug = debug_enabled or debug_requested
     if result.decision == "escalate_human":
-        enforce = str(KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER).strip().lower() in {"1", "true", "yes", "on"}
+        enforce = str(KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER).strip().lower() in {
+            "1",
+            "true",
+            "yes",
+            "on",
+        }
         if enforce:
             applied, handover_error = enforce_live_agent_handover(data)
             if not applied:
@@ -120,16 +140,17 @@ def _process_agent_message_data(data: dict) -> dict:
         append_human_segment_turn(user_id, "user", text)
         append_human_segment_turn(user_id, "assistant", result.answer)
         freeze(user_id, True)
-        payload = {"type": "handover", "message": result.answer, "next_state": "human", "handover_applied": True}
+        payload = {
+            "type": "handover",
+            "message": kai_service.finalize_reply(user_id, result.answer, lang, suppress=True),
+            "next_state": "human",
+            "handover_applied": True,
+        }
     else:
-        # Suppress the "type LA" footer when the bot is clearly helping:
-        #   - FAQ canonical answers (`canonical_answer` capability), or
-        #   - direct answers backed by sources / tool evidence.
-        # This stops the long-thread LA-nag pattern visible in chat history.
         suppress_footer = result.decision in ("direct_answer", "clarifying_question")
         payload = {
             "type": "reply",
-            "message": kai_service.add_footer(user_id, result.answer, lang, suppress=suppress_footer),
+            "message": kai_service.finalize_reply(user_id, result.answer, lang, suppress=suppress_footer),
             "next_state": "bot",
             "confidence": result.confidence,
             "source_ids": result.source_ids,
@@ -188,5 +209,7 @@ def refresh_sop_endpoint(x_admin_token: str | None = Header(default=None)):
 
 @router.get("/admin/tech-backlog/tabs")
 def admin_tech_backlog_tabs(x_admin_token: str | None = Header(default=None)):
+    from kai.support_runtime.tech_backlog import list_backlog_sheet_tabs
+
     _require_admin(x_admin_token)
     return {"ok": True, "tabs": list_backlog_sheet_tabs()}

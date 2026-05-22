@@ -1,9 +1,12 @@
 ---
-version: "1.0"
+version: "1.1"
 agent_name: Kai
 agent_workspace_root: agent_workspace
 rag_source: 02_knowledge/faq/master_faq.md
 context_registry: 04_context/context_registry.yaml
+system_prompt: 01_core/system_prompt.md
+chat_copy: 05_copy/chat_copy.yaml
+settings_defaults: settings.yaml
 session_store:
   backend: sqlite
   env_path_var: SESSION_DB_PATH
@@ -20,11 +23,17 @@ sop_sync:
 
 # Kai agent workspace
 
-Human-editable **content** for the Kommu chatbot: core tone and safety rules, FAQ knowledge, and skill metadata. Runtime code lives in the parent `kai-main` package.
+**Primary config:** [`00_manifest.yaml`](00_manifest.yaml) and [`03_tools/tools.yaml`](03_tools/tools.yaml). This file is legacy documentation + frontmatter fallback.
 
-- **01_core** — Identity and safety text loaded into the LLM system prompt (plus any legacy template fallbacks).
-- **02_knowledge** — `master_faq.md` is the canonical FAQ for RAG indexing. The SOP Google Doc sync overwrites only the region between `<!-- sop-sync:start -->` and `<!-- sop-sync:end -->`.
-- **03_skills** — Skill manifest and documentation only; runtime tools live in `support_runtime/agent_tools.py`.
-- **04_context** — Machine-oriented context registry YAML (not SQLite session rows).
+Human-editable **content** for the Kommu chatbot. Runtime code loads from here via `kai/content/`.
 
-Session and conversation history remain in **SQLite**; see `session_store` above.
+- **01_core** — `system_prompt.md` only (loaded every turn).
+- **02_knowledge** — `master_faq.md` is canonical FAQ (full file in system prompt + compiled `kb_chunks.jsonl` for `search_faq`). SOP Google Doc sync overwrites only the `sop-sync` region.
+- **03_skills** — Skill manifest/docs only; live tools are in `support_runtime/agent_tools.py`.
+- **04_context** — Context registry YAML (tests/tools; not the SQLite session store).
+- **05_copy** — User-visible strings: footers, handover, resume, media guard.
+- **settings.yaml** — Documented non-secret defaults (env overrides).
+
+Session history remains in **SQLite**; see `session_store` above.
+
+See [`docs/OPERATOR.md`](../docs/OPERATOR.md) for the full edit map.
