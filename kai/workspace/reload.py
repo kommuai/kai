@@ -20,3 +20,6 @@ def reload_workspace_caches() -> None:
     from kai.workspace.validate import invalidate_readiness_cache
 
     invalidate_readiness_cache()
+    from config import reload_settings
+
+    reload_settings()

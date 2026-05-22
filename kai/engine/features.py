@@ -17,6 +17,18 @@ class WorkspaceFeatures:
     optional_pip_hint: str
 
 
+def sop_merge_scheduler_enabled() -> bool:
+    from kai.settings import get_settings
+    from kai.workspace.manifest import load_workspace_manifest
+
+    if not get_settings().kai_sop_merge_sync_enabled:
+        return False
+    raw = load_workspace_manifest().raw.get("sop_sync")
+    if isinstance(raw, dict) and raw.get("enabled") is False:
+        return False
+    return True
+
+
 def get_workspace_features() -> WorkspaceFeatures:
     from kai.workspace.tools_config import (
         enabled_canonical_builtins,

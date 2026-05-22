@@ -164,9 +164,25 @@ class ReActAgentLoop:
 
         ch = get_channel_config()
         for step in range(_max_agent_steps()):
-            raw = self.deps.provider.chat_messages(
-                messages, temperature=0.15, max_tokens=MAX_RESPONSE_TOKENS
-            )
+            try:
+                raw = self.deps.provider.chat_messages(
+                    messages, temperature=0.15, max_tokens=MAX_RESPONSE_TOKENS
+                )
+            except Exception as exc:  # noqa: BLE001
+                log.exception("LLM chat_messages failed: %s", exc)
+                return {
+                    "result": RuntimeResult(
+                        decision="escalate_human",
+                        answer=(
+                            "I am having trouble reaching the assistant service. "
+                            "Please try again shortly or type LA for a live agent."
+                        ),
+                        confidence=0.2,
+                        escalate_needed=True,
+                        capability_used="llm_error",
+                        fallback_reason=f"llm_exception:{type(exc).__name__}",
+                    )
+                }
             log.debug("Agent step %d raw: %s", step + 1, raw[:300])
             parsed = _extract_json(raw)
 

@@ -24,7 +24,7 @@ python3 tools/kai doctor
 python3 -m kai.cli port-check   # deps + startup hints for this workspace
 ```
 
-New tenant checklist: [`docs/PORTING.md`](docs/PORTING.md). Core vs optional deps: `requirements.txt` + `requirements-optional.txt`.
+New tenant checklist: [`docs/PORTING.md`](docs/PORTING.md). Security: [`docs/SECURITY.md`](docs/SECURITY.md). Core vs optional deps: `requirements.txt` + `requirements-optional.txt`.
 
 ## Architecture boundaries
 

@@ -5,7 +5,7 @@ WORKDIR /app
 
 # System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc libpq-dev git && \
+    build-essential gcc git && \
     rm -rf /var/lib/apt/lists/*
 
 # Large wheels (e.g. torch via sentence-transformers) need a longer read timeout.
@@ -13,9 +13,10 @@ ENV PIP_DEFAULT_TIMEOUT=1000
 ENV PIP_RETRIES=10
 
 # Install backend dependencies
+ARG INSTALL_OPTIONAL=1
 COPY requirements.txt requirements-optional.txt ./
-RUN pip install --no-cache-dir --default-timeout=1000 \
-    -r requirements.txt -r requirements-optional.txt
+RUN pip install --no-cache-dir --default-timeout=1000 -r requirements.txt \
+    && if [ "$INSTALL_OPTIONAL" = "1" ]; then pip install --no-cache-dir -r requirements-optional.txt; fi
 
 # Copy backend source
 COPY . .
@@ -32,4 +33,4 @@ RUN mkdir -p /app/media /app/logs /app/data
 EXPOSE 8000
 
 # Start FastAPI
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-graceful-shutdown", "30"]

@@ -125,7 +125,7 @@ class Settings:
     master_faq_path: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "02_knowledge" / "faq" / "master_faq.md")
     agent_learnt_faq_path: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "02_knowledge" / "faq" / "agent_learnt_faq.md")
     faq_learn_queue_dir: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "02_knowledge" / "faq" / "learn_queue")
-    workspace_manifest_path: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "00_manifest.md")
+    workspace_manifest_path: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "00_manifest.yaml")
     sop_sync_state_path: Path = field(default_factory=lambda: BASE_DIR / "data" / "sop" / "sop_sync_state.json")
     session_db_path: str = "data/sessions.db"
 
@@ -271,7 +271,7 @@ def load_settings() -> Settings:
         master_faq_path=master_faq,
         agent_learnt_faq_path=agent_learnt,
         faq_learn_queue_dir=learn_queue,
-        workspace_manifest_path=agent_workspace / "00_manifest.md",
+        workspace_manifest_path=agent_workspace / "00_manifest.yaml",
         sop_sync_state_path=base / "data" / "sop" / "sop_sync_state.json",
         session_db_path=_env("SESSION_DB_PATH", _env("DB_PATH", "data/sessions.db")),
         bing_api_key=_env("BING_API_KEY"),

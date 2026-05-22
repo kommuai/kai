@@ -16,15 +16,13 @@ async def _sleep(seconds: float) -> None:
 
 
 async def daily_knowledge_refresh_loop() -> None:
-    from kai.services.container import get_support_runtime_service
-    from kai.workspace.reload import reload_workspace_caches
+    from kai.engine.refresh import refresh_runtime_knowledge
 
     log = logging.getLogger("kai.scheduler")
     while True:
         await _sleep(86400)
         try:
-            reload_workspace_caches()
-            out = get_support_runtime_service().refresh_knowledge()
+            out = refresh_runtime_knowledge(compile_kb=True)
             log.info("scheduled knowledge refresh: %s", out)
         except Exception:
             log.exception("scheduled knowledge refresh failed")
@@ -32,7 +30,7 @@ async def daily_knowledge_refresh_loop() -> None:
 
 async def sop_merge_sync_loop() -> None:
     from config import KAI_SOP_MERGE_SYNC_HOUR, KAI_SOP_MERGE_SYNC_MINUTE, KAI_SOP_MERGE_SYNC_ENABLED, TZ_REGION
-    from kai.core.sop_sync_merge import STATE_PATH, sync_sop_regions
+    from kai.core.sop_sync_merge import state_path, sync_sop_regions
 
     if str(KAI_SOP_MERGE_SYNC_ENABLED).strip().lower() not in {"1", "true", "yes", "on"}:
         return
@@ -49,9 +47,10 @@ async def sop_merge_sync_loop() -> None:
             continue
         today = now.strftime("%Y-%m-%d")
         last_sync_date = ""
-        if STATE_PATH.exists():
+        sp = state_path()
+        if sp.exists():
             try:
-                state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
+                state = json.loads(sp.read_text(encoding="utf-8"))
                 last_sync_date = str(state.get("last_sync_date") or "").strip()
             except Exception:
                 last_sync_date = ""
@@ -75,9 +74,9 @@ def start_background_tasks() -> list[asyncio.Task[Any]]:
         return []
     tasks: list[asyncio.Task[Any]] = []
     tasks.append(asyncio.create_task(daily_knowledge_refresh_loop(), name="kai-daily-refresh"))
-    from config import KAI_SOP_MERGE_SYNC_ENABLED
+    from kai.engine.features import sop_merge_scheduler_enabled
 
-    if str(KAI_SOP_MERGE_SYNC_ENABLED).strip().lower() in {"1", "true", "yes", "on"}:
+    if sop_merge_scheduler_enabled():
         tasks.append(asyncio.create_task(sop_merge_sync_loop(), name="kai-sop-sync"))
     return tasks
 

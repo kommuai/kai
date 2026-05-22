@@ -1,39 +1,13 @@
----
-version: "1.1"
-agent_name: Kai
-agent_workspace_root: agent_workspace
-rag_source: 02_knowledge/faq/master_faq.md
-context_registry: 04_context/context_registry.yaml
-system_prompt: 01_core/system_prompt.md
-chat_copy: 05_copy/chat_copy.yaml
-settings_defaults: settings.yaml
-session_store:
-  backend: sqlite
-  env_path_var: SESSION_DB_PATH
-  env_fallback_var: DB_PATH
-  default_relative: data/sessions.db
-  docker_container_path: /data/sessions.db
-  compose_volume_note: "Host ./data is mounted to /data; SESSION_DB_PATH=/data/sessions.db in docker-compose."
-sop_sync:
-  markers:
-    start: "<!-- sop-sync:start -->"
-    end: "<!-- sop-sync:end -->"
-  optional_env_url: SOP_DOC_URL
----
+# Agent workspace manifest (pointer)
 
-# Kai agent workspace
+**Primary config:** [`00_manifest.yaml`](00_manifest.yaml) — tenant id, paths, knowledge mode, `sop_sync`, `session_store`.
 
-**Primary config:** [`00_manifest.yaml`](00_manifest.yaml) and [`03_tools/tools.yaml`](03_tools/tools.yaml). This file is legacy documentation + frontmatter fallback.
+This Markdown file is kept for operator notes only. Runtime loads YAML first.
 
-Human-editable **content** for the Kommu chatbot. Runtime code loads from here via `kai/content/`.
+## Session storage
 
-- **01_core** — `system_prompt.md` only (loaded every turn).
-- **02_knowledge** — `master_faq.md` is canonical FAQ (full file in system prompt + compiled `kb_chunks.jsonl` for `search_faq`). SOP Google Doc sync overwrites only the `sop-sync` region.
-- **03_skills** — Skill manifest/docs only; live tools are in `support_runtime/agent_tools.py`.
-- **04_context** — Context registry YAML (tests/tools; not the SQLite session store).
-- **05_copy** — User-visible strings: footers, handover, resume, media guard.
-- **settings.yaml** — Documented non-secret defaults (env overrides).
+Configured in `00_manifest.yaml` under `session_store` (default SQLite at `data/sessions.db`). Override with `SESSION_DB_PATH` in `.env`.
 
-Session history remains in **SQLite**; see `session_store` above.
+## SOP region sync
 
-See [`docs/OPERATOR.md`](../docs/OPERATOR.md) for the full edit map.
+Markers in `02_knowledge/faq/master_faq.md` between `<!-- sop-sync:start -->` and `<!-- sop-sync:end -->`. Enable scheduled merge via `KAI_SOP_MERGE_SYNC_ENABLED` and `sop_sync.enabled` in YAML.

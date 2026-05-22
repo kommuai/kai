@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 import re
 from math import sqrt
@@ -13,6 +14,8 @@ try:
     from qdrant_client import QdrantClient
 except Exception:  # noqa: BLE001
     QdrantClient = None
+
+_log = logging.getLogger("kai.retrieval")
 
 
 def _chunks_path() -> Path:
@@ -47,6 +50,10 @@ class HybridRetriever:
                 self.items.append(json.loads(line))
             except Exception:
                 continue
+        if self.use_qdrant and not QdrantClient:
+            _log.warning(
+                "KAI_QDRANT_ENABLED is set but qdrant-client is not installed; using local retrieval only"
+            )
         if self.use_qdrant and QdrantClient:
             try:
                 s = get_settings()

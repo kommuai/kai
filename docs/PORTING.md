@@ -71,3 +71,16 @@ Unchanged for integrators:
 - `GET /health`, `GET /ready` — probes
 
 Point `AGENT_WORKSPACE` at a different directory per deployment; one process = one tenant.
+
+## Tool ID aliases (legacy)
+
+Workspace YAML may use legacy ids; the engine maps them to canonical builtins:
+
+| Legacy id | Canonical |
+|-----------|-----------|
+| `search_kommu_support` | `search_official_site` |
+| `search_bukapilot` | `search_github_repo` |
+| `lookup_warranty` | `lookup_sheet_record` |
+| `create_visitor_pass` | plugin under `03_tools/plugins/` |
+
+See `kai/support_runtime/tools/catalog.py` for `TOOL_PROFILES` (`minimal`, `standard`).

@@ -1,6 +1,9 @@
 services:
   kai:
-    build: .
+    build:
+      context: .
+      args:
+        INSTALL_OPTIONAL: "1"
     container_name: kommu_chatbot
     restart: unless-stopped
     ports:

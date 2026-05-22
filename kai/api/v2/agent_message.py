@@ -8,11 +8,10 @@ from fastapi.responses import PlainTextResponse
 
 from kai.core.policy.settings import RouteMode, get_route_mode
 from kai.content.channels import get_channel_config
-from kai.content.copy import get_chat_copy
-from config import KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER, KAI_ROUTE_AGENT_DEBUG_ENABLED
+from kai.engine.metrics import inc as metrics_inc
+from kai.engine.refresh import refresh_runtime_knowledge
 from kai.settings import get_settings
 
-# Module-level names for tests that patch these attributes.
 from kai.lib.lang_detect import is_malay
 from kai.services.chatwoot_handover import (
     enforce_live_agent_handover,
@@ -20,8 +19,13 @@ from kai.services.chatwoot_handover import (
 )
 from kai.services.container import kai_service, support_runtime_service
 from kai.lib.session_state import append_human_segment_turn, freeze, start_human_segment
+
 log = logging.getLogger("kai.v2")
 router = APIRouter()
+
+_SAFE_ERROR_REPLY = (
+    "Sorry, something went wrong on our side. Please try again in a moment or type LA for a live agent."
+)
 
 
 def _require_admin(x_admin_token: str | None) -> None:
@@ -31,15 +35,14 @@ def _require_admin(x_admin_token: str | None) -> None:
         raise HTTPException(status_code=401, detail="Unauthorized admin client")
 
 
-def _refresh_all_knowledge() -> dict:
-    """Single refresh path for active support runtime knowledge."""
-    from kai.workspace.reload import reload_workspace_caches
+def _admin_token_valid(x_admin_token: str | None) -> bool:
+    token = x_admin_token.strip() if isinstance(x_admin_token, str) else ""
+    expected = str(get_settings().admin_token or "").strip()
+    return bool(expected) and hmac.compare_digest(token, expected)
 
-    reload_workspace_caches()
-    runtime_out = support_runtime_service.refresh_knowledge()
-    kai_service._copy = get_chat_copy()
-    kai_service._channels = get_channel_config()
-    return {"ok": True, "runtime_refresh": runtime_out}
+
+def _refresh_all_knowledge() -> dict:
+    return refresh_runtime_knowledge(compile_kb=True)
 
 
 def _merge_trace(
@@ -51,31 +54,26 @@ def _merge_trace(
     start: float,
     fallback_reason: str = "",
 ) -> dict:
-    out = dict(payload)
-    out.update(
-        {
-            "trace_id": trace_id,
-            "route_mode": mode.value,
-            "capability_used": capability_used,
-            "latency_ms": int((time.time() - start) * 1000),
-        }
-    )
+    payload = dict(payload)
+    payload["trace_id"] = trace_id
+    payload["route_mode"] = mode.value if hasattr(mode, "value") else str(mode)
+    payload["capability_used"] = capability_used
+    payload["latency_ms"] = int((time.time() - start) * 1000)
     if fallback_reason:
-        out["fallback_reason"] = fallback_reason
-    return out
+        payload["fallback_reason"] = fallback_reason
+    return payload
 
 
-def _process_agent_message_data(data: dict) -> dict:
-    if not data:
-        raise ValueError("Invalid n8n payload")
-    msg_type = (data.get("type") or data.get("message_type") or "").strip().lower()
+def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None) -> dict:
+    if not isinstance(data, dict):
+        raise ValueError("payload_must_be_object")
+
     ch = get_channel_config()
-    if ch.is_blocked_media_type(msg_type):
-        lang_early = "BM" if is_malay((data.get("content") or "")) else "EN"
-        guard = ch.media_guard_bm if lang_early == "BM" else ch.media_guard_en
+    if data.get("media_url") and not ch.allow_media:
+        start = time.time()
         payload = {
             "type": "reply",
-            "message": guard,
+            "message": ch.media_fallback_message("EN"),
             "next_state": "bot",
         }
         return _merge_trace(
@@ -83,7 +81,7 @@ def _process_agent_message_data(data: dict) -> dict:
             trace_id=str(uuid4()),
             mode=get_route_mode(),
             capability_used="media_capability_guard",
-            start=time.time(),
+            start=start,
             fallback_reason="media_not_supported_text_only",
         )
     text = data.get("content", "").strip()
@@ -97,26 +95,40 @@ def _process_agent_message_data(data: dict) -> dict:
     if not text:
         return _merge_trace({"ok": True}, trace_id=trace_id, mode=mode, capability_used="empty", start=start)
 
+    metrics_inc("agent_message.requests")
     pre = kai_service.pre_router(data)
     if pre is not None:
         return _merge_trace(pre, trace_id=trace_id, mode=mode, capability_used="pre_router", start=start)
 
-    result = support_runtime_service.execute(text=text, lang=lang, user_id=user_id)
-    debug_enabled = str(KAI_ROUTE_AGENT_DEBUG_ENABLED).strip().lower() in {
-        "1",
-        "true",
-        "yes",
-        "on",
-    }
-    debug_requested = bool(data.get("debug_route_agent"))
-    include_debug = debug_enabled or debug_requested
-    if result.decision == "escalate_human":
-        enforce = str(KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER).strip().lower() in {
-            "1",
-            "true",
-            "yes",
-            "on",
+    try:
+        result = support_runtime_service.execute(text=text, lang=lang, user_id=user_id)
+    except Exception:
+        metrics_inc("agent_message.runtime_errors")
+        log.exception("support_runtime.execute failed trace_id=%s user_id=%s", trace_id, user_id)
+        payload = {
+            "type": "reply",
+            "message": _SAFE_ERROR_REPLY,
+            "next_state": "bot",
+            "decision": "escalate_human",
+            "escalate_needed": True,
         }
+        return _merge_trace(
+            payload,
+            trace_id=trace_id,
+            mode=mode,
+            capability_used="support_runtime_error",
+            start=start,
+            fallback_reason="runtime_exception",
+        )
+
+    s = get_settings()
+    debug_env = bool(s.kai_route_agent_debug_enabled)
+    debug_requested = bool(data.get("debug_route_agent"))
+    include_debug = debug_env and (debug_requested and _admin_token_valid(x_admin_token))
+
+    if result.decision == "escalate_human":
+        metrics_inc("agent_message.escalations")
+        enforce = bool(s.kai_chatwoot_enforce_live_handover)
         if enforce:
             applied, handover_error = enforce_live_agent_handover(data)
             if not applied:
@@ -175,22 +187,27 @@ def _process_agent_message_data(data: dict) -> dict:
 
 
 @router.post("/agent/message")
-async def agent_message(request: Request):
-    data = await request.json()
+async def agent_message(request: Request, x_admin_token: str | None = Header(default=None)):
     try:
-        return _process_agent_message_data(data)
+        data = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="invalid_json") from exc
+    try:
+        return _process_agent_message_data(data, x_admin_token=x_admin_token)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/v2/agent/message")
-async def agent_message_v2(request: Request):
-    data = await request.json()
+async def agent_message_v2(request: Request, x_admin_token: str | None = Header(default=None)):
     try:
-        out = _process_agent_message_data(data)
+        data = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="invalid_json") from exc
+    try:
+        return _process_agent_message_data(data, x_admin_token=x_admin_token)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return out
 
 
 @router.post("/admin/reset_memory")

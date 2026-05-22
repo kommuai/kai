@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+import kai
+from kai.engine.admin_token import admin_token_is_weak, require_strong_admin_token_enabled
 from kai.settings import get_settings
 from kai.support_runtime.compiler import _compiled_dir
 from kai.workspace.manifest import load_workspace_manifest
@@ -13,7 +15,7 @@ router = APIRouter(tags=["health"])
 
 @router.get("/health")
 def health_liveness():
-    return {"status": "ok"}
+    return {"status": "ok", "version": kai.__version__}
 
 
 @router.get("/ready")
@@ -26,10 +28,17 @@ def health_readiness():
     errors = [i for i in issues if i.level == "error"]
 
     llm_configured = bool((settings.kai_llm_api_key or settings.deepseek_api_key or "").strip())
-    admin_weak = (settings.admin_token or "").strip() in {"", "changeme-strong"}
+    admin_weak = admin_token_is_weak()
+    ready = workspace_is_healthy(issues) and chunks.is_file()
+    if require_strong_admin_token_enabled() and admin_weak:
+        ready = False
+
+    from kai.engine.metrics import snapshot as metrics_snapshot
 
     payload = {
-        "status": "ready" if workspace_is_healthy(issues) and chunks.is_file() else "degraded",
+        "status": "ready" if ready else "degraded",
+        "version": kai.__version__,
+        "metrics": metrics_snapshot(),
         "tenant_id": manifest.tenant_id,
         "display_name": manifest.display_name,
         "workspace": str(settings.agent_workspace),

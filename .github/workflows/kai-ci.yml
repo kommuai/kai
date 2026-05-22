@@ -1,0 +1,28 @@
+name: kai-ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt -r requirements-dev.txt
+      - name: Compile knowledge
+        run: python3 -m kai.cli compile
+        env:
+          AGENT_WORKSPACE: agent_workspace
+      - name: Doctor (skip recompile)
+        run: python3 tools/kai doctor --skip-compile
+      - name: Pytest (fast suite)
+        run: pytest tests/ --ignore=tests/test_support_runtime.py -q --cov=kai --cov-report=term-missing
+        env:
+          AGENT_WORKSPACE: agent_workspace

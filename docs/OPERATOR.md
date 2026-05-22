@@ -2,6 +2,8 @@
 
 One-page map of **where to edit** the WhatsApp bot without hunting Python modules.
 
+Production security (gateway-only chat, admin token, debug gating): [`SECURITY.md`](SECURITY.md).
+
 ## Edit map
 
 | What you change | File or command |

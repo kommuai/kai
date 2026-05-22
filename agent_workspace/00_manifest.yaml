@@ -31,3 +31,10 @@ tools:
 channels:
   whatsapp:
     max_reply_chars: 4096
+
+sop_sync:
+  enabled: true
+
+session_store:
+  backend: sqlite
+  path: data/sessions.db

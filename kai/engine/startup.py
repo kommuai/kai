@@ -53,6 +53,14 @@ def run_startup(*, compile_kb: bool | None = None) -> dict:
     if strict and not workspace_is_healthy(issues):
         raise RuntimeError("Workspace validation failed (KAI_STRICT_STARTUP=1)")
 
+    from kai.engine.admin_token import assert_admin_token_acceptable_for_boot
+
+    assert_admin_token_acceptable_for_boot()
+    if strict:
+        from kai.services.container import get_kai_service
+
+        get_kai_service()
+
     log_session_store_hint(Path(get_settings().workspace_manifest_path))
     warm_warranty = needs_warranty_cache()
     counts = get_support_runtime_service().startup(

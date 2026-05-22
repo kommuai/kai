@@ -83,6 +83,42 @@ def cmd_paths(_args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_init_plugin(args: argparse.Namespace) -> int:
+    plugin_id = (args.plugin_id or "").strip()
+    if not plugin_id or not plugin_id.replace("_", "").isalnum():
+        print("plugin_id must be alphanumeric/underscore")
+        return 1
+    ws = get_settings().agent_workspace
+    dest_dir = ws / "03_tools" / "plugins" / plugin_id
+    if dest_dir.exists() and not args.force:
+        print(f"Plugin directory already exists: {dest_dir}")
+        return 1
+    template = _template_root() / "03_tools" / "plugins" / "example_plugin" / "main.py"
+    if not template.is_file():
+        print(f"Template missing: {template}")
+        return 1
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / "main.py"
+    shutil.copy2(template, dest)
+    print(f"Created plugin at {dest}")
+    print("Register in 03_tools/tools.yaml with plugin: {0}".format(plugin_id))
+    return 0
+
+
+def cmd_export_pack(args: argparse.Namespace) -> int:
+    import tarfile
+
+    ws = Path(args.workspace or get_settings().agent_workspace).resolve()
+    if not ws.is_dir():
+        print(f"Workspace not found: {ws}")
+        return 1
+    out = Path(args.output or f"kai-workspace-{ws.name}.tar.gz").resolve()
+    with tarfile.open(out, "w:gz") as tar:
+        tar.add(ws, arcname=ws.name)
+    print(f"Exported {ws} -> {out}")
+    return 0
+
+
 def cmd_compile(_args: argparse.Namespace) -> int:
     counts = compile_canonical_knowledge()
     print(f"Compiled intents={counts.get('intents', 0)} chunks={counts.get('chunks', 0)}")
@@ -164,6 +200,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_paths = sub.add_parser("paths", help="Print resolved workspace file paths")
     p_paths.set_defaults(func=cmd_paths)
+
+    p_plugin = sub.add_parser("init-plugin", help="Scaffold a plugin under 03_tools/plugins/")
+    p_plugin.add_argument("plugin_id", help="Plugin directory name")
+    p_plugin.add_argument("--force", action="store_true")
+    p_plugin.set_defaults(func=cmd_init_plugin)
+
+    p_export = sub.add_parser("export-pack", help="Tar.gz the workspace directory")
+    p_export.add_argument("--workspace", default=str(get_settings().agent_workspace))
+    p_export.add_argument("--output", default="")
+    p_export.set_defaults(func=cmd_export_pack)
 
     return parser
 

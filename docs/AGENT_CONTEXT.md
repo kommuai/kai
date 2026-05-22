@@ -1,5 +1,13 @@
 # Kai — Agent context
 
+## 2026-05-22 — Production-grade + portability plan (phases 1–7)
+
+- **Config:** `config.py` lazy `__getattr__` + `reload_settings()` on workspace refresh; SOP/FAQ use `resolve_master_faq_path()`.
+- **Security:** `docs/SECURITY.md`; debug gated by env + admin token; safe chat error boundary; `/media` requires `KAI_MEDIA_PUBLIC=1`.
+- **Ops:** `kai/engine/refresh.py` unified refresh; SOP atomic write; `kai/engine/metrics.py`; CI `.github/workflows/kai-ci.yml`.
+- **CLI:** `init-plugin`, `export-pack`; generic `tools: []` + `minimal` profile; plugin template.
+- **Validation:** pytest fast suite green; `tools/kai doctor`.
+
 ## 2026-05-22 — Lightweight pass 4 (boot path + porting polish)
 
 - **Intent:** One FAQ compile per boot; faster `/ready`; generic GitHub env names; smaller Docker context.

@@ -76,8 +76,8 @@ class SopSyncMergeTests(unittest.TestCase):
             from pathlib import Path
 
             state_path = Path(td) / "sop_sync_state.json"
-            with patch("kai.core.sop_sync_merge.MASTER_FAQ_PATH", faq_path), patch(
-                "kai.core.sop_sync_merge.STATE_PATH", state_path
+            with patch("kai.core.sop_sync_merge._master_faq_path", return_value=Path(faq_path)), patch(
+                "kai.core.sop_sync_merge._state_path", return_value=state_path
             ):
                 out = sync_sop_regions()
             self.assertTrue(out["ok"])

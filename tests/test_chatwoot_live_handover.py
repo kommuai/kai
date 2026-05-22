@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from kai.api.v2.agent_message import _process_agent_message_data
 from kai.support_runtime.models import RuntimeResult
@@ -9,8 +9,9 @@ class ChatwootLiveHandoverTests(unittest.TestCase):
     @patch("kai.api.v2.agent_message.kai_service.pre_router", return_value=None)
     @patch("kai.api.v2.agent_message.support_runtime_service.execute")
     @patch("kai.api.v2.agent_message.enforce_live_agent_handover", return_value=(True, ""))
-    @patch("kai.api.v2.agent_message.KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER", "1")
-    def test_escalation_applies_live_handover(self, handover_mock, execute_mock, _pre):
+    @patch("kai.api.v2.agent_message.get_settings")
+    def test_escalation_applies_live_handover(self, gs_mock, handover_mock, execute_mock, _pre):
+        gs_mock.return_value.kai_chatwoot_enforce_live_handover = True
         execute_mock.return_value = RuntimeResult(
             decision="escalate_human",
             answer="Escalating now.",
@@ -28,8 +29,9 @@ class ChatwootLiveHandoverTests(unittest.TestCase):
     @patch("kai.api.v2.agent_message.kai_service.pre_router", return_value=None)
     @patch("kai.api.v2.agent_message.support_runtime_service.execute")
     @patch("kai.api.v2.agent_message.enforce_live_agent_handover", return_value=(False, "toggle_status_failed:500"))
-    @patch("kai.api.v2.agent_message.KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER", "1")
-    def test_escalation_fail_closed_when_handover_fails(self, _handover_mock, execute_mock, _pre):
+    @patch("kai.api.v2.agent_message.get_settings")
+    def test_escalation_fail_closed_when_handover_fails(self, gs_mock, _handover_mock, execute_mock, _pre):
+        gs_mock.return_value.kai_chatwoot_enforce_live_handover = True
         execute_mock.return_value = RuntimeResult(
             decision="escalate_human",
             answer="Escalating now.",

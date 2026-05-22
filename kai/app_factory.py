@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 from contextlib import asynccontextmanager
@@ -16,11 +17,27 @@ from kai.engine.scheduler import start_background_tasks, stop_background_tasks
 from kai.engine.startup import run_startup
 
 
+class _JsonLogFormatter(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        payload = {
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        if hasattr(record, "trace_id"):
+            payload["trace_id"] = record.trace_id
+        return json.dumps(payload, ensure_ascii=False)
+
+
 def _configure_logging() -> None:
     os.makedirs("logs", exist_ok=True)
     if logging.getLogger().handlers:
         return
-    handler = RotatingFileHandler("logs/kai.log", maxBytes=2_000_000, backupCount=3, encoding="utf-8")
+    if os.getenv("KAI_LOG_JSON", "").strip().lower() in {"1", "true", "yes", "on"}:
+        handler = logging.StreamHandler()
+        handler.setFormatter(_JsonLogFormatter())
+    else:
+        handler = RotatingFileHandler("logs/kai.log", maxBytes=2_000_000, backupCount=3, encoding="utf-8")
     logging.basicConfig(level=logging.INFO, handlers=[handler])
 
 
@@ -44,9 +61,10 @@ async def lifespan(app: FastAPI):
 
 def create_app() -> FastAPI:
     app = FastAPI(title=_app_title(), lifespan=lifespan)
-    media = Path("media")
-    if media.is_dir():
-        app.mount("/media", StaticFiles(directory=str(media)), name="media")
+    if os.getenv("KAI_MEDIA_PUBLIC", "").strip().lower() in {"1", "true", "yes", "on"}:
+        media = Path("media")
+        if media.is_dir():
+            app.mount("/media", StaticFiles(directory=str(media)), name="media")
     app.include_router(health_router)
     app.include_router(v2_message_router)
     app.include_router(v2_query_router)

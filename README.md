@@ -122,7 +122,7 @@ Machine-agent auth for `/v2/agent/*`:
 
 - `KAI_SERVICE_KEYS=internal-key:public_info.read|repo.read|media.read`
 - `KAI_GITHUB_TOKEN=<optional_github_token_for_higher_rate_limits>`
-- Repo-reader scope is hard-locked to public repos under `https://github.com/kommuai`.
+- GitHub repo search uses `KAI_GITHUB_REPO` or per-tool overrides in `agent_workspace/03_tools/tools.yaml`.
 
 Admin endpoint auth for `/admin/*`:
 

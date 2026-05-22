@@ -13,7 +13,7 @@ pip install -r requirements.txt
 # pip install -r requirements-optional.txt
 ```
 
-See [PORTING.md](PORTING.md) for a full tenant checklist.
+See [PORTING.md](PORTING.md) for a full tenant checklist and [SECURITY.md](SECURITY.md) for production exposure.
 
 ## 2. Create your workspace
 

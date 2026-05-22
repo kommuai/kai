@@ -110,21 +110,20 @@ def summarize_issue(
     return " ; ".join(parts)[:1200]
 
 
-def _load_bukapilot_skill():
-    from config import BASE_DIR
+def _load_github_backlog_skill():
+    from kai.settings.loader import BASE_DIR
 
     root = BASE_DIR
-    skill_path = os.path.join(
-        root,
-        "agent_workspace",
-        "03_skills",
-        "bukapilot_backlog_search",
-        "handler.py",
-    )
+    candidates = [
+        root / "agent_workspace" / "03_skills" / "github_backlog_search" / "handler.py",
+        root / "agent_workspace" / "03_skills" / "bukapilot_backlog_search" / "handler.py",
+    ]
+    skill_path = next((p for p in candidates if p.is_file()), candidates[-1])
+    skill_path = str(skill_path)
     if not os.path.isfile(skill_path):
         return None
     try:
-        spec = importlib.util.spec_from_file_location("kai_bukapilot_skill", skill_path)
+        spec = importlib.util.spec_from_file_location("kai_github_backlog_skill", skill_path)
         if not spec or not spec.loader:
             return None
         mod = importlib.util.module_from_spec(spec)
@@ -144,7 +143,7 @@ def github_repo_agentic_search(
 ) -> dict[str, Any]:
     repo_name = (repo or GITHUB_REPO).strip().strip("/")
     branch = (branch or GITHUB_BRANCH).strip() or "main"
-    skill = _load_bukapilot_skill()
+    skill = _load_github_backlog_skill()
     if skill:
         try:
             hits = skill.search_hits(issue_text, branch=branch, max_hits=max_hits)
