@@ -1,7 +1,7 @@
 import time
 import unittest
 
-from session_state import (
+from kai.lib.session_state import (
     add_message_to_history,
     extract_and_store_facts,
     get_history,

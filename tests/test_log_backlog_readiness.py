@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import patch
 
-from support_runtime.agent_tools import AgentToolRegistry
-from support_runtime.retrieval import HybridRetriever, SimpleReranker
+from kai.support_runtime.agent_tools import AgentToolRegistry
+from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 
 class LogBacklogReadinessTests(unittest.TestCase):
@@ -28,10 +28,10 @@ class LogBacklogReadinessTests(unittest.TestCase):
         self.assertEqual(out["error"], "log_backlog_not_ready_missing_device_car")
 
     @patch(
-        "support_runtime.agent_tools.deepseek_chat_completion",
+        "kai.support_runtime.agent_tools.deepseek_chat_completion",
         return_value='{"problem_description":"DEEPSEEK PROBLEM","reproduction_steps":"Step 1 then Step 2."}',
     )
-    @patch("support_runtime.agent_tools.append_backlog_issue", return_value={"ok": True, "updatedRange": "A1:E1"})
+    @patch("kai.support_runtime.agent_tools.append_backlog_issue", return_value={"ok": True, "updatedRange": "A1:E1"})
     def test_log_backlog_calls_append_when_ready(self, append_mock, _deepseek_mock):
         out = self.reg.log_backlog(
             issue="KA2 error 1003 logs missing",

@@ -1,6 +1,6 @@
 import unittest
 
-from core.context.registry import ContextRegistry
+from kai.core.context.registry import ContextRegistry
 
 
 class ContextRegistryTests(unittest.TestCase):

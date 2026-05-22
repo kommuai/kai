@@ -111,7 +111,9 @@ def summarize_issue(
 
 
 def _load_bukapilot_skill():
-    root = os.path.dirname(os.path.dirname(__file__))
+    from config import BASE_DIR
+
+    root = BASE_DIR
     skill_path = os.path.join(
         root,
         "agent_workspace",

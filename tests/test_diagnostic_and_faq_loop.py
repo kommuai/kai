@@ -1,6 +1,6 @@
 import unittest
 
-from services.container import support_runtime_service
+from kai.services.container import support_runtime_service
 
 
 class DiagnosticAndFaqLoopTests(unittest.TestCase):

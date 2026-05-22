@@ -21,8 +21,8 @@ from config import (
     KAI_LLM_API_KEY,
     resolve_master_faq_path,
 )
-from session_state import pop_human_segment_for_learn
-from support_runtime.providers import build_provider
+from kai.lib.session_state import pop_human_segment_for_learn
+from kai.support_runtime.providers import build_provider
 
 log = logging.getLogger("kai.faq_learn")
 

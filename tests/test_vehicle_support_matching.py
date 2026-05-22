@@ -1,6 +1,6 @@
 import unittest
 
-from services.kai_service import _extract_support_evidence
+from kai.services.kai_service import _extract_support_evidence
 
 
 class VehicleSupportMatchingTests(unittest.TestCase):

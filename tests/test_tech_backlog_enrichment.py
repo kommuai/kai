@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from support_runtime.tech_backlog import infer_possible_solution_from_bukapilot, summarize_issue
+from kai.support_runtime.tech_backlog import infer_possible_solution_from_bukapilot, summarize_issue
 
 
 class TechBacklogEnrichmentTests(unittest.TestCase):
@@ -27,7 +27,7 @@ class TechBacklogEnrichmentTests(unittest.TestCase):
         self.assertIn("Category=connectivity", out)
 
     @patch(
-        "support_runtime.tech_backlog.bukapilot_agentic_search",
+        "kai.support_runtime.tech_backlog.bukapilot_agentic_search",
         return_value={
             "ok": True,
             "branch": "release_ka2",

@@ -1,6 +1,6 @@
 import unittest
 
-from support_runtime.clarify_validation import (
+from kai.support_runtime.clarify_validation import (
     clarify_candidate_from_parsed,
     is_valid_clarifying_text,
     last_question_span,

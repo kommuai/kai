@@ -19,17 +19,17 @@ from config import (
     VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS,
     VEHICLE_SUPPORT_OFFICIAL_URL,
 )
-from google_sheets import warranty_lookup_by_dongle, warranty_text_from_row
-from support_runtime.canonical_faq import extract_answer_from_chunk, pick_best_canonical
-from support_runtime.retrieval import HybridRetriever, SimpleReranker
-from support_runtime.tech_backlog import (
+from kai.lib.google_sheets import warranty_lookup_by_dongle, warranty_text_from_row
+from kai.support_runtime.canonical_faq import extract_answer_from_chunk, pick_best_canonical
+from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
+from kai.support_runtime.tech_backlog import (
     append_backlog_issue,
     bukapilot_agentic_search,
     find_similar_active_issue,
     infer_possible_solution_from_bukapilot,
     summarize_issue,
 )
-from deepseek_client import chat_completion as deepseek_chat_completion
+from kai.lib.deepseek_client import chat_completion as deepseek_chat_completion
 
 
 def _strip_html(raw: str) -> str:
@@ -523,13 +523,12 @@ class AgentToolRegistry:
     def create_visitor_pass(self, visit_date: str = "", visit_time: str = "", unit_id: str = "") -> dict[str, Any]:
         script_path = os.getenv("KAI_SMARTSERVA_TOOL_PATH", "").strip()
         if not script_path:
-            repo_root = Path(__file__).resolve().parents[1]
+            repo_root = Path(__file__).resolve().parents[2]
             candidates = [
+                repo_root / "kai" / "integrations" / "smartserva" / "create_visitor_pass.py",
                 repo_root / "integrations" / "smartserva" / "create_visitor_pass.py",
-                repo_root / "smartserva" / "create_visitor_pass.py",
-                repo_root.parent / "smartserva" / "create_visitor_pass.py",
+                Path.cwd() / "kai" / "integrations" / "smartserva" / "create_visitor_pass.py",
                 Path.cwd() / "integrations" / "smartserva" / "create_visitor_pass.py",
-                Path.cwd() / "smartserva" / "create_visitor_pass.py",
             ]
             found = next((p for p in candidates if p.is_file()), None)
             script_path = str(found) if found else ""

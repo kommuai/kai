@@ -8,11 +8,7 @@ requests==2.32.3
 
 # NLP / ML
 numpy==1.26.4
-faiss-cpu==1.8.0.post1
-fastembed==0.3.3
-onnxruntime==1.18.1
 langdetect==1.0.9
-sentence-transformers>=2.2.2
 
 # Integrations
 openai>=1.30.0

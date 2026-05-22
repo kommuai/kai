@@ -8,7 +8,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from support_runtime.agent_tools import (
+from kai.support_runtime.agent_tools import (
     _expand_years,
     _match_official_vehicle,
     _normalize_vehicle_query,
@@ -79,7 +79,7 @@ FIXTURE = _build_fixture()
 def _patched_match(query: str):
     """Run _match_official_vehicle with cached data replaced by fixture."""
     with patch(
-        "support_runtime.agent_tools._official_supported_vehicles",
+        "kai.support_runtime.agent_tools._official_supported_vehicles",
         return_value=FIXTURE,
     ):
         return _match_official_vehicle(query)

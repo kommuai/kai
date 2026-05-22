@@ -9,8 +9,8 @@ from __future__ import annotations
 
 import unittest
 
-from support_runtime.agent_loop import _looks_like_chitchat
-from support_runtime.clarify_intent import pick_clarify_for_intent
+from kai.support_runtime.agent_loop import _looks_like_chitchat
+from kai.support_runtime.clarify_intent import pick_clarify_for_intent
 
 
 class ClarifyIntentPickerTests(unittest.TestCase):

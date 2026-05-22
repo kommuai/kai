@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import patch, Mock
 
-from support_runtime.agent_tools import AgentToolRegistry
-from support_runtime.retrieval import HybridRetriever, SimpleReranker
+from kai.support_runtime.agent_tools import AgentToolRegistry
+from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 
 class AgentToolsTests(unittest.TestCase):
@@ -30,8 +30,8 @@ class AgentToolsTests(unittest.TestCase):
         self.assertFalse(out["ok"])
         self.assertIn("unknown_tool", out["error"])
 
-    @patch("support_runtime.agent_tools.os.path.isfile", return_value=True)
-    @patch("support_runtime.agent_tools.subprocess.run")
+    @patch("kai.support_runtime.agent_tools.os.path.isfile", return_value=True)
+    @patch("kai.support_runtime.agent_tools.subprocess.run")
     def test_create_visitor_pass_tool_success(self, mock_run: Mock, _mock_isfile: Mock):
         mock_run.return_value = Mock(
             returncode=0,
@@ -43,8 +43,8 @@ class AgentToolsTests(unittest.TestCase):
         self.assertTrue(out["ok"])
         self.assertEqual(out["visitor_pass_link"], "https://example.com/pass")
 
-    @patch("support_runtime.agent_tools.os.path.isfile", return_value=True)
-    @patch("support_runtime.agent_tools.subprocess.run")
+    @patch("kai.support_runtime.agent_tools.os.path.isfile", return_value=True)
+    @patch("kai.support_runtime.agent_tools.subprocess.run")
     def test_create_visitor_pass_tool_defaults_to_now_when_date_time_missing(
         self, mock_run: Mock, _mock_isfile: Mock
     ):
@@ -60,8 +60,8 @@ class AgentToolsTests(unittest.TestCase):
         self.assertNotIn("--date", called_cmd)
         self.assertNotIn("--time", called_cmd)
 
-    @patch("support_runtime.agent_tools.os.path.isfile", return_value=True)
-    @patch("support_runtime.agent_tools.subprocess.run")
+    @patch("kai.support_runtime.agent_tools.os.path.isfile", return_value=True)
+    @patch("kai.support_runtime.agent_tools.subprocess.run")
     def test_create_visitor_pass_tool_failure(self, mock_run: Mock, _mock_isfile: Mock):
         mock_run.return_value = Mock(
             returncode=1,

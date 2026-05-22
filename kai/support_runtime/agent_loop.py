@@ -6,9 +6,9 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from support_runtime.agent_tools import AgentToolRegistry
-from support_runtime.clarify_intent import pick_clarify_for_intent
-from support_runtime.clarify_validation import (
+from kai.support_runtime.agent_tools import AgentToolRegistry
+from kai.support_runtime.clarify_intent import pick_clarify_for_intent
+from kai.support_runtime.clarify_validation import (
     REPAIR_USER_PROMPT,
     clarify_candidate_from_parsed,
     compress_to_one_question,
@@ -16,8 +16,8 @@ from support_runtime.clarify_validation import (
     last_question_span,
 )
 from config import MEMORY_DEPTH
-from support_runtime.guardrails import safety_gate
-from support_runtime.models import RuntimeResult
+from kai.support_runtime.guardrails import safety_gate
+from kai.support_runtime.models import RuntimeResult
 
 log = logging.getLogger("kai.agent_loop")
 

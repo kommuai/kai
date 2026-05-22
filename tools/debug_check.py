@@ -1,6 +1,6 @@
 # debug_check.py  — Kai health/debug tool
 import os, io, csv, re
-import requests, faiss
+import requests
 from pathlib import Path
 from colorama import init, Fore, Style
 from dotenv import load_dotenv
@@ -11,25 +11,16 @@ from config import (
     PORT, TZ_REGION, OFFICE_START, OFFICE_END,
     DEEPSEEK_API_KEY, DEEPSEEK_BASE_URL, DEEPSEEK_MODEL,
     SOP_DOC_URL, WARRANTY_CSV_URL,
-    RAG_DIR, FAISS_DIR
+    AGENT_WORKSPACE, MASTER_FAQ_PATH, SOP_SYNC_STATE_PATH,
 )
 
 # NEW: optional second warranty sheet (CSV)
 EXTRA_WARRANTY_CSV_URL = os.getenv("EXTRA_WARRANTY_CSV_URL", "")
 
 try:
-    from deepseek_client import chat_completion
+    from kai.lib.deepseek_client import chat_completion
 except Exception:
     chat_completion = None
-
-try:
-    from rag.rag import RAGEngine
-except Exception:
-    RAGEngine = None
-
-RAG_INDEX = Path(FAISS_DIR) / "index.faiss"
-RAG_META  = Path(FAISS_DIR) / "index.pkl"
-SOP_JSON  = Path(RAG_DIR)  / "sop_data.json"
 
 init(autoreset=True)
 
@@ -145,24 +136,14 @@ def main():
         else:
             bad(f"Extra fetch         : {err2}")
 
-    # ---------- RAG / FAISS ----------
-    header("RAG / FAISS")
-    ok(f"sop_data.json       : {'EXISTS' if Path(SOP_JSON).exists() else 'MISSING'}")
-    ok(f"index.faiss         : {'EXISTS' if RAG_INDEX.exists() else 'MISSING'}")
-    ok(f"index.pkl           : {'EXISTS' if RAG_META.exists() else 'MISSING'}")
-    if RAG_INDEX.exists():
-        try:
-            idx = faiss.read_index(str(RAG_INDEX))
-            ok(f"FAISS ntotal        : {idx.ntotal}")
-        except Exception as e:
-            bad(f"FAISS read          : {e}")
-    if RAG_INDEX.exists() and RAG_META.exists() and RAGEngine:
-        try:
-            rag = RAGEngine(k=3)
-            ctx = rag.build_context("What is Kommu?", topk=3)
-            ok("RAGEngine search    : OK" if (ctx or "").strip() else "RAGEngine search    : empty")
-        except Exception as e:
-            bad(f"RAGEngine           : {e}")
+    # ---------- FAQ / compiled knowledge (active runtime) ----------
+    header("FAQ / compiled knowledge")
+    ok(f"master_faq.md       : {'EXISTS' if Path(MASTER_FAQ_PATH).exists() else 'MISSING'}")
+    compiled = Path(AGENT_WORKSPACE) / "compiled"
+    for name in ("intents.json", "kb_chunks.jsonl"):
+        p = compiled / name
+        ok(f"compiled/{name}  : {'EXISTS' if p.exists() else 'MISSING'}")
+    ok(f"sop_sync_state.json : {'EXISTS' if Path(SOP_SYNC_STATE_PATH).exists() else 'MISSING'}")
 
     # ---------- Local server ----------
     header("Local server")

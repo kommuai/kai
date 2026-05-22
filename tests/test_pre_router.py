@@ -1,7 +1,7 @@
 import unittest
 
-from services.container import kai_service, support_runtime_service
-from session_state import reset_memory
+from kai.services.container import kai_service, support_runtime_service
+from kai.lib.session_state import reset_memory
 
 
 class PreRouterTests(unittest.TestCase):

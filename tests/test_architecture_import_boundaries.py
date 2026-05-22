@@ -3,13 +3,13 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
-ACTIVE_DIRS = ("api", "support_runtime", "services", "core")
+ACTIVE_DIRS = ("kai/api", "kai/support_runtime", "kai/services", "kai/core", "kai/lib")
 DISALLOWED_IMPORT_SNIPPETS = (
     "archive_legacy.",
     "from archive_legacy",
     "import archive_legacy",
-    "from core.policy.tool_adapter",
-    "from core.skills.registry",
+    "from kai.core.policy.tool_adapter",
+    "from kai.core.skills.registry",
 )
 
 

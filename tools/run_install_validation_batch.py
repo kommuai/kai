@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from services.container import support_runtime_service  # noqa: E402
+from kai.services.container import support_runtime_service  # noqa: E402
 
 # 20 distinct questions: mix of direct SOP topics, paraphrases, typos, Malay, edge cases.
 QUESTIONS: list[tuple[str, str]] = [

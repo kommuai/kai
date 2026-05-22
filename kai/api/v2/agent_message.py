@@ -6,14 +6,14 @@ from uuid import uuid4
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
-from core.policy.settings import RouteMode, get_route_mode
+from kai.core.policy.settings import RouteMode, get_route_mode
 from config import ADMIN_TOKEN, KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER, KAI_ROUTE_AGENT_DEBUG_ENABLED
-from lang_detect import is_malay
-from services.chatwoot_handover import enforce_live_agent_handover
-from services.container import kai_service, support_runtime_service
-from session_state import append_human_segment_turn, freeze, start_human_segment
-from services.chatwoot_handover import extract_chatwoot_conversation_id
-from support_runtime.tech_backlog import list_backlog_sheet_tabs
+from kai.lib.lang_detect import is_malay
+from kai.services.chatwoot_handover import enforce_live_agent_handover
+from kai.services.container import kai_service, support_runtime_service
+from kai.lib.session_state import append_human_segment_turn, freeze, start_human_segment
+from kai.services.chatwoot_handover import extract_chatwoot_conversation_id
+from kai.support_runtime.tech_backlog import list_backlog_sheet_tabs
 
 log = logging.getLogger("kai.v2")
 router = APIRouter()

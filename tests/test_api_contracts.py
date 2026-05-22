@@ -3,21 +3,21 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from api.v2.agent_query import agent_query, agent_search, AgentQueryRequest
+from kai.api.v2.agent_query import agent_query, agent_search, AgentQueryRequest
 from app import app
 from fastapi import HTTPException
-from support_runtime.models import RuntimeResult
+from kai.support_runtime.models import RuntimeResult
 
 
 class AgentQueryContractTests(unittest.TestCase):
-    @patch("api.v2.agent_query.authorize", return_value=False)
+    @patch("kai.api.v2.agent_query.authorize", return_value=False)
     def test_agent_query_requires_api_key(self, _auth):
         with self.assertRaises(HTTPException) as ctx:
             agent_query(AgentQueryRequest(query="hello"), x_api_key=None)
         self.assertEqual(ctx.exception.status_code, 401)
 
-    @patch("api.v2.agent_query.authorize", return_value=True)
-    @patch("api.v2.agent_query.support_runtime_service.execute")
+    @patch("kai.api.v2.agent_query.authorize", return_value=True)
+    @patch("kai.api.v2.agent_query.support_runtime_service.execute")
     def test_agent_query_escalation_returns_404(self, execute_mock, _auth):
         execute_mock.return_value = RuntimeResult(
             decision="escalate_human",
@@ -30,8 +30,8 @@ class AgentQueryContractTests(unittest.TestCase):
         self.assertEqual(ctx.exception.status_code, 404)
         self.assertEqual(ctx.exception.detail, "needs_human")
 
-    @patch("api.v2.agent_query.authorize", return_value=True)
-    @patch("api.v2.agent_query.support_runtime_service.execute")
+    @patch("kai.api.v2.agent_query.authorize", return_value=True)
+    @patch("kai.api.v2.agent_query.support_runtime_service.execute")
     def test_agent_search_contract(self, execute_mock, _auth):
         execute_mock.return_value = RuntimeResult(
             decision="direct_answer",
@@ -50,8 +50,8 @@ class AgentMessageShadowContractTests(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
 
-    @patch("api.v2.agent_message.kai_service.pre_router", return_value=None)
-    @patch("api.v2.agent_message.support_runtime_service.execute")
+    @patch("kai.api.v2.agent_message.kai_service.pre_router", return_value=None)
+    @patch("kai.api.v2.agent_message.support_runtime_service.execute")
     def test_v2_message_uses_support_runtime(self, execute_mock, _pre):
         execute_mock.return_value = RuntimeResult(
             decision="direct_answer",
@@ -66,7 +66,7 @@ class AgentMessageShadowContractTests(unittest.TestCase):
         self.assertEqual(body.get("type"), "reply")
         execute_mock.assert_called_once()
 
-    @patch("api.v2.agent_message._refresh_all_knowledge", return_value={"ok": True, "runtime_refresh": {"intents": 1}})
+    @patch("kai.api.v2.agent_message._refresh_all_knowledge", return_value={"ok": True, "runtime_refresh": {"intents": 1}})
     def test_admin_refresh_sop_contract(self, refresh_mock):
         resp = self.client.post("/admin/refresh-sop", headers={"x-admin-token": "changeme-strong"})
         self.assertEqual(resp.status_code, 200)

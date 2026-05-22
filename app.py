@@ -10,8 +10,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi_utils.tasks import repeat_every
 import pytz
 
-from api.v2.agent_message import router as v2_message_router
-from api.v2.agent_query import router as v2_query_router
+from kai.api.v2.agent_message import router as v2_message_router
+from kai.api.v2.agent_query import router as v2_query_router
 from config import (
     KAI_SOP_MERGE_SYNC_ENABLED,
     KAI_SOP_MERGE_SYNC_HOUR,
@@ -19,9 +19,9 @@ from config import (
     TZ_REGION,
     WORKSPACE_MANIFEST_PATH,
 )
-from core.sop_sync_merge import STATE_PATH, sync_sop_regions
-from core.workspace_manifest import log_session_store_hint
-from services.container import kai_service, support_runtime_service
+from kai.core.sop_sync_merge import STATE_PATH, sync_sop_regions
+from kai.core.workspace_manifest import log_session_store_hint
+from kai.services.container import kai_service, support_runtime_service
 
 os.makedirs("logs", exist_ok=True)
 handler = RotatingFileHandler("logs/kai.log", maxBytes=2_000_000, backupCount=3, encoding="utf-8")

@@ -1,8 +1,8 @@
 import unittest
 
-from api.v2.agent_message import _process_agent_message_data
-from services.container import kai_service
-from session_state import reset_memory
+from kai.api.v2.agent_message import _process_agent_message_data
+from kai.services.container import kai_service
+from kai.lib.session_state import reset_memory
 
 
 class ChatwootParityContractTests(unittest.TestCase):

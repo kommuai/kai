@@ -9,9 +9,9 @@ import re
 import pytz
 
 from config import OFFICE_END, OFFICE_START, TZ_REGION
-from lang_detect import is_malay
-from media_handler import init_media_log
-from session_state import (
+from kai.lib.lang_detect import is_malay
+from kai.lib.media_handler import init_media_log
+from kai.lib.session_state import (
     add_message_to_history,
     append_human_segment_turn,
     extract_and_store_facts,
@@ -25,8 +25,8 @@ from session_state import (
     start_human_segment,
     update_session_summary,
 )
-from services.chatwoot_handover import extract_chatwoot_conversation_id
-from support_runtime.faq_learn import schedule_faq_learn_after_handback
+from kai.services.chatwoot_handover import extract_chatwoot_conversation_id
+from kai.support_runtime.faq_learn import schedule_faq_learn_after_handback
 
 log = logging.getLogger("kai")
 
@@ -71,7 +71,7 @@ class KaiService:
         self, conversation_id, answer: str, lang: str, *, suppress: bool = False
     ) -> tuple[str, dict]:
         """Footer + WhatsApp-safe length (Twilio text.body ≤ 4096)."""
-        from core.outbound_delivery import prepare_outbound_reply
+        from kai.core.outbound_delivery import prepare_outbound_reply
 
         body = self.add_footer(conversation_id, answer, lang, suppress=suppress)
         return prepare_outbound_reply(body, lang)

@@ -1,6 +1,6 @@
 import unittest
 
-from support_runtime.tech_backlog import list_backlog_sheet_tabs
+from kai.support_runtime.tech_backlog import list_backlog_sheet_tabs
 
 
 class TechBacklogTabsTests(unittest.TestCase):

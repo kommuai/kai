@@ -1,6 +1,6 @@
 import unittest
 
-from core.faq_markdown import (
+from kai.core.faq_markdown import (
     parse_faq_markdown,
     parse_master_faq_schema,
     replace_sop_sync_region,

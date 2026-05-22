@@ -7,8 +7,8 @@ import re
 from math import sqrt
 
 from config import AGENT_WORKSPACE
-from support_runtime.models import RetrievalItem
-from support_runtime.providers import ChatProvider
+from kai.support_runtime.models import RetrievalItem
+from kai.support_runtime.providers import ChatProvider
 
 try:
     from qdrant_client import QdrantClient

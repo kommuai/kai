@@ -8,8 +8,8 @@ from typing import Any
 
 import pytz
 
-from config import MASTER_FAQ_PATH, RAG_DIR, TZ_REGION
-from core.faq_markdown import (
+from config import MASTER_FAQ_PATH, SOP_SYNC_STATE_PATH, TZ_REGION
+from kai.core.faq_markdown import (
     SOP_SYNC_END_DEFAULT,
     SOP_SYNC_START_DEFAULT,
     ensure_sop_sync_markers,
@@ -17,10 +17,10 @@ from core.faq_markdown import (
     render_master_faq_schema,
     replace_sop_sync_region,
 )
-from sop_doc_loader import fetch_sop_sync_region_from_google_doc
-from support_runtime.sop_writeback import push_master_faq_to_google_doc
+from kai.lib.sop_doc_loader import fetch_sop_sync_region_from_google_doc
+from kai.support_runtime.sop_writeback import push_master_faq_to_google_doc
 
-STATE_PATH = Path(RAG_DIR) / "sop_sync_state.json"
+STATE_PATH = Path(SOP_SYNC_STATE_PATH)
 
 
 def _extract_local_sync_region(full_text: str) -> str:

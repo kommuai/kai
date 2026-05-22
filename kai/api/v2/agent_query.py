@@ -3,9 +3,9 @@ from uuid import uuid4
 from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from core.authz.service_auth import authorize
-from core.provenance.evidence import normalize_source
-from services.container import support_runtime_service
+from kai.core.authz.service_auth import authorize
+from kai.core.provenance.evidence import normalize_source
+from kai.services.container import support_runtime_service
 
 router = APIRouter()
 

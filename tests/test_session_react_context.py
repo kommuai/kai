@@ -5,7 +5,7 @@ from __future__ import annotations
 import unittest
 from uuid import uuid4
 
-from session_state import (
+from kai.lib.session_state import (
     add_message_to_history,
     build_short_term_context,
     init_db,
@@ -13,10 +13,10 @@ from session_state import (
     update_session_summary,
     upsert_memory_fact,
 )
-from support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
-from support_runtime.agent_tools import AgentToolRegistry
-from support_runtime.retrieval import HybridRetriever, SimpleReranker
-from support_runtime.service import SupportRuntimeService
+from kai.support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
+from kai.support_runtime.agent_tools import AgentToolRegistry
+from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
+from kai.support_runtime.service import SupportRuntimeService
 
 
 class _CaptureProvider:

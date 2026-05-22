@@ -1,8 +1,8 @@
 import unittest
 
-from support_runtime.compiler import compile_canonical_knowledge
-from support_runtime.providers import build_provider
-from support_runtime.retrieval import HybridRetriever, SimpleReranker
+from kai.support_runtime.compiler import compile_canonical_knowledge
+from kai.support_runtime.providers import build_provider
+from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
 class SkillContractTests(unittest.TestCase):
     def test_retriever_and_reranker_contract(self):
         compile_canonical_knowledge()

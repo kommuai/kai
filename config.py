@@ -63,11 +63,9 @@ GOOGLE_SHEETS_WARRANTY_GID = os.getenv("GOOGLE_SHEETS_WARRANTY_GID", "")
 GOOGLE_SHEETS_WARRANTY_EXTRA_GID = os.getenv("GOOGLE_SHEETS_WARRANTY_EXTRA_GID", "")
 SOP_POLL_SECONDS = int(os.getenv("SOP_POLL_SECONDS", "0"))
 
-# RAG paths
 BASE_DIR = os.path.dirname(__file__)
-RAG_DIR = os.path.join(BASE_DIR, "rag")
-FAISS_DIR = os.path.join(RAG_DIR, "faiss_index")
-SOP_JSON_PATH = os.path.join(RAG_DIR, "sop_data.json")
+# SOP merge-sync state (was under legacy kai/rag/)
+SOP_SYNC_STATE_PATH = os.path.join(BASE_DIR, "data", "sop", "sop_sync_state.json")
 
 # agent_workspace (content root: core MD, FAQ, skills metadata)
 _agent_ws = os.getenv("AGENT_WORKSPACE", "agent_workspace")

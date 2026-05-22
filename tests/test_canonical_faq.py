@@ -4,14 +4,14 @@ from __future__ import annotations
 
 import unittest
 
-from support_runtime.agent_tools import AgentToolRegistry
-from support_runtime.canonical_faq import (
+from kai.support_runtime.agent_tools import AgentToolRegistry
+from kai.support_runtime.canonical_faq import (
     extract_answer_from_chunk,
     format_canonical_hint,
     pick_best_canonical,
     pick_faq_first_runtime,
 )
-from support_runtime.retrieval import HybridRetriever, SimpleReranker
+from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 
 class CanonicalFaqUnitTests(unittest.TestCase):

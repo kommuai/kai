@@ -33,8 +33,8 @@ tmp/
 pip-wheel-metadata/
 
 # Data & indices
-rag/faiss_index/
-rag/website_data.json
+data/sop/*.json
+!data/sop/.gitkeep
 data/**/raw/
 data/**/tmp/
 *.sqlite

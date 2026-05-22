@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
-from core.types import CapabilityRequest, CapabilityResult
+from kai.core.types import CapabilityRequest, CapabilityResult
 
 
 @dataclass

@@ -6,7 +6,7 @@ from pathlib import Path
 import re
 
 from config import AGENT_WORKSPACE, resolve_master_faq_path
-from core.faq_markdown import parse_master_faq_schema
+from kai.core.faq_markdown import parse_master_faq_schema
 
 
 COMPILED_DIR = Path(AGENT_WORKSPACE) / "compiled"

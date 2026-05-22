@@ -6,8 +6,8 @@ Add capabilities via support_runtime/agent_tools.py and master_faq.md instead.
 import argparse
 from pathlib import Path
 
-TEMPLATE_HANDLER = '''from core.skills.contracts import SkillBudget, SkillContextBundle
-from core.types import CapabilityRequest, CapabilityResult
+TEMPLATE_HANDLER = '''from kai.core.skills.contracts import SkillBudget, SkillContextBundle
+from kai.core.types import CapabilityRequest, CapabilityResult
 
 
 class {class_name}:

@@ -14,12 +14,12 @@ POST /agent/message  (or /v2/agent/message)
 | Path | Role |
 |------|------|
 | `app.py` | FastAPI app, startup refresh, optional SOP merge cron |
-| `api/v2/` | Chat + admin + agent query routes |
-| `services/kai_service.py` | `pre_router`, footers, outbound prep |
-| `support_runtime/` | Compiler, ReAct loop, agent tools, turn planner, evidence policy |
+| `kai/api/v2/` | Chat + admin + agent query routes |
+| `kai/services/kai_service.py` | `pre_router`, footers, outbound prep |
+| `kai/support_runtime/` | Compiler, ReAct loop, agent tools |
 | `agent_workspace/` | FAQ markdown → `compiled/` JSON |
-| `session_state.py` | SQLite sessions + memory facts |
-| `core/outbound_delivery.py` | Intelligent reply shortening for Twilio |
+| `kai/lib/session_state.py` | SQLite sessions + memory facts |
+| `kai/core/outbound_delivery.py` | Intelligent reply shortening for Twilio |
 
 ## Removed (legacy cleanup)
 
@@ -34,4 +34,8 @@ POST /agent/message  (or /v2/agent/message)
 ## Knowledge refresh
 
 - `POST /admin/refresh-sop` → `compile_canonical_knowledge()` + warranty sheet load
-- Optional daily SOP merge: `KAI_SOP_MERGE_SYNC_ENABLED`
+- Optional daily SOP merge: `KAI_SOP_MERGE_SYNC_ENABLED` (state file: `data/sop/sop_sync_state.json`)
+
+## Removed legacy RAG
+
+- FAISS / `RAGEngine` / `run_rag_dual` — not used in production. Retrieval is FAQ compiler + `HybridRetriever` (Qdrant or local `kb_chunks.jsonl`).

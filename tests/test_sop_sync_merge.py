@@ -2,8 +2,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from core.faq_markdown import parse_master_faq_schema
-from core.sop_sync_merge import merge_schemas, render_merged_schema_to_markdown, sync_sop_regions
+from kai.core.faq_markdown import parse_master_faq_schema
+from kai.core.sop_sync_merge import merge_schemas, render_merged_schema_to_markdown, sync_sop_regions
 
 
 class SopSyncMergeTests(unittest.TestCase):

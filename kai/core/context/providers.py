@@ -1,4 +1,4 @@
-from core.context.contracts import ContextProvider
+from kai.core.context.contracts import ContextProvider
 
 
 class StaticContextProvider(ContextProvider):

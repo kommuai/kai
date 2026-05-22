@@ -2,26 +2,26 @@ from __future__ import annotations
 
 from dataclasses import asdict
 
-from google_sheets import fetch_warranty_all
-from session_state import (
+from kai.lib.google_sheets import fetch_warranty_all
+from kai.lib.session_state import (
     add_message_to_history,
     build_short_term_context,
     get_history,
     update_session_summary,
 )
-from support_runtime.canonical_faq import (
+from kai.support_runtime.canonical_faq import (
     enrich_query_with_history,
     format_canonical_hint,
     pick_best_canonical,
     pick_faq_first_runtime,
 )
-from support_runtime.compiler import compile_canonical_knowledge
-from support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
-from support_runtime.agent_prompts import build_system_prompt
-from support_runtime.agent_tools import AgentToolRegistry
-from support_runtime.models import RuntimeResult
-from support_runtime.providers import build_provider
-from support_runtime.retrieval import HybridRetriever, SimpleReranker
+from kai.support_runtime.compiler import compile_canonical_knowledge
+from kai.support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
+from kai.support_runtime.agent_prompts import build_system_prompt
+from kai.support_runtime.agent_tools import AgentToolRegistry
+from kai.support_runtime.models import RuntimeResult
+from kai.support_runtime.providers import build_provider
+from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 
 class SupportRuntimeService:

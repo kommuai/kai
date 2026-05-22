@@ -1,13 +1,13 @@
 import unittest
 from unittest.mock import patch
 
-from support_runtime.agent_tools import AgentToolRegistry
-from support_runtime.retrieval import HybridRetriever, SimpleReranker
+from kai.support_runtime.agent_tools import AgentToolRegistry
+from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 
 class VehicleSupportOfficialMatchTests(unittest.TestCase):
     @patch(
-        "support_runtime.agent_tools._official_supported_vehicles",
+        "kai.support_runtime.agent_tools._official_supported_vehicles",
         return_value=[
             {
                 "name": "Toyota Alphard",

@@ -136,7 +136,7 @@ Admin endpoint auth for `/admin/*`:
 ### A) One-shot full system check (CLI)
 
 ```bash
-python debug_check.py
+python tools/debug_check.py
 ```
 
 ### E) Runtime evaluation harness (offline)
@@ -240,17 +240,25 @@ flowchart TD
 ##  Repo Layout
 
 ```bash
-├── app.py                    # FastAPI app
-├── config.py                 # Config + constants
-├── data/sop/                 # SOP docs
-├── support_runtime/          # Active runtime (ReAct loop, FAQ, retrieval, tools)
-├── integrations/smartserva/  # SmartServa visitor-pass automation module
-├── tools/                    # Audits & benchmarks
-├── logs/                     # Runtime & benchmark logs
+├── app.py                    # FastAPI entry (uvicorn app:app)
+├── config.py                 # Env + path constants (.env loaded here)
+├── .env                      # Local secrets (not in git)
+├── kai/                      # Application package
+│   ├── api/v2/               # HTTP routes (/agent/message, /admin/*)
+│   ├── support_runtime/      # ReAct loop, FAQ, retrieval, tools
+│   ├── services/             # pre_router, Chatwoot handover
+│   ├── core/                 # SOP sync, policies, outbound delivery
+│   ├── lib/                  # session, LLM client, sheets, media
+│   └── integrations/         # SmartServa visitor pass, etc.
+├── agent_workspace/          # FAQ + compiled knowledge (Docker volume)
+├── data/sop/                 # SOP merge-sync state (not legacy FAISS)
+├── data/                     # SQLite sessions, SOP assets
+├── secrets/                  # Google service account JSON
+├── tools/                    # debug_check, eval, SOP sync scripts
+├── tests/
+├── docs/
 ├── docker-compose.yml
-├── Dockerfile
-├── requirements.txt
-└── README.md
+└── requirements.txt
 ```
 
 ---
@@ -287,6 +295,6 @@ Architecture map (including removed legacy paths):
 
 - `curl 127.0.0.1:8000` fails → ensure `uvicorn app:app` is running.  
 - In Docker, use **6090** not 8000.  
-- SOP outdated → run `python debug_check.py`.  
+- SOP outdated → run `python tools/debug_check.py`.  
 - Always “live agent” → call `/admin/reset_memory?user_id=<phone_number>`.  
 - Wrong language → check pinned language.  
