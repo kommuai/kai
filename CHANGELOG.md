@@ -8,12 +8,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Full FAQ context:** every agent turn injects complete `master_faq.md` into the system prompt (`faq_context.py`); session chat is the full message list for the active session (default **24h** idle timeout, up to **100** turns).
+- `SESSION_IDLE_HOURS`, `SESSION_MAX_HISTORY_MESSAGES` config; `ensure_active_session()` resets history after idle window.
+- `docs/architecture/turn_orchestrator.md` — proposed state-driven turn pipeline (ConversationState, PolicyRouter, CanonicalExecutor, workflow compiler metadata) to replace FAQ-hint + implicit ReAct routing.
+
+### Removed
+
+- Regex-based clarify routing (`clarify_intent.py` / `pick_clarify_for_intent`) and `MEMORY_DEPTH=10` cap on session chat (replaced by session window settings).
+
+### Added
+
 - `tools/clear_chat.py` — CLI to clear session/history for a phone number (`python tools/clear_chat.py 0173611088`).
 
 ### Changed
 
+- **Agent prompts + FAQ:** answer-first rules (no default pricing/install upsell); new FAQ intents `vehicle_manufacturer_warranty`, `insurance_out_of_scope`; expanded `warranty` aliases; suppress LA footer on normal bot replies.
+- **Partner installers (FAQ-only):** JB partner — Mr Tey Hyper Auto, Skudai (Lot CP2 Best Mart, +60 12-787 5885); Penang — SAFCA Penang (Facebook contact; no public street address found).
+- **Context architecture:** removed regex topic stickiness (`infer_session_topic`, `update_session_topics`, `get_session_topics`), per-turn FAQ retrieval hints, and FAQ-first-on-message-1 shortcut; model uses full FAQ + full session history instead.
+- **Agent loop:** removed server grounding gate (`ungrounded_answer_blocked`, `vehicle_nudge`, `pick_clarify_for_intent`); the model’s `direct_answer` is sent as-is even without `source_ids` or tool calls. Path A clarify validation (`finalize_clarifying_answer`) unchanged.
 - **FAQ (`master_faq.md`):** added `regional_installer` and `regional_installer_followup` intents (Penang/outstation partner installers, aliases for "one in penang"); narrowed `install_booking` to HQ appointments; clarified `self_install` vs partner vs HQ.
-- **Clarify fallback:** if the ReAct path still lacks grounding, `installer` queries no longer fall through to the generic HQ/self-install menu (word-boundary only; not a routing change).
 
 ### Added
 

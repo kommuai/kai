@@ -126,10 +126,7 @@ def _process_agent_message_data(data: dict) -> dict:
         #   - FAQ canonical answers (`canonical_answer` capability), or
         #   - direct answers backed by sources / tool evidence.
         # This stops the long-thread LA-nag pattern visible in chat history.
-        suppress_footer = (
-            result.capability_used == "canonical_answer"
-            or (result.decision == "direct_answer" and bool(result.source_ids))
-        )
+        suppress_footer = result.decision in ("direct_answer", "clarifying_question")
         payload = {
             "type": "reply",
             "message": kai_service.add_footer(user_id, result.answer, lang, suppress=suppress_footer),

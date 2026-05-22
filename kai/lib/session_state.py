@@ -1,11 +1,12 @@
 import sqlite3, json, os, re
 from datetime import datetime, timedelta, timezone
 from config import (
-    MEMORY_DEPTH,
     MEMORY_SUMMARY_MAX_CHARS,
     MEMORY_TTL_PREFERENCES_DAYS,
     MEMORY_TTL_DEVICE_ACCOUNT_DAYS,
     MEMORY_TTL_TEMP_ISSUE_DAYS,
+    SESSION_IDLE_HOURS,
+    SESSION_MAX_HISTORY_MESSAGES,
 )
 
 DB_PATH = os.getenv("SESSION_DB_PATH", "data/sessions.db")
@@ -63,12 +64,10 @@ def get_session(user_id: str):
         "reply_count": 0,
         "greeted": False,
         "last_intent": None,
-        "last_topic": None,
-        "last_vehicle": None,
-        "last_vehicle_year": None,
-        "last_dongle": None,
         "history": [],
         "session_summary": "",
+        "session_started_at": None,
+        "last_activity_at": None,
         "human_segment_open": False,
         "human_segment_messages": [],
         "human_segment_cw_conversation_id": "",
@@ -88,6 +87,64 @@ def _now_iso() -> str:
 
 def _expires_iso(days: int) -> str:
     return (datetime.now(timezone.utc) + timedelta(days=days)).isoformat()
+
+
+def _parse_iso_dt(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _default_session_fields() -> dict:
+    return {
+        "lang": None,
+        "frozen": False,
+        "reply_count": 0,
+        "greeted": False,
+        "last_intent": None,
+        "history": [],
+        "session_summary": "",
+        "session_started_at": None,
+        "last_activity_at": None,
+        "human_segment_open": False,
+        "human_segment_messages": [],
+        "human_segment_cw_conversation_id": "",
+    }
+
+
+def ensure_active_session(user_id: str) -> bool:
+    """Start or continue a session. Returns True if the session was reset (idle > SESSION_IDLE_HOURS)."""
+    if not user_id:
+        return False
+    now = datetime.now(timezone.utc)
+    sess = get_session(user_id)
+    last_dt = _parse_iso_dt(sess.get("last_activity_at"))
+    idle_seconds = SESSION_IDLE_HOURS * 3600
+    reset = bool(last_dt and (now - last_dt).total_seconds() > idle_seconds)
+    if reset or not sess.get("session_started_at"):
+        preserved_lang = sess.get("lang")
+        preserved_frozen = bool(sess.get("frozen"))
+        fresh = _default_session_fields()
+        fresh["lang"] = preserved_lang
+        fresh["frozen"] = preserved_frozen
+        sess = fresh
+        sess["session_started_at"] = now.isoformat()
+        reset = True
+    sess["last_activity_at"] = now.isoformat()
+    save_session(user_id, sess)
+    return reset
+
+
+def touch_session_activity(user_id: str) -> None:
+    if not user_id:
+        return
+    sess = get_session(user_id)
+    sess["last_activity_at"] = datetime.now(timezone.utc).isoformat()
+    save_session(user_id, sess)
+
 
 # ----------------- State Updates -----------------
 def set_lang(user_id: str, lang: str):
@@ -123,13 +180,18 @@ def get_last_intent(user_id: str):
 
 # ----------------- Multi-Turn Memory -----------------
 def add_message_to_history(user_id: str, role: str, text: str):
-    """Append message to session history, keeping only MEMORY_DEPTH turns."""
+    """Append message to session history (full session window, capped at SESSION_MAX_HISTORY_MESSAGES)."""
+    if not user_id:
+        return
+    ensure_active_session(user_id)
     sess = get_session(user_id)
     history = sess.get("history", [])
     history.append({"role": role, "text": text})
-    if len(history) > MEMORY_DEPTH:
-        history = history[-MEMORY_DEPTH:]
+    cap = max(20, SESSION_MAX_HISTORY_MESSAGES)
+    if len(history) > cap:
+        history = history[-cap:]
     sess["history"] = history
+    sess["last_activity_at"] = datetime.now(timezone.utc).isoformat()
     save_session(user_id, sess)
     try:
         from kai.lib.session_search import index_message
@@ -138,10 +200,12 @@ def add_message_to_history(user_id: str, role: str, text: str):
     except Exception:
         pass
 
-def get_history(user_id: str):
-    """Retrieve the recent conversation history."""
-    sess = get_session(user_id)
-    return sess.get("history", [])
+def get_history(user_id: str) -> list[dict]:
+    """All messages in the current session (same 24h idle window as ensure_active_session)."""
+    if not user_id:
+        return []
+    ensure_active_session(user_id)
+    return list(get_session(user_id).get("history") or [])
 
 
 def update_session_summary(user_id: str, role: str, text: str):
@@ -163,100 +227,6 @@ def update_session_summary(user_id: str, role: str, text: str):
 
 def get_session_summary(user_id: str) -> str:
     return (get_session(user_id).get("session_summary") or "").strip()
-
-
-_VEHICLE_BRANDS = (
-    "myvi", "alza", "ativa", "perodua", "proton", "axia", "saga",
-    "x50", "x70", "x90", "s70",
-    "honda", "city", "civic", "crv", "cr-v", "hrv", "hr-v", "crv",
-    "vios", "toyota", "alphard", "vellfire", "corolla", "cross",
-    "byd", "atto", "seal", "sealion",
-    "mazda", "lexus", "mercedes", "bmw", "audi",
-    "tiggo", "chery", "jaecoo", "kereta",
-)
-
-
-def infer_session_topic(text: str) -> str | None:
-    t = (text or "").lower()
-    if not t:
-        return None
-    if any(k in t for k in ("warranty", "waranti", "dongle")):
-        return "warranty"
-    if any(k in t for k in ("qr", "visitor pass", "visitor link", "access link", "pas masuk")):
-        return "visitor_pass"
-    if any(k in t for k in ("price", "harga", "berapa", "rto", "deposit", "installment")):
-        return "pricing"
-    if any(b in t for b in _VEHICLE_BRANDS) or re.search(
-        r"\b(car|vehicle|kereta|supported)\b", t
-    ):
-        return "vehicle_support"
-    if re.search(r"\binstallers?\b", text or "", re.I) or re.search(
-        r"\b(pemasang|partner\s+install)\b", text or "", re.I
-    ):
-        return "partner_installer"
-    if re.search(r"\b(install|pasang|pemasangan|diy)\b", text or "", re.I) or any(
-        k in t for k in ("video", "guide", "tutorial")
-    ):
-        return "installation"
-    if any(k in t for k in ("office", "address", "hours", "alamat", "buka", "tutup")):
-        return "office"
-    if any(k in t for k in ("error", "issue", "rosak", "not working", "cannot", "problem", "masalah")):
-        return "diagnostic"
-    return None
-
-
-def extract_vehicle_from_text(text: str) -> str:
-    t = (text or "").strip()
-    if not t:
-        return ""
-    low = t.lower()
-    if not any(b in low for b in _VEHICLE_BRANDS) and not re.search(
-        r"\b(car|vehicle|kereta)\b", low
-    ):
-        return ""
-    return t[:120].strip()
-
-
-def extract_year_from_text(text: str) -> str:
-    m = re.search(r"\b(19|20)\d{2}\b", text or "")
-    return m.group(0) if m else ""
-
-
-def extract_dongle_from_text(text: str) -> str:
-    t = (text or "").strip()
-    if 6 <= len(t) <= 20 and re.match(r"^[A-Za-z0-9]+$", t):
-        return t
-    return ""
-
-
-def update_session_topics(user_id: str, text: str) -> None:
-    """Persist topic / vehicle / dongle stickiness from the latest user message."""
-    if not user_id or not (text or "").strip():
-        return
-    sess = get_session(user_id)
-    topic = infer_session_topic(text)
-    if topic:
-        sess["last_topic"] = topic
-    vehicle = extract_vehicle_from_text(text)
-    if vehicle:
-        sess["last_vehicle"] = vehicle
-    year = extract_year_from_text(text)
-    if year:
-        sess["last_vehicle_year"] = year
-    dongle = extract_dongle_from_text(text)
-    if dongle:
-        sess["last_dongle"] = dongle
-    save_session(user_id, sess)
-
-
-def get_session_topics(user_id: str) -> dict[str, str]:
-    sess = get_session(user_id) if user_id else {}
-    out: dict[str, str] = {}
-    for key in ("last_topic", "last_vehicle", "last_vehicle_year", "last_dongle"):
-        val = sess.get(key)
-        if val:
-            out[key] = str(val)
-    return out
 
 
 def build_short_term_context(user_id: str) -> str:
@@ -447,22 +417,7 @@ def reset_memory(user_id: str | None = None):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     if user_id:
-        default = {
-            "lang": None,
-            "frozen": False,
-            "reply_count": 0,
-            "greeted": False,
-            "last_intent": None,
-            "last_topic": None,
-            "last_vehicle": None,
-            "last_vehicle_year": None,
-            "last_dongle": None,
-            "history": [],
-            "session_summary": "",
-            "human_segment_open": False,
-            "human_segment_messages": [],
-            "human_segment_cw_conversation_id": "",
-        }
+        default = _default_session_fields()
         c.execute("REPLACE INTO sessions (user_id, data) VALUES (?,?)", (user_id, json.dumps(default)))
         c.execute("DELETE FROM memory_facts WHERE user_id=?", (user_id,))
     else:

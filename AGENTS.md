@@ -13,7 +13,8 @@
 
 - FAQ content: `agent_workspace/02_knowledge/faq/master_faq.md` then `/admin/refresh-sop`.
 - Agent behavior: `kai/support_runtime/agent_prompts.py`, `kai/support_runtime/agent_tools.py`.
-- Clarify fallbacks: `kai/support_runtime/clarify_intent.py`, `kai/support_runtime/clarify_validation.py`.
+- Full FAQ in system prompt: `kai/support_runtime/faq_context.py`; session chat via `SESSION_IDLE_HOURS` (default 24h) in `kai/lib/session_state.py`.
+- Clarify format rules: `kai/support_runtime/clarify_validation.py` (hedge repair when the model chooses `clarifying_question`).
 
 ## Restricted edits
 
@@ -24,5 +25,5 @@
 ## Verification
 
 ```bash
-pytest tests/test_architecture_import_boundaries.py tests/test_clarify_intent.py tests/test_api_contracts.py -q
+pytest tests/test_architecture_import_boundaries.py tests/test_agent_loop.py tests/test_api_contracts.py -q
 ```

@@ -21,12 +21,12 @@ class MemoryExtensionTests(unittest.TestCase):
         self.uid = "mem_test_user"
         reset_memory(self.uid)
 
-    def test_history_window_10(self):
+    def test_history_keeps_full_session_window(self):
         for i in range(13):
             add_message_to_history(self.uid, "user", f"m{i}")
         hist = get_history(self.uid)
-        self.assertEqual(len(hist), 10)
-        self.assertEqual(hist[0]["text"], "m3")
+        self.assertEqual(len(hist), 13)
+        self.assertEqual(hist[0]["text"], "m0")
         self.assertEqual(hist[-1]["text"], "m12")
 
     def test_session_summary_persists(self):

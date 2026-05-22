@@ -130,8 +130,11 @@ KAI_FAQ_BEAUTIFY_ENABLED = os.getenv("KAI_FAQ_BEAUTIFY_ENABLED", "1")
 # Minimum supported car year 
 MIN_SUPPORTED_YEAR = 2016
 
-# Memory settings
-MEMORY_DEPTH = int(os.getenv("MEMORY_DEPTH", "10"))
+# Session chat window (WhatsApp): idle timeout starts a new session; history kept within window
+SESSION_IDLE_HOURS = int(os.getenv("SESSION_IDLE_HOURS", "24"))
+SESSION_MAX_HISTORY_MESSAGES = int(os.getenv("SESSION_MAX_HISTORY_MESSAGES", "100"))
+# Deprecated: use SESSION_MAX_HISTORY_MESSAGES. Kept for older env files.
+MEMORY_DEPTH = int(os.getenv("MEMORY_DEPTH", str(SESSION_MAX_HISTORY_MESSAGES)))
 MEMORY_SUMMARY_MAX_CHARS = int(os.getenv("MEMORY_SUMMARY_MAX_CHARS", "1200"))
 MEMORY_TTL_PREFERENCES_DAYS = int(os.getenv("MEMORY_TTL_PREFERENCES_DAYS", "365"))
 MEMORY_TTL_DEVICE_ACCOUNT_DAYS = int(os.getenv("MEMORY_TTL_DEVICE_ACCOUNT_DAYS", "90"))

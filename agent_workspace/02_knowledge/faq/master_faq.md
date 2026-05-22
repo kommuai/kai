@@ -82,7 +82,25 @@ aliases:
 answer:
 KommuAssist KA2 is RM4,999 (one-off) or RM175/month for 24 months + RM1,999 upfront deposit under our Rent to Own (RTO) plan. The monthly payment duration for RTO is 24 months. Check it out at: https://kommu.ai/product/
 
-## intent: regional_installer
+## intent: partner_installers_directory
+aliases:
+- partner installer list
+- installer contacts
+- installer directory
+- who is the installer
+- installer phone number
+- installer whatsapp
+- contact installer
+answer:
+**Partner installer answers (use this policy):** On any question about a **partner / outstation / regional installer**, reply in the **first message** with the **full partner block** for that region from the intents below (`partner_installer_penang`, `partner_installer_johor`, or `office_info` for HQ). Include **location (area + address if known)** and **how to contact** (phone / WhatsApp / link). Do **not** ask for postcode, street, or landmark before giving this.
+
+**Regions with a listed partner:** Penang Island, Johor Bahru (JB). **HQ install (Selangor/KL):** Kommu at EmHub — see `office_info`.
+
+**No partner listed yet:** Ipoh, Melaka, Sabah, Sarawak, etc. — say so; offer **self-install** video https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD or **HQ** appointment at EmHub.
+
+**Maintain contacts here** — update shop name, address, and phone in the regional intents when partners change.
+
+## intent: partner_installer_penang
 aliases:
 - do you have an installer at penang
 - do you have installer at penang
@@ -91,12 +109,64 @@ aliases:
 - installer at penang
 - penang installer
 - do you have installer in penang
-- do you have installer
-- do you have an installer
 - ada installer penang
 - ada pemasang penang
 - pemasang di penang
 - pemasang penang
+- installer in the north
+- north installer
+- do you have one in penang
+- have one in penang
+- one in penang
+- ada di penang
+- any installer in penang
+- got installer penang
+- workshop install penang
+- penang got installer
+answer:
+Yes — **Penang Island** has an authorized KommuAssist partner installer:
+
+**SAFCA Penang** (authorized KommuAssist installer)
+- **Area served:** Penang Island (Georgetown / Pulau Pinang)
+- **Address:** No fixed public workshop listing — **message SAFCA on Facebook** for their current service location or on-site install address pin (Penang Island).
+- **Contact:** **SAFCA Penang** on Facebook (Messenger): https://www.facebook.com/profile.php?id=61551530818125 — mention **KommuAssist** installation.
+- **How to book:** DM SAFCA on Facebook to confirm slot and location. Kommu coordination: **support@kommu.ai**.
+
+**Self-install** (anywhere in Malaysia): https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD
+
+## intent: partner_installer_johor
+aliases:
+- installer johor
+- installer in johor
+- installer jb
+- johor bahru installer
+- jb installer
+- installer near jb
+- near causeway
+- near the causeway
+- singapore coming to johor
+- coming to jb
+- stay in singapore johor
+- johor installer
+- skudai installer
+- nusa bestari installer
+- mr tey installer
+- hyper auto skudai
+answer:
+Yes — **Johor Bahru (JB)** has an authorized KommuAssist partner installer (incl. areas near the **Singapore–Johor Causeway**; Malaysian postcode not required):
+
+**Mr Tey — Hyper Auto Accessories & Air Cond. Service**
+- **Area served:** Johor Bahru, Skudai, Nusa Bestari; visitors from Singapore / near Causeway welcome
+- **Address:** Lot CP2, Car Park 1, Best Mart, Taman Nusa Bestari 2, 81300 Skudai, Johor Bahru, Johor
+- **Contact:** **+60 12-787 5885** (WhatsApp/call)
+- **How to book:** WhatsApp/call **+60 12-787 5885** and mention **KommuAssist** install. Kommu coordination: **support@kommu.ai** or **+60 14-967 6780**.
+
+**Self-install:** https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD
+
+## intent: regional_installer
+aliases:
+- do you have installer
+- do you have an installer
 - partner installer
 - third party installer
 - installer location
@@ -107,9 +177,6 @@ aliases:
 - regional installer
 - installer outside kl
 - installer outside selangor
-- installer johor
-- installer in johor
-- installer jb
 - installer in kl
 - installer selangor
 - installer ipoh
@@ -118,40 +185,16 @@ aliases:
 - installer sarawak
 - installer kedah
 - installer perak
-- do you have one in penang
-- have one in penang
-- one in penang
-- ada di penang
-- any installer in penang
-- got installer penang
-- workshop install penang
 answer:
-Yes — we have **partner installers** in **Penang** (and other states outside Selangor/KL).
+We have **partner installers** outside Selangor/KL where listed below. In your reply, give the **matching region’s full partner block** (shop/area, address if known, contact) from `partner_installer_penang` or `partner_installer_johor` — do not ask for postcode first.
 
-Tell us your **postcode or area** (e.g. George Town, Butterworth, Bukit Mertajam) and we will confirm the nearest partner **installer** and any travel or service fees.
+| Region | Partner |
+|--------|---------|
+| **Penang Island** | SAFCA Penang — see `partner_installer_penang` |
+| **Johor Bahru (JB)** | Mr Tey — Hyper Auto, Skudai — see `partner_installer_johor` |
+| **Selangor / KL (HQ)** | Kommu EmHub — see `office_info` (appointment after checkout) |
 
-**Options if you are not near HQ (Selangor/KL):**
-1. **Partner installer** in your state (where available) — we coordinate after you share location.
-2. **Self-install** — full video guide: https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD (warranty applies when you follow the official steps).
-3. **HQ appointment** at EmHub, Kota Damansara — optional if you prefer to visit us.
-
-This is **not** the same as asking how to DIY install hardware — partner installers are separate from our HQ booking calendar.
-
-If the user only says **"do you have one in Penang"** or **"one in penang"** after asking about installers, they mean the same **partner installer** — answer **yes**, we have one in Penang, and ask for postcode/area.
-
-## intent: regional_installer_followup
-aliases:
-- do you have one in penang
-- have one in penang
-- one in penang
-- ada satu di penang
-- got one in penang
-- any in penang
-- penang got installer
-answer:
-Yes — we have a **partner installer in Penang**. Share your **postcode or area** (George Town, Butterworth, etc.) and we will confirm the nearest slot and fees.
-
-If you meant **HQ install in Selangor**, say so — that is a separate booking at EmHub after checkout.
+Other states: no partner listed yet — **self-install** video or visit **HQ**.
 
 ## intent: install_booking
 aliases:
@@ -184,7 +227,7 @@ aliases:
 answer:
 You can **self-install** anywhere in Malaysia. Video guide: https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD
 
-If you want **on-site help outside Selangor/KL**, ask about **partner installers** in your state (e.g. Penang, Johor) — share your postcode and we will check availability. **HQ installation** in Petaling Jaya is optional by appointment.
+If you want **on-site help outside Selangor/KL**, see **partner_installer_penang** or **partner_installer_johor** for location and contact. **HQ installation** in Petaling Jaya is optional by appointment.
 
 ## intent: office_info
 aliases:
@@ -219,8 +262,46 @@ aliases:
 - warranty claim
 - is it under warranty
 - device warranty
+- mess with my warranty
+- affect my warranty
+- void warranty
+- kommu warranty
 answer:
-Warranty is 1 year for one-off purchase, 3 years for RTO (Rent to Own). It covers manufacturing defects but excludes physical damage or misuse. If you want to check a specific device's warranty status, share your dongle ID and we can look it up.
+**KommuAssist device warranty** (our product): 1 year for one-off purchase, 3 years for RTO (Rent to Own). It covers manufacturing defects but excludes physical damage or misuse. Self-install using Kommu's official guide is fine for device warranty; unauthorized tampering or wrong-port power (KA2 diagnostic USB) is not covered.
+
+This is **not** the same as your **car manufacturer's warranty** — Kommu cannot confirm whether your dealer/brand (e.g. BYD, Proton, Toyota) allows aftermarket ADAS. Please check with your dealer if that matters to you.
+
+To check a specific unit's warranty status, share your **dongle ID**.
+
+## intent: vehicle_manufacturer_warranty
+aliases:
+- mess with my car warranty
+- affect my car warranty
+- void my car warranty
+- dealership warranty
+- dealer warranty
+- car warranty aftermarket
+- will dealer void
+answer:
+KommuAssist is an **aftermarket** ADAS add-on — it does not permanently replace your car's factory hardware/software.
+
+**Kommu cannot speak for your car brand or dealer warranty.** Whether installation affects OEM warranty varies by dealer — please confirm with your dealership if that is your concern.
+
+**Kommu's own device warranty** (manufacturing defects, 1 year one-off / 3 years RTO) is separate. Share your dongle ID if you want us to check device warranty status.
+
+## intent: insurance_out_of_scope
+aliases:
+- insurance claim
+- insurance
+- motor insurance
+- accident claim
+- claim from insurance
+- insurans
+- tuntutan insurans
+answer:
+KommuAssist support does **not** handle **motor insurance claims** (accidents, total loss, insurer payouts, policy disputes). Please contact your **insurance company** or agent for those.
+
+We **can** help with KommuAssist pricing, installation, device warranty, technical issues, and vehicle compatibility. Type **LA** if you need a live agent for an unusual case.
 
 ## intent: shipping
 aliases:

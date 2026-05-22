@@ -62,6 +62,21 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual(out.decision, "clarifying_question")
         self.assertLessEqual(out.confidence, 0.55)
 
+    def test_direct_answer_without_sources_is_allowed(self):
+        provider = _FakeProvider(
+            [
+                '{"action":"final","decision":"direct_answer","answer":"RM175 per month RTO.","confidence":0.9}',
+            ]
+        )
+        registry = AgentToolRegistry(HybridRetriever(provider=None), SimpleReranker(provider=None))
+        loop = ReActAgentLoop(
+            AgentLoopDependencies(provider=provider, tools=registry, system_prompt="test")
+        )
+        out = loop.run(text="rent to own", lang="EN", user_id="u_no_ground")["result"]
+        self.assertEqual(out.decision, "direct_answer")
+        self.assertIn("RM175", out.answer)
+        self.assertNotIn("ungrounded_answer_blocked", out.fallback_reason or "")
+
     def test_direct_answer_with_sources_is_allowed(self):
         provider = _FakeProvider(
             [
