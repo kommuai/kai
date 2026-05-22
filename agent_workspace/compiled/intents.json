@@ -155,24 +155,52 @@
     }
   },
   {
-    "intent_id": "install_booking",
+    "intent_id": "regional_installer",
     "route_type": "known_faq_intent",
     "aliases": [
-      "can i install now",
-      "book installation",
-      "installation appointment",
-      "when can i come for install",
-      "how to install",
-      "schedule install",
-      "booking",
-      "walk in install",
-      "i want to install",
-      "just bought can i come",
-      "install myself",
-      "self install",
-      "diy install kommuassist"
+      "do you have an installer at penang",
+      "do you have installer at penang",
+      "do you have one in penang",
+      "installer in penang",
+      "installer at penang",
+      "penang installer",
+      "do you have installer in penang",
+      "do you have installer",
+      "do you have an installer",
+      "ada installer penang",
+      "ada pemasang penang",
+      "pemasang di penang",
+      "pemasang penang",
+      "partner installer",
+      "third party installer",
+      "installer location",
+      "installer near me",
+      "who can install for me",
+      "installation partner",
+      "outstation installer",
+      "regional installer",
+      "installer outside kl",
+      "installer outside selangor",
+      "installer johor",
+      "installer in johor",
+      "installer jb",
+      "installer in kl",
+      "installer selangor",
+      "installer ipoh",
+      "installer melaka",
+      "installer sabah",
+      "installer sarawak",
+      "installer kedah",
+      "installer perak",
+      "do you have one in penang",
+      "have one in penang",
+      "one in penang",
+      "ada di penang",
+      "any installer in penang",
+      "got installer penang",
+      "workshop install penang"
     ],
-    "canonical_answer": "Installation is by appointment after checkout. You will receive an appointment link in your email once payment has been made. The on-site process takes about 30 minutes (15 min installation + 15 min tutorial/briefing on how to use the device).",
+    "canonical_answer": "Yes \u2014 we have **partner installers** in **Penang** (and other states outside Selangor/KL).\n\nTell us your **postcode or area** (e.g. George Town, Butterworth, Bukit Mertajam) and we will confirm the nearest partner **installer** and any travel or service fees.\n\n**Options if you are not near HQ (Selangor/KL):**\n1. **Partner installer** in your state (where available) \u2014 we coordinate after you share location.\n2. **Self-install** \u2014 full video guide: https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD (warranty applies when you follow the official steps).\n3. **HQ appointment** at EmHub, Kota Damansara \u2014 optional if you prefer to visit us.\n\nThis is **not** the same as asking how to DIY install hardware \u2014 partner installers are separate from our HQ booking calendar.\n\nIf the user only says **\"do you have one in Penang\"** or **\"one in penang\"** after asking about installers, they mean the same **partner installer** \u2014 answer **yes**, we have one in Penang, and ask for postcode/area.",
     "policy_flags": [
       "grounded_only"
     ],
@@ -187,15 +215,18 @@
     }
   },
   {
-    "intent_id": "self_install",
+    "intent_id": "regional_installer_followup",
     "route_type": "known_faq_intent",
     "aliases": [
-      "can i install it by myself",
-      "how to self install",
-      "hard to install",
-      "video guide"
+      "do you have one in penang",
+      "have one in penang",
+      "one in penang",
+      "ada satu di penang",
+      "got one in penang",
+      "any in penang",
+      "penang got installer"
     ],
-    "canonical_answer": "If you are not based in Selangor/Kuala Lumpur, you can opt for self-installation. Refer to this video guide: https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD",
+    "canonical_answer": "Yes \u2014 we have a **partner installer in Penang**. Share your **postcode or area** (George Town, Butterworth, etc.) and we will confirm the nearest slot and fees.\n\nIf you meant **HQ install in Selangor**, say so \u2014 that is a separate booking at EmHub after checkout.",
     "policy_flags": [
       "grounded_only"
     ],
@@ -203,6 +234,63 @@
     "metadata": {
       "source": "master_faq",
       "index": 8,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "install_booking",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "can i install now",
+      "book installation",
+      "installation appointment",
+      "when can i come for install",
+      "schedule install at hq",
+      "book hq installation",
+      "booking",
+      "walk in install",
+      "i want to install at hq",
+      "just bought can i come",
+      "appointment after purchase",
+      "when is my install slot"
+    ],
+    "canonical_answer": "**HQ installation** at Kommu (EmHub, Kota Damansara) is by **appointment after checkout**. You will receive an appointment link by email once payment is made. On-site takes about 30 minutes (15 min install + 15 min briefing).\n\nIf you are asking about a **partner installer in Penang, Johor, or other states** \u2014 that is a different topic (see partner installer / outstation installer). If you prefer DIY, see our **self-install video** instead of booking HQ.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 9,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "self_install",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "can i install it by myself",
+      "how to self install",
+      "hard to install",
+      "video guide",
+      "diy install kommuassist",
+      "install myself",
+      "self install"
+    ],
+    "canonical_answer": "You can **self-install** anywhere in Malaysia. Video guide: https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD\n\nIf you want **on-site help outside Selangor/KL**, ask about **partner installers** in your state (e.g. Penang, Johor) \u2014 share your postcode and we will check availability. **HQ installation** in Petaling Jaya is optional by appointment.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 10,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -231,7 +319,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 9,
+      "index": 11,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -254,7 +342,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 10,
+      "index": 12,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -280,7 +368,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 11,
+      "index": 13,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -305,7 +393,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 12,
+      "index": 14,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -329,7 +417,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 13,
+      "index": 15,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -353,7 +441,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 14,
+      "index": 16,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -377,7 +465,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 15,
+      "index": 17,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -401,7 +489,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 16,
+      "index": 18,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -428,7 +516,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 17,
+      "index": 19,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -453,7 +541,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 18,
+      "index": 20,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -477,7 +565,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 19,
+      "index": 21,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -501,7 +589,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 20,
+      "index": 22,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -527,7 +615,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 21,
+      "index": 23,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -552,7 +640,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 22,
+      "index": 24,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -577,7 +665,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 23,
+      "index": 25,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -602,7 +690,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 24,
+      "index": 26,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -625,7 +713,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 25,
+      "index": 27,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -648,7 +736,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 26,
+      "index": 28,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -672,7 +760,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 27,
+      "index": 29,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -697,7 +785,7 @@
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 28,
+      "index": 30,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -721,7 +809,7 @@
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 29,
+      "index": 31,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -746,7 +834,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 30,
+      "index": 32,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -769,7 +857,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 31,
+      "index": 33,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -791,7 +879,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 32,
+      "index": 34,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -816,7 +904,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 33,
+      "index": 35,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -837,7 +925,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 34,
+      "index": 36,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -860,7 +948,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 35,
+      "index": 37,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -884,7 +972,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 36,
+      "index": 38,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -906,7 +994,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 37,
+      "index": 39,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -931,7 +1019,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 38,
+      "index": 40,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -958,7 +1046,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 39,
+      "index": 41,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -992,7 +1080,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 40,
+      "index": 42,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1013,7 +1101,7 @@
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 41,
+      "index": 43,
       "product": "KA",
       "audience": "customer",
       "version": "v1",

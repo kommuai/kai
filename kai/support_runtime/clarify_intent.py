@@ -91,8 +91,34 @@ def pick_clarify_for_intent(user_text: str, lang: str = "EN") -> str:
             "Share your dongle ID and I'll check the warranty status."
         )
 
-    # Install / video / guide
-    if _has_any(t, ("install", "pasang", "video", "guide", "tutorial", "panduan")):
+    # Short follow-up with state name (FAQ: regional_installer_followup)
+    if re.search(
+        r"\b(penang|johor|ipoh|melaka|sabah|sarawak|kedah|perak|kl|selangor)\b", t, re.I
+    ) and re.search(r"\b(one|installer|pemasang)\b", t, re.I):
+        return (
+            "Ya — kami ada pemasang rakan kongsi di Penang. Kongsi poskod/kawasan anda."
+            if bm and "penang" in t else
+            "Yes — we have a partner installer in Penang. Share your postcode or area."
+            if "penang" in t else
+            "Yes — we have partner installers in several states. Share your postcode or area."
+        )
+
+    # Partner installer — before install check ("installer" contains "install")
+    if re.search(r"\binstallers?\b", user_text, re.I) or re.search(
+        r"\b(pemasang|partner\s+install)\b", user_text, re.I
+    ):
+        return (
+            "Ya — kami ada pemasang rakan kongsi di Penang dan negeri lain. Kongsi poskod/kawasan anda."
+            if bm else
+            "Yes — we have partner installers in Penang and other states. Share your postcode or area."
+        )
+
+    # Install / video / guide (not installer)
+    if re.search(r"\binstallers?\b", user_text, re.I):
+        pass
+    elif re.search(r"\b(install(?:ation)?|pasang|pemasangan|diy)\b", user_text, re.I) or _has_any(
+        t, ("video", "guide", "tutorial", "panduan")
+    ):
         return (
             "Tentang pemasangan \u2014 anda nak buat sendiri (ada video panduan) atau buat janji temu di HQ?"
             if bm else

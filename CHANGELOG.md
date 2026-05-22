@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `tools/clear_chat.py` — CLI to clear session/history for a phone number (`python tools/clear_chat.py 0173611088`).
+
+### Changed
+
+- **FAQ (`master_faq.md`):** added `regional_installer` and `regional_installer_followup` intents (Penang/outstation partner installers, aliases for "one in penang"); narrowed `install_booking` to HQ appointments; clarified `self_install` vs partner vs HQ.
+- **Clarify fallback:** if the ReAct path still lacks grounding, `installer` queries no longer fall through to the generic HQ/self-install menu (word-boundary only; not a routing change).
+
+### Added
+
 - `kai/` Python package: consolidated `api`, `core`, `support_runtime`, `services`, `integrations`, `rag`, and shared `lib/` modules.
 - `pytest.ini` — `pythonpath = .` for tests after package layout change.
 - `kai/core/outbound_delivery.py` — WhatsApp 4096-char safe replies.

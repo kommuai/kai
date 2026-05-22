@@ -82,23 +82,95 @@ aliases:
 answer:
 KommuAssist KA2 is RM4,999 (one-off) or RM175/month for 24 months + RM1,999 upfront deposit under our Rent to Own (RTO) plan. The monthly payment duration for RTO is 24 months. Check it out at: https://kommu.ai/product/
 
+## intent: regional_installer
+aliases:
+- do you have an installer at penang
+- do you have installer at penang
+- do you have one in penang
+- installer in penang
+- installer at penang
+- penang installer
+- do you have installer in penang
+- do you have installer
+- do you have an installer
+- ada installer penang
+- ada pemasang penang
+- pemasang di penang
+- pemasang penang
+- partner installer
+- third party installer
+- installer location
+- installer near me
+- who can install for me
+- installation partner
+- outstation installer
+- regional installer
+- installer outside kl
+- installer outside selangor
+- installer johor
+- installer in johor
+- installer jb
+- installer in kl
+- installer selangor
+- installer ipoh
+- installer melaka
+- installer sabah
+- installer sarawak
+- installer kedah
+- installer perak
+- do you have one in penang
+- have one in penang
+- one in penang
+- ada di penang
+- any installer in penang
+- got installer penang
+- workshop install penang
+answer:
+Yes — we have **partner installers** in **Penang** (and other states outside Selangor/KL).
+
+Tell us your **postcode or area** (e.g. George Town, Butterworth, Bukit Mertajam) and we will confirm the nearest partner **installer** and any travel or service fees.
+
+**Options if you are not near HQ (Selangor/KL):**
+1. **Partner installer** in your state (where available) — we coordinate after you share location.
+2. **Self-install** — full video guide: https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD (warranty applies when you follow the official steps).
+3. **HQ appointment** at EmHub, Kota Damansara — optional if you prefer to visit us.
+
+This is **not** the same as asking how to DIY install hardware — partner installers are separate from our HQ booking calendar.
+
+If the user only says **"do you have one in Penang"** or **"one in penang"** after asking about installers, they mean the same **partner installer** — answer **yes**, we have one in Penang, and ask for postcode/area.
+
+## intent: regional_installer_followup
+aliases:
+- do you have one in penang
+- have one in penang
+- one in penang
+- ada satu di penang
+- got one in penang
+- any in penang
+- penang got installer
+answer:
+Yes — we have a **partner installer in Penang**. Share your **postcode or area** (George Town, Butterworth, etc.) and we will confirm the nearest slot and fees.
+
+If you meant **HQ install in Selangor**, say so — that is a separate booking at EmHub after checkout.
+
 ## intent: install_booking
 aliases:
 - can i install now
 - book installation
 - installation appointment
 - when can i come for install
-- how to install
-- schedule install
+- schedule install at hq
+- book hq installation
 - booking
 - walk in install
-- i want to install
+- i want to install at hq
 - just bought can i come
-- install myself
-- self install
-- diy install kommuassist
+- appointment after purchase
+- when is my install slot
 answer:
-Installation is by appointment after checkout. You will receive an appointment link in your email once payment has been made. The on-site process takes about 30 minutes (15 min installation + 15 min tutorial/briefing on how to use the device).
+**HQ installation** at Kommu (EmHub, Kota Damansara) is by **appointment after checkout**. You will receive an appointment link by email once payment is made. On-site takes about 30 minutes (15 min install + 15 min briefing).
+
+If you are asking about a **partner installer in Penang, Johor, or other states** — that is a different topic (see partner installer / outstation installer). If you prefer DIY, see our **self-install video** instead of booking HQ.
 
 ## intent: self_install
 aliases:
@@ -106,8 +178,13 @@ aliases:
 - how to self install
 - hard to install
 - video guide
+- diy install kommuassist
+- install myself
+- self install
 answer:
-If you are not based in Selangor/Kuala Lumpur, you can opt for self-installation. Refer to this video guide: https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD
+You can **self-install** anywhere in Malaysia. Video guide: https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD
+
+If you want **on-site help outside Selangor/KL**, ask about **partner installers** in your state (e.g. Penang, Johor) — share your postcode and we will check availability. **HQ installation** in Petaling Jaya is optional by appointment.
 
 ## intent: office_info
 aliases:
