@@ -27,17 +27,3 @@ def load_core_prompt_sections() -> tuple[str, str]:
     return identity, safety
 
 
-def build_rag_system_prompt(*, dropoff_token: str, testdrive_token: str) -> str:
-    """Assemble system prompt for RAG dual path (KaiService.run_rag_dual)."""
-    identity, safety = load_core_prompt_sections()
-    parts = []
-    if identity:
-        parts.append(identity)
-    if safety:
-        parts.append(safety)
-    # Tokens are runtime-specific (templates / handover)
-    parts.append(
-        f"- If user asks about drop offs, add: For dropoffs, type {dropoff_token}.\n"
-        f"- If user asks about test drives, add: To schedule a test drive, type {testdrive_token}."
-    )
-    return "\n\n".join(parts).strip()

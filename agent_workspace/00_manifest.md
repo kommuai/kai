@@ -24,7 +24,7 @@ Human-editable **content** for the Kommu chatbot: core tone and safety rules, FA
 
 - **01_core** — Identity and safety text loaded into the LLM system prompt (plus any legacy template fallbacks).
 - **02_knowledge** — `master_faq.md` is the canonical FAQ for RAG indexing. The SOP Google Doc sync overwrites only the region between `<!-- sop-sync:start -->` and `<!-- sop-sync:end -->`.
-- **03_skills** — One folder per skill: `skill.md` (YAML frontmatter + description) and `handler.py` (re-exports the Python skill class).
+- **03_skills** — Skill manifest and documentation only; runtime tools live in `support_runtime/agent_tools.py`.
 - **04_context** — Machine-oriented context registry YAML (not SQLite session rows).
 
 Session and conversation history remain in **SQLite**; see `session_store` above.

@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+"""Deprecated: workspace skill handlers are no longer used in production chat.
+
+Add capabilities via support_runtime/agent_tools.py and master_faq.md instead.
+"""
 import argparse
 from pathlib import Path
 

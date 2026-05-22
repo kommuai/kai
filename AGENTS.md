@@ -1,42 +1,27 @@
 # AGENTS Guide
 
-This repository supports both human chat and machine-agent integrations.
+## Architecture boundaries
 
-## Architecture Boundaries
+- `api/v2/`: HTTP chat and admin routes (`POST /agent/message`, `/admin/*`, `/v2/agent/query`).
+- `services/kai_service.py`: `pre_router`, outbound footers, WhatsApp length limits.
+- `support_runtime/`: FAQ compiler, ReAct agent loop, turn planner, evidence policy.
+- `agent_workspace/02_knowledge/faq/`: canonical FAQ source (`master_faq.md` → `compiled/`).
+- `core/`: SOP sync, FAQ markdown parser, outbound delivery.
 
-- `api/v2/`: all HTTP chat and admin routes (`POST /agent/message`, `POST /v2/agent/message`, `/admin/*`, `/v2/agent/query`, etc.).
-- `core/`: routing, policy, registry, authz, provenance primitives.
-- `agent_workspace/03_skills/<id>/`: pluggable v2 skills (`skill.md` + `handler.py`).
-- `agent_workspace/04_context/context_registry.yaml`: enable/disable context groups.
-- `workers/`: async execution for heavy capabilities.
+## Safe edit zones
 
-## Safe Edit Zones
+- FAQ content: `agent_workspace/02_knowledge/faq/master_faq.md` then `/admin/refresh-sop`.
+- Agent behavior: `support_runtime/agent_prompts.py`, `support_runtime/agent_tools.py`.
+- Clarify fallbacks: `support_runtime/clarify_intent.py`, `support_runtime/clarify_validation.py`.
 
-- Add/modify skills under `agent_workspace/03_skills/<id>/` (`python tools/new_skill.py --id my_skill`).
-- Add contexts via `python tools/new_context.py --id my_context` or edit `context_registry.yaml`.
-- Add policy rules in `core/policy/`.
+## Restricted edits
 
-## Restricted Edits (Require Caution)
+- Do not break `POST /agent/message` payload/response envelope (n8n/WhatsApp).
+- Keep `pre_router` before `support_runtime_service.execute`.
+- Do not reintroduce removed legacy paths (`main_conversation`, `archive_legacy`, `IntentRouter`).
 
-- Do not break `POST /agent/message` or `POST /v2/agent/message` payload or response envelope (n8n/WhatsApp).
-- Keep `pre_router` + `main_conversation` ordering correct so handover/frozen runs before skills.
-- Keep n8n compatibility for A2A endpoints that use service keys.
+## Verification
 
-## Before Proposing a Change
-
-1. Ensure `skill.md` frontmatter and `context_registry.yaml` are valid YAML.
-2. Run Python compile checks.
-3. Ensure contract tests under `tests/` pass.
-
-## Skill Contract Summary
-
-- `can_handle(request, context_meta) -> float`
-- `execute(request, context_bundle, budget) -> CapabilityResult`
-- `degrade(reason) -> CapabilityResult`
-
-## Context Contract Summary
-
-- `refresh()`
-- `retrieve(query, filters, top_k)`
-- `health()`
-
+```bash
+pytest tests/test_architecture_import_boundaries.py tests/test_clarify_intent.py tests/test_api_contracts.py -q
+```

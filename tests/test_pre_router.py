@@ -1,33 +1,28 @@
 import unittest
 
-from services.container import kai_service
+from services.container import kai_service, support_runtime_service
 from session_state import reset_memory
 
 
-class PreRouterParityTests(unittest.TestCase):
-    def test_handle_equals_pre_then_main_for_plain_text(self):
-        uid = "test_parity_plain"
-        reset_memory(uid)
-        data = {"content": "random query xyz123 no match", "phone_number": uid}
-        full = kai_service.handle_agent_message(dict(data))
-        reset_memory(uid)
-        early = kai_service.pre_router(dict(data))
-        self.assertIsNone(early)
-        tail = kai_service.main_conversation(dict(data))
-        self.assertEqual(full.get("type"), tail.get("type"))
-        self.assertEqual(full.get("next_state"), tail.get("next_state"))
-
-    def test_la_handover_matches_full_handle(self):
-        uid = "test_parity_ka2"
+class PreRouterTests(unittest.TestCase):
+    def test_la_handover_via_pre_router(self):
+        uid = "test_pre_la"
         reset_memory(uid)
         data = {"content": "LA", "phone_number": uid}
-        full = kai_service.handle_agent_message(dict(data))
-        reset_memory(uid)
         early = kai_service.pre_router(dict(data))
         self.assertIsNotNone(early)
         self.assertEqual(early.get("type"), "handover")
-        self.assertEqual(full.get("type"), early.get("type"))
-        self.assertEqual(full.get("next_state"), early.get("next_state"))
+        self.assertEqual(early.get("next_state"), "human")
+
+    def test_plain_text_continues_to_support_runtime(self):
+        uid = "test_pre_continue"
+        reset_memory(uid)
+        data = {"content": "what is the price?", "phone_number": uid}
+        early = kai_service.pre_router(dict(data))
+        self.assertIsNone(early)
+        support_runtime_service.startup()
+        out = support_runtime_service.execute(text=data["content"], lang="EN", user_id=uid)
+        self.assertIn(out.decision, {"direct_answer", "clarifying_question", "escalate_human"})
 
 
 if __name__ == "__main__":

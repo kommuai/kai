@@ -3,19 +3,14 @@ from uuid import uuid4
 
 from services.kai_service import strip_bold_markdown_wrapping_around_urls
 from support_runtime.compiler import compile_canonical_knowledge
-from support_runtime.router import IntentRouter
 from support_runtime.service import SupportRuntimeService
 
 
 class SupportRuntimeTests(unittest.TestCase):
-    def test_compiler_and_router_load(self):
+    def test_compiler_loads_intents(self):
         counts = compile_canonical_knowledge()
-        self.assertGreaterEqual(counts["intents"], 0)
-        router = IntentRouter()
-        router.load()
-        route_type, conf, _ = router.route("order status")
-        self.assertEqual(route_type, "account_order_status_intent")
-        self.assertGreater(conf, 0.5)
+        self.assertGreater(counts["intents"], 0)
+        self.assertGreater(counts["chunks"], 0)
 
     def test_service_returns_structured_decision(self):
         svc = SupportRuntimeService()

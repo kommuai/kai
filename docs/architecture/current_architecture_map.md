@@ -1,62 +1,37 @@
-# Current Architecture Map
+# Current architecture map
 
-This map shows the active runtime and the archived legacy areas.
+Production chat flow (WhatsApp / n8n):
 
-## Active Runtime (Keep)
+```
+POST /agent/message  (or /v2/agent/message)
+  → KaiService.pre_router          # handover, frozen, session priming
+  → SupportRuntimeService.execute  # FAQ-first + ReAct agent loop
+  → outbound_delivery              # WhatsApp length cap (4096)
+```
 
-- API entrypoints:
-  - `api/v2/agent_message.py`
-  - `api/v2/agent_query.py`
-- Runtime pipeline:
-  - `support_runtime/`
-    - `service.py`
-    - `agent_loop.py`
-    - `agent_tools.py`
-    - `agent_prompts.py`
-    - `retrieval.py`
-    - `compiler.py`
-    - `providers.py`
-    - `guardrails.py`
-    - `observability.py`
-- Chatwoot parity/session behavior:
-  - `services/kai_service.py`
-  - `session_state.py`
-- App bootstrap:
-  - `app.py`
-  - `config.py`
-- Operational note:
-  - Startup and scheduled refresh are owned by `support_runtime_service`.
-  - Legacy v2 shadow execution path has been removed.
+## Active packages
 
-## Active Knowledge + Evaluation
+| Path | Role |
+|------|------|
+| `app.py` | FastAPI app, startup refresh, optional SOP merge cron |
+| `api/v2/` | Chat + admin + agent query routes |
+| `services/kai_service.py` | `pre_router`, footers, outbound prep |
+| `support_runtime/` | Compiler, ReAct loop, agent tools, turn planner, evidence policy |
+| `agent_workspace/` | FAQ markdown → `compiled/` JSON |
+| `session_state.py` | SQLite sessions + memory facts |
+| `core/outbound_delivery.py` | Intelligent reply shortening for Twilio |
 
-- Canonical source:
-  - `agent_workspace/02_knowledge/faq/master_faq.md`
-- Compiled runtime artifacts:
-  - `agent_workspace/compiled/`
-- Eval and quality checks:
-  - `tools/eval_support_runtime.py`
-  - `tests/test_pre_router.py`
-  - `tests/test_chatwoot_parity_contract.py`
-  - `tests/test_support_runtime.py`
+## Removed (legacy cleanup)
 
-## Archived Legacy (Moved)
+- `archive_legacy/` — old RouterEngine + workspace skill loaders
+- `KaiService.main_conversation` / `run_rag_dual` / `handle_agent_message`
+- `support_runtime/router.py` (IntentRouter) — routing is FAQ-first + ReAct agent loop
+- `support_runtime/tools.py` (ToolPolicyEngine) — unused in ReAct path
+- `support_runtime/warranty.py` — warranty via `agent_tools.lookup_warranty`
+- `templates.py`, `workers/skill_worker.py`
+- Unused `agent_workspace/03_skills/*/handler.py` skill stubs
 
-- `archive_legacy/docs/legacy_tool_paths.md`
-- `archive_legacy/core_router/engine.py`
-- `archive_legacy/skills_runtime/workspace_factory.py`
-- `archive_legacy/skills_runtime/workspace_registry.py`
-- `archive_legacy/skills_runtime/legacy_rag/`
-- `archive_legacy/skills_runtime/legacy_warranty/`
+## Knowledge refresh
 
-These legacy files are kept for reference/rollback and are not part of the current runtime flow.
-
-## Removed During Refactor (No Longer Used)
-
-- `core/policy/tool_adapter.py`
-- `core/skills/registry.py`
-- `tools/check_architecture.py`
-- `support_runtime/graph.py`
-- `support_runtime/vehicle_support.py`
-- `support_runtime/agentic_understanding.py`
-
+- `POST /admin/refresh-sop` → `compile_canonical_knowledge()` + warranty sheet load
+- Optional daily SOP merge: `KAI_SOP_MERGE_SYNC_ENABLED`

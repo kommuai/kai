@@ -85,13 +85,13 @@ Exposed endpoints (in Docker):
 - `http://127.0.0.1:6090/admin/refresh-sop`
 - `http://127.0.0.1:6090/admin/reset_memory`
 
-Route mode (trace label + future strategy toggle):
+Route mode (trace label only; chat always uses `support_runtime` ReAct loop after `pre_router`):
 
-- `KAI_ROUTE_MODE=hybrid` (default) — try skills after session/handover gate, then `main_conversation` if no skill succeeds
-- `KAI_ROUTE_MODE=agent_first` — same router ordering today; reserved for stricter agent preference later
-- `KAI_ROUTE_MODE=stable_only` — treated as `hybrid` (legacy env value)
+- `KAI_ROUTE_MODE=hybrid` (default)
+- `KAI_ROUTE_MODE=agent_first`
+- `KAI_ROUTE_MODE=stable_only` — mapped to `hybrid` for backward compatibility
 
-Both `POST /agent/message` and `POST /v2/agent/message` use the same active handler (trace fields always included). Legacy shadow execution has been removed.
+Both `POST /agent/message` and `POST /v2/agent/message` share the same handler in `api/v2/agent_message.py`.
 
 Model backend (default DeepSeek, model-agnostic adapter):
 
@@ -156,7 +156,6 @@ Expected output:
 ```
 [SOP-DOC] Loaded FAQ content and refreshed compiled knowledge artifacts.
 [WARRANTY] Loaded total rows: 476; 308 unique dongle ids; 98 phone/serial keys.
-[HEALTH] All templates OK.
 [LANG] Detector ready (EN/BM).
 [OK] System is ready.
 ```
@@ -220,20 +219,20 @@ tail -n 200 /home/deployment-user/kai-refresh.log
 
 ##  How the Chatbot Works (High-Level)
 
-The diagram below illustrates the **end-to-end workflow**. A chat message hits `POST /agent/message` or `POST /v2/agent/message` (same logic). **Pre-router** preserves Chatwoot handover/frozen behavior first. Then runtime follows deterministic router-first flow with retrieval/rerank/tool/escalation decisions.
+A chat message hits `POST /agent/message` or `POST /v2/agent/message` (same logic). **Pre-router** handles handover, frozen sessions, and resume. **Support runtime** runs FAQ-first on the first message, then the ReAct agent loop with tools (FAQ search, warranty, vehicle support, visitor pass, etc.). Outbound text is capped for WhatsApp (4096 chars).
 
 ```mermaid
 flowchart TD
-    A[User sends message] --> C[FastAPI /agent/message or /v2/agent/message]
-    C --> D[PreRouter handover frozen resume]
-    D -->|Immediate| E[Response + trace]
-    D -->|Continue| F[IntentRouter confidence gate]
-    F -->|Known high confidence| E
-    F -->|Needs retrieval| G[Haystack retrieve plus rerank plus grounded answer]
-    G --> E
-
-
-   
+    A[User message] --> B[POST /agent/message]
+    B --> C[pre_router handover frozen resume]
+    C -->|Early exit| D[Response + trace]
+    C -->|Continue| E[support_runtime.execute]
+    E --> F{First message?}
+    F -->|Yes| G[FAQ-first canonical answer]
+    F -->|No| H[ReAct agent loop]
+    G -->|Miss| H
+    H --> I[prepare_outbound_message length cap]
+    I --> D
 ```
 
 ---
@@ -244,7 +243,7 @@ flowchart TD
 ├── app.py                    # FastAPI app
 ├── config.py                 # Config + constants
 ├── data/sop/                 # SOP docs
-├── support_runtime/          # Active runtime (router/retrieval/graph/tools)
+├── support_runtime/          # Active runtime (ReAct loop, FAQ, retrieval, tools)
 ├── integrations/smartserva/  # SmartServa visitor-pass automation module
 ├── tools/                    # Audits & benchmarks
 ├── logs/                     # Runtime & benchmark logs
@@ -276,11 +275,9 @@ Use these as the primary runtime map:
   - `tests/test_chatwoot_parity_contract.py`
   - `tests/test_support_runtime.py`
 
-Legacy items that were moved are documented in:
+Architecture map (including removed legacy paths):
 
 - `docs/architecture/current_architecture_map.md`
-- `archive_legacy/`
-- `ARCHIVE_LEGACY.md`
 
 ---
 

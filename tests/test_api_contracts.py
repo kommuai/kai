@@ -50,10 +50,9 @@ class AgentMessageShadowContractTests(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
 
-    @patch("api.v2.agent_message.kai_service.handle_agent_message")
     @patch("api.v2.agent_message.kai_service.pre_router", return_value=None)
     @patch("api.v2.agent_message.support_runtime_service.execute")
-    def test_v2_message_does_not_call_legacy_handler(self, execute_mock, _pre, legacy_mock):
+    def test_v2_message_uses_support_runtime(self, execute_mock, _pre):
         execute_mock.return_value = RuntimeResult(
             decision="direct_answer",
             answer="Installation is by appointment after checkout.",
@@ -65,7 +64,7 @@ class AgentMessageShadowContractTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 200)
         body = resp.json()
         self.assertEqual(body.get("type"), "reply")
-        legacy_mock.assert_not_called()
+        execute_mock.assert_called_once()
 
     @patch("api.v2.agent_message._refresh_all_knowledge", return_value={"ok": True, "runtime_refresh": {"intents": 1}})
     def test_admin_refresh_sop_contract(self, refresh_mock):
