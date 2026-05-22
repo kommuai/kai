@@ -79,8 +79,49 @@ aliases:
 - how much does it cost
 - monthly price
 - installment
+- how much is kommuassist
+- kommuassist price
+- price of kommuassist
 answer:
 KommuAssist KA2 is RM4,999 (one-off) or RM175/month for 24 months + RM1,999 upfront deposit under our Rent to Own (RTO) plan. The monthly payment duration for RTO is 24 months. Check it out at: https://kommu.ai/product/
+
+## intent: pricing_followup
+aliases:
+- oh i mean kommuassist
+- i mean kommuassist
+- i mean the device
+- i mean the product
+- the device price
+- product price
+- how much is the device
+- how much if self install
+- how much is it if i self install
+answer:
+You are asking for the **KommuAssist device price** (not the installation labour fee).
+
+KommuAssist KA2: **RM4,999** one-off, or **RM175/month** × 24 months + **RM1,999** deposit (Rent to Own). https://kommu.ai/product/
+
+**Self-install:** no extra Kommu installation charge — you pay the device price above and follow the video guide.
+
+## intent: installation_fees
+aliases:
+- extra charges for installation
+- installation fee
+- install fee
+- is there a fee if install at kommu hq
+- fee if install at hq
+- hq installation charge
+- installation cost
+- install cost
+- any extra charges for installation
+answer:
+**Installation service fees** (separate from **device price** — see `pricing`):
+
+- **Self-install:** **No** Kommu installation fee — only the device price (`pricing`).
+- **Kommu HQ (EmHub):** Installation is **included at no extra charge** after purchase; appointment link by email after checkout (~30 min on-site).
+- **Partner installers** (e.g. SAFCA Penang, Mr Tey JB): Any install/travel fee is set by the **partner**, not Kommu — contact them directly.
+
+If the user then says **"I mean KommuAssist"** / **"how much is the device"** → give **`pricing`** / **`pricing_followup`** (RM4,999 / RTO).
 
 ## intent: partner_installers_directory
 aliases:
@@ -226,6 +267,8 @@ aliases:
 - self install
 answer:
 You can **self-install** anywhere in Malaysia. Video guide: https://youtu.be/lzCoMxFTCnc?si=P9NtoWYG-SsrKRSD
+
+**No Kommu installation fee** for DIY — but if they ask **"how much"** / **"how much if self install"**, they usually mean **device price** → use **`pricing`** / **`pricing_followup`** (RM4,999 / RTO), not only "install is free".
 
 If you want **on-site help outside Selangor/KL**, see **partner_installer_penang** or **partner_installer_johor** for location and contact. **HQ installation** in Petaling Jaya is optional by appointment.
 

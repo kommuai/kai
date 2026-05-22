@@ -40,7 +40,7 @@ def master_faq_system_block() -> str:
         "- For policy/FAQ questions, answer from here first; paraphrase clearly and keep links verbatim.\n"
         "- Read the **full session chat** in the messages below for follow-ups (postcodes, regions, "
         "yes/no, car model already discussed).\n"
-        "- **Answer the user's latest question directly**; do not default to pricing/install upsell.\n"
+        "- **Answer the user's latest question directly**; read full session for follow-ups (e.g. \"I mean KommuAssist\" after install-fee talk = device price from `pricing_followup`).\n"
         "- Use tools only when this FAQ does not cover the request (official vehicle list, dongle "
         "warranty lookup, visitor pass API, bukapilot code, backlog).\n\n"
         f"{body}\n"

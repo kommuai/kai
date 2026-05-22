@@ -8,12 +8,14 @@ import re
 
 import pytz
 
-from config import OFFICE_END, OFFICE_START, TZ_REGION
+from config import OFFICE_END, OFFICE_START, SESSION_IDLE_HOURS, TZ_REGION
 from kai.lib.lang_detect import is_malay
 from kai.lib.media_handler import init_media_log
 from kai.lib.session_state import (
     add_message_to_history,
     append_human_segment_turn,
+    auto_unfreeze_stale_handoff,
+    ensure_active_session,
     extract_and_store_facts,
     freeze,
     get_history,
@@ -91,6 +93,7 @@ class KaiService:
         log.info("[Kai] IN conv=%s type=text text=%s", conversation_id, text)
 
         lower = re.sub(r"\s+", " ", (text or "").lower()).strip()
+        ensure_active_session(conversation_id)
         sess = get_session(conversation_id)
         lang = "BM" if is_malay(text) else "EN"
         set_lang(conversation_id, lang)
@@ -132,16 +135,25 @@ class KaiService:
             return {"type": "handover", "message": msg_out, "next_state": "human"}
 
         if sess.get("frozen"):
-            if lower in {"resume", "unfreeze", "sambung"}:
+            if auto_unfreeze_stale_handoff(conversation_id):
+                log.info("[Kai] auto-unfreeze after %sh handoff idle conv=%s", SESSION_IDLE_HOURS, conversation_id)
+                schedule_faq_learn_after_handback(conversation_id)
+                sess = get_session(conversation_id)
+            elif lower in {"resume", "unfreeze", "sambung"}:
                 add_message_to_history(conversation_id, "user", text)
                 schedule_faq_learn_after_handback(conversation_id)
                 freeze(conversation_id, False)
-                msg_out = "Bot resumed. How can I help?" if lang == "EN" else "Bot disambung semula. Ada apa saya boleh bantu?"
+                msg_out = (
+                    "Bot resumed. How can I help?"
+                    if lang == "EN"
+                    else "Bot disambung semula. Ada apa saya boleh bantu?"
+                )
                 add_message_to_history(conversation_id, "assistant", msg_out)
                 update_session_summary(conversation_id, "assistant", msg_out)
                 return {"type": "reply", "message": msg_out, "next_state": "bot"}
-            add_message_to_history(conversation_id, "user", text)
-            append_human_segment_turn(conversation_id, "user", text)
-            return {"type": "frozen", "message": "", "next_state": "human"}
+            else:
+                add_message_to_history(conversation_id, "user", text)
+                append_human_segment_turn(conversation_id, "user", text)
+                return {"type": "frozen", "message": "", "next_state": "human"}
 
         return None

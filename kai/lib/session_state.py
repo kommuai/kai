@@ -124,15 +124,15 @@ def ensure_active_session(user_id: str) -> bool:
     last_dt = _parse_iso_dt(sess.get("last_activity_at"))
     idle_seconds = SESSION_IDLE_HOURS * 3600
     reset = bool(last_dt and (now - last_dt).total_seconds() > idle_seconds)
-    if reset or not sess.get("session_started_at"):
+    if reset:
         preserved_lang = sess.get("lang")
-        preserved_frozen = bool(sess.get("frozen"))
         fresh = _default_session_fields()
         fresh["lang"] = preserved_lang
-        fresh["frozen"] = preserved_frozen
+        # After SESSION_IDLE_HOURS with no activity, start fresh — bot resumes (no stuck LA freeze).
         sess = fresh
         sess["session_started_at"] = now.isoformat()
-        reset = True
+    elif not sess.get("session_started_at"):
+        sess["session_started_at"] = now.isoformat()
     sess["last_activity_at"] = now.isoformat()
     save_session(user_id, sess)
     return reset
@@ -155,7 +155,38 @@ def set_lang(user_id: str, lang: str):
 def freeze(user_id: str, frozen: bool):
     sess = get_session(user_id)
     sess["frozen"] = frozen
+    if frozen:
+        sess["frozen_at"] = _now_iso()
+        if not sess.get("session_started_at"):
+            sess["session_started_at"] = sess["frozen_at"]
+    else:
+        sess.pop("frozen_at", None)
+    sess["last_activity_at"] = _now_iso()
     save_session(user_id, sess)
+
+
+def auto_unfreeze_stale_handoff(user_id: str, *, idle_hours: int | None = None) -> bool:
+    """End live-agent freeze after idle_hours (default SESSION_IDLE_HOURS, usually 24h).
+
+    Uses ``frozen_at`` (set when handoff starts). Legacy sessions without it fall back to
+    ``last_activity_at``. Returns True if the session was unfrozen.
+    """
+    if not user_id:
+        return False
+    sess = get_session(user_id)
+    if not sess.get("frozen"):
+        return False
+    hours = SESSION_IDLE_HOURS if idle_hours is None else idle_hours
+    threshold_s = max(1, hours) * 3600
+    now = datetime.now(timezone.utc)
+    frozen_at = _parse_iso_dt(sess.get("frozen_at")) or _parse_iso_dt(sess.get("last_activity_at"))
+    if not frozen_at or (now - frozen_at).total_seconds() <= threshold_s:
+        return False
+    sess["frozen"] = False
+    sess.pop("frozen_at", None)
+    sess["human_segment_open"] = False
+    save_session(user_id, sess)
+    return True
 
 def update_reply_state(user_id: str):
     sess = get_session(user_id)

@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **Agent prompts + FAQ:** answer-first rules (no default pricing/install upsell); new FAQ intents `vehicle_manufacturer_warranty`, `insurance_out_of_scope`; expanded `warranty` aliases; suppress LA footer on normal bot replies.
+- **Live-agent auto-resume:** after `SESSION_IDLE_HOURS` (default 24h), `frozen` clears automatically with **no** outbound message; manual `resume` / `unfreeze` / `sambung` still sends the Bot resumed ack.
+- **Pricing continuity:** FAQ `installation_fees`, `pricing_followup` — disambiguate install fees vs device price; prompts ban empty \"anything else I can help?\" when user still asks price or says \"I mean KommuAssist\".
 - **Partner installers (FAQ-only):** JB partner — Mr Tey Hyper Auto, Skudai (Lot CP2 Best Mart, +60 12-787 5885); Penang — SAFCA Penang (Facebook contact; no public street address found).
 - **Context architecture:** removed regex topic stickiness (`infer_session_topic`, `update_session_topics`, `get_session_topics`), per-turn FAQ retrieval hints, and FAQ-first-on-message-1 shortcut; model uses full FAQ + full session history instead.
 - **Agent loop:** removed server grounding gate (`ungrounded_answer_blocked`, `vehicle_nudge`, `pick_clarify_for_intent`); the model’s `direct_answer` is sent as-is even without `source_ids` or tool calls. Path A clarify validation (`finalize_clarifying_answer`) unchanged.
