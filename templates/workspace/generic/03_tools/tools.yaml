@@ -1,9 +1,0 @@
-active_profile: minimal
-
-profiles:
-  minimal:
-    - search_faq
-    - search_session_memory
-    - escalate_to_human
-
-tools: []

@@ -1,0 +1,15 @@
+id: kommu-support
+version: "1.0.0"
+display_name: Kommu Support
+description: KommuAssist tenant pack — FAQ, tools profile, SmartServa visitor pass plugin
+required_env:
+  - DEEPSEEK_API_KEY
+optional_env:
+  - WARRANTY_CSV_URL
+  - EXTRA_WARRANTY_CSV_URL
+  - KAI_GITHUB_REPO
+  - SMARTSERVA_USERNAME
+  - SMARTSERVA_PASSWORD
+  - GOOGLE_SHEETS_CREDENTIALS_JSON
+optional_pip:
+  - ddddocr

@@ -2,10 +2,24 @@ import unittest
 from unittest.mock import patch
 
 from kai.api.v2.agent_message import _process_agent_message_data
+from kai.lib.session_state import reset_memory
 from kai.support_runtime.models import RuntimeResult
 
 
 class ChatwootLiveHandoverTests(unittest.TestCase):
+    @patch("kai.api.v2.agent_message.enforce_live_agent_handover", return_value=(True, ""))
+    @patch("kai.api.v2.agent_message.get_settings")
+    def test_la_pre_router_applies_live_handover(self, gs_mock, handover_mock):
+        uid = "cw_la_handover_test"
+        reset_memory(uid)
+        gs_mock.return_value.kai_chatwoot_enforce_live_handover = True
+        out = _process_agent_message_data(
+            {"phone_number": uid, "content": "LA", "conversation_id": 55}
+        )
+        self.assertEqual(out.get("type"), "handover")
+        self.assertTrue(out.get("handover_applied"))
+        handover_mock.assert_called_once()
+
     @patch("kai.api.v2.agent_message.kai_service.pre_router", return_value=None)
     @patch("kai.api.v2.agent_message.support_runtime_service.execute")
     @patch("kai.api.v2.agent_message.enforce_live_agent_handover", return_value=(True, ""))

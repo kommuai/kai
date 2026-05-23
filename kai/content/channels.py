@@ -7,7 +7,10 @@ from typing import Any
 
 import yaml
 
-from kai.workspace.manifest import load_workspace_manifest
+from kai.content.copy import get_chat_copy
+from kai.settings import get_settings
+from kai.workspace.manifest import load_workspace_data, load_workspace_manifest
+from kai.workspace.runtime_settings import get_runtime_settings
 
 
 @dataclass(frozen=True)
@@ -54,25 +57,17 @@ class ChannelConfig:
         return (msg_type or "").strip().lower() in {t.lower() for t in self.blocked_media_types}
 
 
-def _channels_path() -> Path:
-    manifest = load_workspace_manifest()
-    return manifest.resolve(manifest.paths.channels_handover)
-
-
 def _load_yaml() -> dict[str, Any]:
-    path = _channels_path()
-    if not path.is_file():
-        return {}
-    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    return data if isinstance(data, dict) else {}
+    data = load_workspace_data()
+    channels = data.get("channels")
+    if isinstance(channels, dict) and channels:
+        return channels
+    return {}
 
 
 @lru_cache(maxsize=1)
 def get_channel_config() -> ChannelConfig:
     raw = _load_yaml()
-    from kai.content.copy import get_chat_copy
-    from kai.workspace.runtime_settings import get_runtime_settings
-
     cp = get_chat_copy()
     rt = get_runtime_settings()
     manifest = load_workspace_manifest()
@@ -145,4 +140,5 @@ def get_channel_config() -> ChannelConfig:
 
 def reload_channel_config() -> ChannelConfig:
     get_channel_config.cache_clear()
+    load_workspace_data.cache_clear()
     return get_channel_config()

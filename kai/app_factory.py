@@ -13,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 from kai.api.health import router as health_router
 from kai.api.v2.agent_message import router as v2_message_router
 from kai.api.v2.agent_query import router as v2_query_router
+from kai.integrations.chatwoot.webhook import router as chatwoot_webhook_router
 from kai.engine.scheduler import start_background_tasks, stop_background_tasks
 from kai.engine.startup import run_startup
 
@@ -62,10 +63,16 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     app = FastAPI(title=_app_title(), lifespan=lifespan)
     if os.getenv("KAI_MEDIA_PUBLIC", "").strip().lower() in {"1", "true", "yes", "on"}:
-        media = Path("media")
+        try:
+            from kai.settings import get_settings
+
+            media = get_settings().kai_home / "data" / "media"
+        except Exception:  # noqa: BLE001
+            media = Path("data/media")
         if media.is_dir():
             app.mount("/media", StaticFiles(directory=str(media)), name="media")
     app.include_router(health_router)
     app.include_router(v2_message_router)
     app.include_router(v2_query_router)
+    app.include_router(chatwoot_webhook_router)
     return app

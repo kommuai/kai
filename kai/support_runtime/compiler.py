@@ -14,9 +14,9 @@ def _compiled_dir() -> Path:
         from kai.workspace.manifest import load_workspace_manifest
 
         manifest = load_workspace_manifest()
-        return get_settings().agent_workspace / manifest.paths.knowledge_compiled_dir
+        return get_settings().kai_home / manifest.paths.knowledge_compiled_dir
     except Exception:  # noqa: BLE001
-        return get_settings().agent_workspace / "compiled"
+        return get_settings().kai_home / "compiled"
 
 
 def _parse_iso_date(value: str | None) -> date | None:

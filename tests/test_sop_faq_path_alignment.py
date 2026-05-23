@@ -11,17 +11,17 @@ class SopFaqPathAlignmentTests(unittest.TestCase):
     def test_compiler_and_resolve_use_same_master_faq(self):
         with tempfile.TemporaryDirectory() as td:
             ws = Path(td) / "agent_workspace"
-            faq = ws / "02_knowledge" / "faq" / "master_faq.md"
-            faq.parent.mkdir(parents=True)
+            ws.mkdir(parents=True)
+            faq = ws / "master_faq.md"
             faq.write_text(
                 "## intent: demo\naliases:\n- hello\nanswer:\nHi\n",
                 encoding="utf-8",
             )
             (ws / "compiled").mkdir(parents=True, exist_ok=True)
-            (ws / "00_manifest.yaml").write_text(
+            (ws / "workspace.yaml").write_text(
                 f'version: "2"\n'
                 f"tenant:\n  id: test\n  display_name: Test\n"
-                f"paths:\n  knowledge_primary: 02_knowledge/faq/master_faq.md\n"
+                f"paths:\n  knowledge_primary: master_faq.md\n"
                 f"  knowledge_compiled_dir: compiled\n"
                 f"knowledge:\n  compile: kb_chunks.jsonl\n",
                 encoding="utf-8",

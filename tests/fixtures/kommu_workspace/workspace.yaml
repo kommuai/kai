@@ -1,0 +1,188 @@
+version: '2'
+tenant:
+  id: kommu-support
+  display_name: Kai
+  default_lang: en
+  timezone: Asia/Kuala_Lumpur
+paths:
+  system_prompt: system_prompt.md
+  knowledge_primary: knowledge/master_faq.md
+  knowledge_compiled_dir: compiled
+  knowledge_learnt_faq: knowledge/learnt_faq.md
+  knowledge_learn_queue: knowledge/learn_queue
+  tools_plugins_dir: tools/plugins
+knowledge:
+  format: master_faq_v1
+  compile: kb_chunks.jsonl
+  inject_mode: full_context
+  faq_preamble: '## Authoritative FAQ (master_faq.md)
+
+
+    This is the only source of truth for Kommu product, pricing, installation,
+
+    warranty, office, and policy answers. Use tools when this FAQ does not cover the
+    request.
+
+    '
+tools:
+  enabled: []
+channels:
+  office:
+    timezone: Asia/Kuala_Lumpur
+    weekdays:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    start_hour: 10
+    end_hour: 18
+  handover:
+    dropoff_keyword: DROPOFF
+    live_agent_keywords:
+    - LA
+    resume_keywords:
+    - resume
+    - unfreeze
+    - sambung
+  frozen:
+    idle_hours: 24
+  media:
+    blocked_types:
+    - image
+    - video
+    - audio
+    - voice
+  fallbacks:
+    no_signal_en: What do you need help with — pricing, vehicle support, installation,
+      warranty, or a device problem?
+    post_tool_en: What car is this (brand, model, year), and what exact error or symptom
+      do you see?
+    install_head_en: 'KommuAssist installation summary:'
+    install_head_bm: 'Ringkasan pemasangan KommuAssist:'
+    install_tail_en: Type LA if you need a step-by-step walkthrough with an agent.
+    install_tail_bm: Taip LA jika anda perlukan panduan langkah demi langkah dengan
+      ejen.
+    whatsapp_short_en: '
+
+
+      (Message shortened for WhatsApp. Type LA for full details.)'
+    whatsapp_short_bm: '
+
+
+      (Mesej dipendekkan untuk WhatsApp. Taip LA untuk butiran penuh.)'
+  whatsapp:
+    max_reply_chars: 4096
+sop_sync:
+  enabled: true
+session_store:
+  backend: sqlite
+  path: data/sessions.db
+session:
+  idle_hours: 24
+  max_history_messages: 100
+agent:
+  max_steps: 8
+  footer_history_threshold: 10
+compile:
+  extra_artifacts: false
+faq_learn:
+  use_queue: true
+  legacy_append: false
+copy:
+  keywords:
+    dropoff: DROPOFF
+    live_agent:
+    - LA
+  footer:
+    en: '
+
+
+      For Live Agent, type LA'
+    bm: '
+
+
+      Jika anda mahu bercakap dengan ejen yang sedia ada, taip LA'
+    history_threshold: 10
+  after_hours:
+    en: '
+
+
+      PS: We’re currently outside office hours. A live agent will follow up later.'
+    bm: '
+
+
+      PS: Sekarang di luar waktu pejabat.'
+  handover:
+    dropoff_en: Please provide the date and time for the dropoff. Our staff will assist
+      you soon. Type *resume* to continue with the bot.
+    dropoff_bm: Sila berikan tarikh dan masa untuk penghantaran. Ejen kami akan membantu
+      anda sebentar lagi. Taip *resume* untuk teruskan.
+    live_agent_en: A live agent will assist you soon. Type *resume* to continue with
+      the bot.
+    live_agent_bm: Ejen kami akan membantu anda. Taip *resume* untuk teruskan.
+  resume:
+    en: Bot resumed. How can I help?
+    bm: Bot disambung semula. Ada apa saya boleh bantu?
+  media_guard:
+    en: I am a front-line diagnostic AI and do not support image/video/audio analysis
+      yet. Please describe the issue in text and tell me what car you are driving
+      (brand/model/year).
+tools_profile:
+  active_profile: kommu
+  profiles:
+    minimal:
+    - search_faq
+    - search_session_memory
+    - escalate_to_human
+    kommu:
+    - search_faq
+    - search_session_memory
+    - search_web
+    - search_kommu_support
+    - search_bukapilot
+    - read_bukapilot_file
+    - lookup_warranty
+    - lookup_backlog
+    - log_backlog
+    - escalate_to_human
+    - create_visitor_pass
+  profile_overrides:
+    search_kommu_support:
+      builtin: search_official_site
+      params:
+        official_url: https://kommu.ai/support/
+        vehicles_json_url: https://raw.githubusercontent.com/kommuai/bukapilot/snapshot/selfdrive/car/supported_vehicle.json
+    search_bukapilot:
+      builtin: search_github_repo
+      params:
+        repo: kommuai/bukapilot
+        branch: release_ka2
+    read_bukapilot_file:
+      builtin: read_github_file
+      params:
+        repo: kommuai/bukapilot
+        branch: release_ka2
+    lookup_warranty:
+      builtin: lookup_sheet_record
+    lookup_backlog:
+      builtin: lookup_sheet_backlog
+    log_backlog:
+      builtin: log_sheet_backlog
+      params:
+        summarize_system_prompt: You are a technical documentation writer for KommuAssist
+          (KA2). Return ONLY JSON with keys problem_description and reproduction_steps.
+    create_visitor_pass:
+      plugin: smartserva_visitor_pass
+      description: Create building visitor pass and return link (plain URL only).
+  tools: []
+contexts:
+- id: default_contexts
+  enabled: true
+  kind: composite
+  config:
+    providers:
+    - sop
+    - warranty
+    - repo_public
+    - media_artifacts

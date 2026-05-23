@@ -19,7 +19,7 @@ _log = logging.getLogger("kai.retrieval")
 
 
 def _chunks_path() -> Path:
-    return get_settings().agent_workspace / "compiled" / "kb_chunks.jsonl"
+    return get_settings().kai_home / "compiled" / "kb_chunks.jsonl"
 
 
 def _terms(text: str) -> set[str]:

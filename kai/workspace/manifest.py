@@ -9,16 +9,17 @@ import yaml
 
 from kai.settings import get_settings
 
+WORKSPACE_FILENAMES = ("workspace.yaml", "00_manifest.yaml")
+
 
 @dataclass(frozen=True)
 class WorkspacePaths:
-    system_prompt: str = "01_core/system_prompt.md"
-    knowledge_primary: str = "02_knowledge/faq/master_faq.md"
+    system_prompt: str = "system_prompt.md"
+    knowledge_primary: str = "knowledge/master_faq.md"
     knowledge_compiled_dir: str = "compiled"
-    chat_copy: str = "05_copy/chat_copy.yaml"
-    channels_handover: str = "04_channels/handover.yaml"
-    settings: str = "settings.yaml"
-    tools: str = "03_tools/tools.yaml"
+    knowledge_learnt_faq: str = "knowledge/learnt_faq.md"
+    knowledge_learn_queue: str = "knowledge/learn_queue"
+    tools_plugins_dir: str = "tools/plugins"
 
 
 @dataclass(frozen=True)
@@ -42,11 +43,16 @@ class WorkspaceManifest:
     raw: dict[str, Any] = field(default_factory=dict, repr=False)
 
     def resolve(self, relative: str) -> Path:
-        return get_settings().agent_workspace / relative
+        return get_settings().kai_home / relative
 
 
-def _manifest_yaml_path() -> Path:
-    return get_settings().agent_workspace / "00_manifest.yaml"
+def workspace_yaml_path() -> Path:
+    ws = get_settings().kai_home
+    for name in WORKSPACE_FILENAMES:
+        path = ws / name
+        if path.is_file():
+            return path
+    return ws / WORKSPACE_FILENAMES[0]
 
 
 def _manifest_md_path() -> Path:
@@ -76,18 +82,17 @@ def _paths_from_dict(data: dict[str, Any]) -> WorkspacePaths:
     knowledge = data.get("knowledge") if isinstance(data.get("knowledge"), dict) else {}
     compiled = knowledge.get("compiled_dir") or paths.get("compiled_dir") or "compiled"
     return WorkspacePaths(
-        system_prompt=str(paths.get("system_prompt") or data.get("system_prompt") or "01_core/system_prompt.md"),
+        system_prompt=str(paths.get("system_prompt") or data.get("system_prompt") or "system_prompt.md"),
         knowledge_primary=str(
             paths.get("knowledge_primary")
             or paths.get("primary")
             or data.get("rag_source")
-            or "02_knowledge/faq/master_faq.md"
+            or "knowledge/master_faq.md"
         ),
         knowledge_compiled_dir=str(compiled),
-        chat_copy=str(paths.get("chat_copy") or data.get("chat_copy") or "05_copy/chat_copy.yaml"),
-        channels_handover=str(paths.get("channels_handover") or "04_channels/handover.yaml"),
-        settings=str(paths.get("settings") or data.get("settings_defaults") or "settings.yaml"),
-        tools=str(paths.get("tools") or "03_tools/tools.yaml"),
+        knowledge_learnt_faq=str(paths.get("knowledge_learnt_faq") or "knowledge/learnt_faq.md"),
+        knowledge_learn_queue=str(paths.get("knowledge_learn_queue") or "knowledge/learn_queue"),
+        tools_plugins_dir=str(paths.get("tools_plugins_dir") or "tools/plugins"),
     )
 
 
@@ -141,6 +146,25 @@ def manifest_from_dict(data: dict[str, Any]) -> WorkspaceManifest:
     )
 
 
+@lru_cache(maxsize=1)
+def load_workspace_data() -> dict[str, Any]:
+    path = workspace_yaml_path()
+    if path.is_file():
+        data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        return data if isinstance(data, dict) else {}
+
+    md_path = _manifest_md_path()
+    if md_path.is_file() and md_path.suffix == ".md":
+        return _parse_md_frontmatter(md_path)
+
+    return {}
+
+
+def workspace_section(name: str) -> dict[str, Any]:
+    block = load_workspace_data().get(name)
+    return block if isinstance(block, dict) else {}
+
+
 def load_workspace_manifest(*, force: bool = False) -> WorkspaceManifest:
     if force:
         reload_workspace_manifest()
@@ -149,22 +173,23 @@ def load_workspace_manifest(*, force: bool = False) -> WorkspaceManifest:
 
 @lru_cache(maxsize=1)
 def _load_workspace_manifest_cached() -> WorkspaceManifest:
-    yaml_path = _manifest_yaml_path()
-    if yaml_path.is_file():
-        data = yaml.safe_load(yaml_path.read_text(encoding="utf-8")) or {}
-        if isinstance(data, dict):
-            return manifest_from_dict(data)
-
-    md_path = _manifest_md_path()
-    if md_path.is_file():
-        return manifest_from_dict(_parse_md_frontmatter(md_path))
-
+    data = load_workspace_data()
+    if data:
+        return manifest_from_dict(data)
     return manifest_from_dict({})
 
 
 def reload_workspace_manifest() -> WorkspaceManifest:
+    load_workspace_data.cache_clear()
     _load_workspace_manifest_cached.cache_clear()
+    from kai.workspace.runtime_settings import reload_workspace_settings_yaml
     from kai.workspace.tools_config import reload_tools_config
 
+    reload_workspace_settings_yaml()
     reload_tools_config()
+    from kai.content.channels import reload_channel_config
+    from kai.content.copy import reload_chat_copy
+
+    reload_channel_config()
+    reload_chat_copy()
     return load_workspace_manifest()

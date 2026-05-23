@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+import logging
 import os
-from typing import Protocol
 import re
+from dataclasses import dataclass
+from typing import Protocol
 
 from openai import OpenAI
 
 from kai.settings import get_settings
+
+log = logging.getLogger("kai.providers")
 
 
 class ChatProvider(Protocol):
@@ -34,6 +37,8 @@ class ProviderConfig:
 
 
 class DeepSeekProvider:
+    _missing_key_warned = False
+
     def __init__(self, cfg: ProviderConfig) -> None:
         self.cfg = cfg
         self.client = OpenAI(api_key=cfg.api_key, base_url=cfg.base_url)
@@ -47,6 +52,13 @@ class DeepSeekProvider:
 
     def chat_messages(self, messages: list[dict], *, temperature: float = 0.2, max_tokens: int = 1200) -> str:
         if not self.cfg.api_key:
+            if not DeepSeekProvider._missing_key_warned:
+                log.error(
+                    "LLM call skipped: no API key configured. "
+                    "Set KAI_LLM_API_KEY or DEEPSEEK_API_KEY (empty values shadow the alias). "
+                    "Replies will fall back to clarify text until this is fixed."
+                )
+                DeepSeekProvider._missing_key_warned = True
             return ""
         resp = self.client.chat.completions.create(
             model=self.cfg.model,
@@ -78,6 +90,8 @@ class DeepSeekProvider:
 class OpenAICompatibleProvider:
     """Generic OpenAI-compatible provider for non-DeepSeek backends."""
 
+    _missing_key_warned = False
+
     def __init__(self, cfg: ProviderConfig) -> None:
         self.cfg = cfg
         self.client = OpenAI(api_key=cfg.api_key, base_url=cfg.base_url or None)
@@ -91,6 +105,13 @@ class OpenAICompatibleProvider:
 
     def chat_messages(self, messages: list[dict], *, temperature: float = 0.2, max_tokens: int = 1200) -> str:
         if not self.cfg.api_key:
+            if not OpenAICompatibleProvider._missing_key_warned:
+                log.error(
+                    "LLM call skipped: no API key configured. "
+                    "Set KAI_LLM_API_KEY (empty value shadows the alias). "
+                    "Replies will fall back to clarify text until this is fixed."
+                )
+                OpenAICompatibleProvider._missing_key_warned = True
             return ""
         resp = self.client.chat.completions.create(
             model=self.cfg.model,

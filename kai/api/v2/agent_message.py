@@ -96,8 +96,25 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
         return _merge_trace({"ok": True}, trace_id=trace_id, mode=mode, capability_used="empty", start=start)
 
     metrics_inc("agent_message.requests")
+    s = get_settings()
     pre = kai_service.pre_router(data)
     if pre is not None:
+        if pre.get("type") == "handover" and bool(s.kai_chatwoot_enforce_live_handover):
+            applied, handover_error = enforce_live_agent_handover(data)
+            pre = dict(pre)
+            if applied:
+                pre["handover_applied"] = True
+            else:
+                pre = {
+                    "type": "handover_failed",
+                    "message": (
+                        "Live-agent handover was requested but could not be completed. "
+                        "Please retry or contact support."
+                    ),
+                    "next_state": "human",
+                    "handover_applied": False,
+                    "handover_error": handover_error,
+                }
         return _merge_trace(pre, trace_id=trace_id, mode=mode, capability_used="pre_router", start=start)
 
     try:
@@ -121,7 +138,6 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
             fallback_reason="runtime_exception",
         )
 
-    s = get_settings()
     debug_env = bool(s.kai_route_agent_debug_enabled)
     debug_requested = bool(data.get("debug_route_agent"))
     include_debug = debug_env and (debug_requested and _admin_token_valid(x_admin_token))

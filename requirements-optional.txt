@@ -1,7 +1,0 @@
-# Install after requirements.txt when a tenant needs these integrations.
-#   pip install -r requirements.txt -r requirements-optional.txt
-
-qdrant-client>=1.10.0
-google-auth>=2.35.0
-google-api-python-client>=2.151.0
-ddddocr>=1.5.6

@@ -2,18 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 
-import yaml
-
 from kai.settings import Settings, get_settings
-from kai.workspace.manifest import load_workspace_manifest
+from kai.workspace.manifest import load_workspace_data, load_workspace_manifest
 
 
 @dataclass(frozen=True)
 class RuntimeSettings:
-    """Effective non-secret config: env Settings with workspace/settings.yaml overrides."""
+    """Effective non-secret config: env Settings with workspace.yaml overrides."""
 
     timezone: str
     office_weekdays: tuple[int, ...]
@@ -62,23 +59,15 @@ class RuntimeSettings:
         )
 
 
-def _workspace_settings_path() -> Path:
-    manifest = load_workspace_manifest()
-    return manifest.resolve(manifest.paths.settings)
-
-
 @lru_cache(maxsize=1)
 def load_workspace_settings_yaml() -> dict[str, Any]:
-    path = _workspace_settings_path()
-    if not path.is_file():
-        return {}
-    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    return data if isinstance(data, dict) else {}
+    return load_workspace_data()
 
 
 def reload_workspace_settings_yaml() -> dict[str, Any]:
     load_workspace_settings_yaml.cache_clear()
     get_runtime_settings.cache_clear()
+    load_workspace_data.cache_clear()
     return load_workspace_settings_yaml()
 
 

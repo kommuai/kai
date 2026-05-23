@@ -6,9 +6,10 @@ from pathlib import Path
 
 from kai.content.copy import get_chat_copy
 from kai.settings import get_settings
+from kai.settings.paths import using_deprecated_agent_workspace
 from kai.support_runtime.compiler import compile_canonical_knowledge
 from kai.support_runtime.tools.catalog import builtin_catalog, resolve_builtin_id
-from kai.workspace.manifest import load_workspace_manifest
+from kai.workspace.manifest import load_workspace_data, load_workspace_manifest, workspace_yaml_path
 from kai.workspace.tools_config import load_tools_config
 
 
@@ -22,31 +23,37 @@ class ValidationIssue:
 def validate_workspace(*, compile_kb: bool = True, ping_llm: bool = False) -> list[ValidationIssue]:
     issues: list[ValidationIssue] = []
     settings = get_settings()
-    ws = settings.agent_workspace
+    ws = settings.kai_home
+
+    if using_deprecated_agent_workspace():
+        issues.append(
+            ValidationIssue(
+                "warn",
+                "deprecated_agent_workspace",
+                "AGENT_WORKSPACE is deprecated; set KAI_HOME instead",
+            )
+        )
 
     if not ws.is_dir():
         issues.append(ValidationIssue("error", "workspace_missing", f"Workspace not found: {ws}"))
         return issues
 
     manifest = load_workspace_manifest()
-    yaml_manifest = ws / "00_manifest.yaml"
-    if yaml_manifest.is_file():
-        issues.append(ValidationIssue("ok", "manifest_yaml", f"Loaded manifest v{manifest.version} ({manifest.tenant_id})"))
+    wpath = workspace_yaml_path()
+    if wpath.is_file():
+        issues.append(ValidationIssue("ok", "workspace_yaml", f"Loaded workspace v{manifest.version} ({manifest.tenant_id})"))
     else:
         issues.append(
             ValidationIssue(
                 "warn",
-                "manifest_yaml_missing",
-                "00_manifest.yaml not found; using 00_manifest.md frontmatter or defaults",
+                "workspace_yaml_missing",
+                "workspace.yaml not found; using defaults",
             )
         )
 
     for label, rel in (
         ("system_prompt", manifest.paths.system_prompt),
         ("knowledge", manifest.paths.knowledge_primary),
-        ("chat_copy", manifest.paths.chat_copy),
-        ("channels", manifest.paths.channels_handover),
-        ("settings", manifest.paths.settings),
     ):
         path = manifest.resolve(rel)
         if path.is_file():
@@ -54,11 +61,14 @@ def validate_workspace(*, compile_kb: bool = True, ping_llm: bool = False) -> li
         else:
             issues.append(ValidationIssue("error", f"path_{label}_missing", f"Missing {label}: {rel}"))
 
+    data = load_workspace_data()
+    if isinstance(data.get("copy"), dict):
+        issues.append(ValidationIssue("ok", "copy_inline", "copy section in workspace.yaml"))
     tools_cfg = load_tools_config()
-    if tools_cfg.path.is_file():
-        issues.append(ValidationIssue("ok", "tools_yaml", f"{len(tools_cfg.enabled_entries())} tools enabled"))
+    if tools_cfg.raw or data.get("tools_profile") or data.get("tools"):
+        issues.append(ValidationIssue("ok", "tools_config", f"{len(tools_cfg.enabled_entries())} tools enabled"))
     else:
-        issues.append(ValidationIssue("warn", "tools_yaml_missing", f"Missing {manifest.paths.tools}; using defaults"))
+        issues.append(ValidationIssue("warn", "tools_config_missing", "No tools_profile in workspace.yaml; using defaults"))
 
     catalog = builtin_catalog()
     for entry in tools_cfg.enabled_entries():
@@ -72,7 +82,7 @@ def validate_workspace(*, compile_kb: bool = True, ping_llm: bool = False) -> li
                     ValidationIssue(
                         "error",
                         "plugin_script_missing",
-                        f"Tool {entry.id} plugin={entry.plugin} has no script under 03_tools/plugins/",
+                        f"Tool {entry.id} plugin={entry.plugin} has no script under tools/plugins/",
                     )
                 )
             continue
@@ -84,9 +94,9 @@ def validate_workspace(*, compile_kb: bool = True, ping_llm: bool = False) -> li
 
     try:
         get_chat_copy()
-        issues.append(ValidationIssue("ok", "chat_copy_parse", "chat_copy.yaml parses"))
+        issues.append(ValidationIssue("ok", "chat_copy_parse", "copy section parses"))
     except Exception as exc:  # noqa: BLE001
-        issues.append(ValidationIssue("error", "chat_copy_parse", f"chat_copy.yaml failed: {exc}"))
+        issues.append(ValidationIssue("error", "chat_copy_parse", f"copy failed: {exc}"))
 
     if compile_kb:
         try:

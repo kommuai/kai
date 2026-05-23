@@ -12,6 +12,10 @@
 
 Do **not** expose the service directly on `0.0.0.0` without network controls.
 
+## Chatwoot Agent Bot webhook
+
+`POST /webhooks/chatwoot` is enabled only when `KAI_CHATWOOT_BOT_ENABLED=1`. Set `KAI_CHATWOOT_WEBHOOK_SECRET` and send it as `X-Chatwoot-Bot-Token` (or `?token=`) so only Chatwoot can call the endpoint.
+
 ## Admin API
 
 Routes under `/admin/*` require header `x-admin-token` matching `ADMIN_TOKEN` in `.env` (constant-time compare).
@@ -41,7 +45,7 @@ Otherwise debug is omitted even if the client sends `debug_route_agent`.
 
 ## Media
 
-Static files under `/media` are mounted only when `KAI_MEDIA_PUBLIC=1`. Leave unset in production unless you intend public media URLs.
+Static files under `/media` are mounted only when `KAI_MEDIA_PUBLIC=1` (serves `KAI_HOME/data/media/`). Leave unset in production unless you intend public media URLs.
 
 ## Plugins
 

@@ -7,7 +7,7 @@ from kai.settings import get_settings
 
 
 def workspace_root() -> Path:
-    return get_settings().agent_workspace
+    return get_settings().kai_home
 
 
 def resolve_workspace_path(*parts: str) -> Path:
@@ -15,16 +15,13 @@ def resolve_workspace_path(*parts: str) -> Path:
 
 
 def manifest_relative_path(key: str, default: str) -> str:
-    """Resolve a path key from 00_manifest.yaml (system_prompt, knowledge_primary, …)."""
+    """Resolve a path key from workspace.yaml (system_prompt, knowledge_primary, …)."""
     from kai.workspace.manifest import load_workspace_manifest
 
     manifest = load_workspace_manifest()
     mapping = {
         "system_prompt": manifest.paths.system_prompt,
         "knowledge_primary": manifest.paths.knowledge_primary,
-        "chat_copy": manifest.paths.chat_copy,
-        "settings": manifest.paths.settings,
-        "tools": manifest.paths.tools,
     }
     return mapping.get(key, default)
 

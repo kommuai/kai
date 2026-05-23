@@ -17,7 +17,7 @@ def should_compile_at_startup() -> bool:
 
         manifest = load_workspace_manifest()
         chunks = (
-            get_settings().agent_workspace
+            get_settings().kai_home
             / manifest.paths.knowledge_compiled_dir
             / manifest.knowledge.compile_artifact
         )
@@ -34,7 +34,7 @@ def run_startup(*, compile_kb: bool | None = None) -> dict:
 
     log = logging.getLogger("kai.startup")
     manifest = load_workspace_manifest()
-    ws = get_settings().agent_workspace
+    ws = get_settings().kai_home
     log.info("tenant=%s workspace=%s", manifest.tenant_id, ws)
 
     do_compile = should_compile_at_startup() if compile_kb is None else compile_kb
@@ -61,7 +61,7 @@ def run_startup(*, compile_kb: bool | None = None) -> dict:
 
         get_kai_service()
 
-    log_session_store_hint(Path(get_settings().workspace_manifest_path))
+    log_session_store_hint()
     warm_warranty = needs_warranty_cache()
     counts = get_support_runtime_service().startup(
         compile_kb=do_compile,

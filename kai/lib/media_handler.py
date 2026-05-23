@@ -1,28 +1,43 @@
-import os
-import requests
 import logging
+import os
 import sqlite3
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
+
+import requests
 
 log = logging.getLogger(__name__)
 
 META_TOKEN = os.getenv("META_PERMANENT_TOKEN", "")
-MEDIA_CACHE_DIR = "media"
-DB_PATH = os.getenv("DB_PATH", "data/sessions.db")
 
-os.makedirs(MEDIA_CACHE_DIR, exist_ok=True)
 
-def _db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+def _media_cache_dir() -> Path:
+    try:
+        from kai.settings import get_settings
 
-def init_media_log():
-    """Ensure media_log table exists"""
-    conn = _db()
+        return get_settings().kai_home / "data" / "media"
+    except Exception:  # noqa: BLE001
+        return Path("data/media")
+
+
+def _db_path() -> str:
+    try:
+        from kai.settings import get_settings
+
+        return get_settings().session_db_path
+    except Exception:  # noqa: BLE001
+        return os.getenv("DB_PATH", "data/sessions.db")
+
+
+def init_media_log() -> None:
+    """Ensure media_log table exists in the session database."""
+    cache = _media_cache_dir()
+    cache.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(_db_path())
     cur = conn.cursor()
-    cur.execute("""
+    cur.execute(
+        """
         CREATE TABLE IF NOT EXISTS media_log (
             id TEXT PRIMARY KEY,
             sender TEXT,
@@ -32,22 +47,24 @@ def init_media_log():
             path TEXT,
             created_at TEXT
         )
-    """)
-    conn.commit()
-    conn.close()
-
-def insert_media_record(media_id, sender, mtype, caption, mime, path):
-    conn = _db()
-    cur = conn.cursor()
-    cur.execute(
-        "INSERT OR REPLACE INTO media_log VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (media_id, sender, mtype, caption, mime, path, datetime.utcnow().isoformat())
+        """
     )
     conn.commit()
     conn.close()
 
+
+def insert_media_record(media_id, sender, mtype, caption, mime, path) -> None:
+    conn = sqlite3.connect(_db_path())
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT OR REPLACE INTO media_log VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (media_id, sender, mtype, caption, mime, path, datetime.utcnow().isoformat()),
+    )
+    conn.commit()
+    conn.close()
+
+
 def get_media_url(media_id: str) -> Optional[str]:
-    """Request temporary download URL from Meta"""
     if not META_TOKEN:
         log.error("META_PERMANENT_TOKEN missing")
         return None
@@ -59,10 +76,11 @@ def get_media_url(media_id: str) -> Optional[str]:
         )
         if r.ok:
             return r.json().get("url")
-        log.warning(f"Failed to get media URL: {r.text}")
-    except Exception as e:
-        log.error(f"get_media_url error: {e}")
+        log.warning("Failed to get media URL: %s", r.text)
+    except Exception as exc:  # noqa: BLE001
+        log.error("get_media_url error: %s", exc)
     return None
+
 
 def guess_extension_from_type(mime_type: str) -> str:
     if "image" in mime_type:
@@ -75,28 +93,27 @@ def guess_extension_from_type(mime_type: str) -> str:
         return ".pdf"
     return ".bin"
 
+
 def download_media(media_url: str, media_id: str, ext: str) -> Optional[str]:
-    """Download file and return saved path"""
     try:
         headers = {"Authorization": f"Bearer {META_TOKEN}"}
         r = requests.get(media_url, headers=headers, timeout=30)
         if not r.ok:
-            log.warning(f"Download failed {r.status_code}")
+            log.warning("Download failed %s", r.status_code)
             return None
-        filename = f"{media_id}{ext}"
-        path = os.path.join(MEDIA_CACHE_DIR, filename)
-        with open(path, "wb") as f:
-            f.write(r.content)
+        cache = _media_cache_dir()
+        cache.mkdir(parents=True, exist_ok=True)
+        path = str(cache / f"{media_id}{ext}")
+        with open(path, "wb") as fh:
+            fh.write(r.content)
         return path
-    except Exception as e:
-        log.error(f"download_media error: {e}")
+    except Exception as exc:  # noqa: BLE001
+        log.error("download_media error: %s", exc)
         return None
 
-def handle_incoming_media(msg: dict, sender_id: str, add_message_to_history):
-    """
-    Detect and process WhatsApp media messages.
-    Returns True if handled.
-    """
+
+def handle_incoming_media(msg: dict, sender_id: str, add_message_to_history) -> bool:
+    """Process WhatsApp media messages (optional; not wired on default chat route)."""
     msg_type = msg.get("type", "text")
     if msg_type == "text":
         return False
@@ -117,11 +134,8 @@ def handle_incoming_media(msg: dict, sender_id: str, add_message_to_history):
         add_message_to_history(sender_id, "user", f"[{msg_type.upper()}] (download failed)")
         return True
 
-    
     insert_media_record(media_id, sender_id, msg_type, caption, mime, path)
-
-    
     note = f"[{msg_type.upper()}] {caption or mime}\nSaved at: {path}"
     add_message_to_history(sender_id, "user", note)
-    log.info(f"Media saved: {path}")
+    log.info("Media saved: %s", path)
     return True

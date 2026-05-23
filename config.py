@@ -81,7 +81,10 @@ def _export_value(name: str, s: Settings) -> Any:
     if name == "WORKSPACE_MANIFEST_PATH":
         return str(s.workspace_manifest_path)
     if name == "CONTEXT_REGISTRY_YAML":
-        return str(s.agent_workspace / "04_context" / "context_registry.yaml")
+        legacy = s.agent_workspace / "04_context" / "context_registry.yaml"
+        if legacy.is_file():
+            return str(legacy)
+        return str(s.workspace_manifest_path)
     return getattr(s, name.lower())
 
 

@@ -41,7 +41,7 @@ def health_readiness():
         "metrics": metrics_snapshot(),
         "tenant_id": manifest.tenant_id,
         "display_name": manifest.display_name,
-        "workspace": str(settings.agent_workspace),
+        "workspace": str(settings.kai_home),
         "knowledge_chunks": chunks.is_file(),
         "tools_enabled": len(tools.enabled_entries()),
         "llm_configured": llm_configured,

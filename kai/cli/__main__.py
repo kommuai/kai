@@ -1,15 +1,16 @@
 #!/usr/bin/env python3
-"""Usage: python -m kai.cli <init|doctor|validate|compile|port-check|paths>"""
+"""Usage: python -m kai.cli <workspace|pack|doctor|compile|port-check|paths>"""
 
 from __future__ import annotations
 
 import argparse
-import shutil
 import sys
 from pathlib import Path
 
-from kai.settings import get_settings
+from kai.cli.pack import export_pack, install_pack, scaffold_workspace
+from kai.settings import get_settings, reload_settings
 from kai.settings.loader import BASE_DIR
+from kai.settings.paths import resolve_kai_home, using_deprecated_agent_workspace
 from kai.support_runtime.compiler import compile_canonical_knowledge
 from kai.workspace.validate import ValidationIssue, validate_workspace, workspace_is_healthy
 
@@ -29,6 +30,8 @@ def _print_issues(issues: list[ValidationIssue]) -> None:
 
 
 def cmd_doctor(args: argparse.Namespace) -> int:
+    if using_deprecated_agent_workspace():
+        print("[WARN] AGENT_WORKSPACE is deprecated; use KAI_HOME instead.")
     issues = validate_workspace(compile_kb=not args.skip_compile, ping_llm=args.ping_llm)
     _print_issues(issues)
     return 0 if workspace_is_healthy(issues) else 1
@@ -39,61 +42,56 @@ def cmd_validate(args: argparse.Namespace) -> int:
 
 
 def cmd_port_check(_args: argparse.Namespace) -> int:
-    """Print what this workspace needs to run (deps + env hints)."""
     from kai.engine.features import get_workspace_features
     from kai.workspace.manifest import load_workspace_manifest
 
     manifest = load_workspace_manifest()
     feat = get_workspace_features()
+    settings = get_settings()
     print(f"tenant_id={manifest.tenant_id} display_name={manifest.display_name}")
-    print(f"workspace={get_settings().agent_workspace}")
+    print(f"KAI_HOME={settings.kai_home}")
     print(f"enabled_builtins={','.join(feat.enabled_builtins) or '(defaults)'}")
     if feat.plugin_ids:
         print(f"plugins={','.join(feat.plugin_ids)}")
     if feat.optional_pip_hint:
-        print(f"optional_install: {feat.optional_pip_hint}")
-        print("  pip install -r requirements-optional.txt")
-    else:
-        print("optional_install: none (core requirements.txt only)")
-    print("startup_hints:")
-    print("  KAI_STARTUP_COMPILE=auto     # skip compile when kb_chunks.jsonl exists")
-    print("  KAI_SCHEDULER_ENABLED=0      # disable daily refresh background task")
-    print("  KAI_STRICT_STARTUP=1         # fail boot on validation errors")
+        print(f"integration_hints: {feat.optional_pip_hint}")
     return 0
 
 
 def cmd_paths(_args: argparse.Namespace) -> int:
-    from kai.workspace.manifest import load_workspace_manifest
+    from kai.workspace.manifest import load_workspace_manifest, workspace_yaml_path
 
     manifest = load_workspace_manifest()
-    ws = get_settings().agent_workspace
-    print(f"workspace={ws}")
+    home = get_settings().kai_home
+    print(f"KAI_HOME={home}")
+    print(f"  workspace_yaml: {workspace_yaml_path()}")
     for label, rel in (
-        ("manifest_yaml", "00_manifest.yaml"),
         ("system_prompt", manifest.paths.system_prompt),
         ("knowledge", manifest.paths.knowledge_primary),
         ("compiled_dir", manifest.paths.knowledge_compiled_dir),
-        ("tools", manifest.paths.tools),
-        ("channels", manifest.paths.channels_handover),
-        ("chat_copy", manifest.paths.chat_copy),
-        ("settings", manifest.paths.settings),
+        ("tools_plugins", manifest.paths.tools_plugins_dir),
     ):
-        p = ws / rel if label == "manifest_yaml" else manifest.resolve(rel)
-        print(f"  {label}: {p}")
+        print(f"  {label}: {manifest.resolve(rel)}")
+    print(f"  session_db: {get_settings().session_db_path}")
     return 0
 
 
 def cmd_init_plugin(args: argparse.Namespace) -> int:
+    import shutil
+
     plugin_id = (args.plugin_id or "").strip()
     if not plugin_id or not plugin_id.replace("_", "").isalnum():
         print("plugin_id must be alphanumeric/underscore")
         return 1
-    ws = get_settings().agent_workspace
-    dest_dir = ws / "03_tools" / "plugins" / plugin_id
+    home = get_settings().kai_home
+    from kai.workspace.manifest import load_workspace_manifest
+
+    plugins_dir = load_workspace_manifest().paths.tools_plugins_dir
+    dest_dir = home / plugins_dir / plugin_id
     if dest_dir.exists() and not args.force:
         print(f"Plugin directory already exists: {dest_dir}")
         return 1
-    template = _template_root() / "03_tools" / "plugins" / "example_plugin" / "main.py"
+    template = _template_root() / "tools" / "plugins" / "example_plugin" / "main.py"
     if not template.is_file():
         print(f"Template missing: {template}")
         return 1
@@ -101,21 +99,7 @@ def cmd_init_plugin(args: argparse.Namespace) -> int:
     dest = dest_dir / "main.py"
     shutil.copy2(template, dest)
     print(f"Created plugin at {dest}")
-    print("Register in 03_tools/tools.yaml with plugin: {0}".format(plugin_id))
-    return 0
-
-
-def cmd_export_pack(args: argparse.Namespace) -> int:
-    import tarfile
-
-    ws = Path(args.workspace or get_settings().agent_workspace).resolve()
-    if not ws.is_dir():
-        print(f"Workspace not found: {ws}")
-        return 1
-    out = Path(args.output or f"kai-workspace-{ws.name}.tar.gz").resolve()
-    with tarfile.open(out, "w:gz") as tar:
-        tar.add(ws, arcname=ws.name)
-    print(f"Exported {ws} -> {out}")
+    print(f"Register in workspace.yaml tools_profile with plugin: {plugin_id}")
     return 0
 
 
@@ -125,91 +109,120 @@ def cmd_compile(_args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_init(args: argparse.Namespace) -> int:
-    ws = Path(args.workspace).resolve()
-    if not args.force and ws.exists() and any(ws.iterdir()):
-        print(f"Workspace already exists and is not empty: {ws}")
-        print("Use --force to merge template files (existing files are not overwritten).")
+def cmd_workspace_init(args: argparse.Namespace) -> int:
+    home = Path(args.home or resolve_kai_home()).expanduser().resolve()
+    try:
+        copied, target = scaffold_workspace(home, force=args.force)
+    except FileExistsError as exc:
+        print(str(exc))
+        print("Use --force to add missing template files without overwriting.")
         return 1
-
-    template = _template_root()
-    if not template.is_dir():
-        print(f"Template missing: {template}")
+    except FileNotFoundError as exc:
+        print(str(exc))
         return 1
-
-    ws.mkdir(parents=True, exist_ok=True)
-    copied = 0
-    for src in template.rglob("*"):
-        if src.is_dir():
-            continue
-        rel = src.relative_to(template)
-        dest = ws / rel
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        if dest.exists() and not args.force:
-            continue
-        if dest.exists() and args.force:
-            continue
-        shutil.copy2(src, dest)
-        copied += 1
-
-    env_example = _repo_root() / ".env.example"
-    env_dest = _repo_root() / ".env"
-    if env_example.is_file() and not env_dest.exists():
-        shutil.copy2(env_example, env_dest)
-        print(f"Created {_rel(env_dest)} from .env.example — add your API keys.")
-
-    print(f"Initialized workspace at {ws} ({copied} files from template).")
+    reload_settings()
+    print(f"Initialized KAI_HOME at {target} ({copied} files from template).")
     print("Next:")
-    print(f"  1. Set AGENT_WORKSPACE={ws} in .env (or use default agent_workspace/)")
-    print("  2. Edit FAQ: 02_knowledge/faq/master_faq.md")
-    print("  3. Run: python -m kai.cli doctor")
+    print("  kai pack install <tenant-pack>   # optional tenant content")
+    print("  kai doctor")
     return 0
 
 
-def _rel(path: Path) -> str:
-    try:
-        return str(path.relative_to(_repo_root()))
-    except ValueError:
-        return str(path)
+def cmd_pack_install(args: argparse.Namespace) -> int:
+    copied, messages = install_pack(args.source, force=args.force)
+    for line in messages:
+        print(line)
+    if copied == 0 and messages and "not found" in messages[0].lower():
+        return 1
+    reload_settings()
+    from kai.workspace.reload import reload_workspace_caches
+
+    reload_workspace_caches()
+    return 0
+
+
+def cmd_pack_export(args: argparse.Namespace) -> int:
+    home = Path(args.home).expanduser() if args.home else get_settings().kai_home
+    out = export_pack(
+        args.output or f"kai-pack-{home.name}.tar.gz",
+        home=home,
+        exclude_runtime=not args.include_runtime,
+    )
+    print(f"Exported {home} -> {out}")
+    return 0
+
+
+def cmd_init(args: argparse.Namespace) -> int:
+    """Deprecated alias for workspace init."""
+    args.home = args.workspace
+    return cmd_workspace_init(args)
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="kai", description="Kai workspace CLI")
+    parser = argparse.ArgumentParser(prog="kai", description="Kai agent harness CLI")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    p_init = sub.add_parser("init", help="Scaffold a new agent_workspace from template")
-    p_init.add_argument(
-        "--workspace",
-        default=str(get_settings().agent_workspace),
-        help="Target workspace directory",
+    p_ws = sub.add_parser("workspace", help="Manage KAI_HOME workspace")
+    ws_sub = p_ws.add_subparsers(dest="workspace_cmd", required=True)
+    p_ws_init = ws_sub.add_parser("init", help="Scaffold ~/.kai from generic template")
+    p_ws_init.add_argument("--home", default="", help="KAI_HOME path (default ~/.kai or KAI_HOME env)")
+    p_ws_init.add_argument("--force", action="store_true", help="Add missing files without overwriting existing")
+    p_ws_init.set_defaults(func=cmd_workspace_init)
+
+    p_pack = sub.add_parser("pack", help="Install or export tenant packs")
+    pack_sub = p_pack.add_subparsers(dest="pack_cmd", required=True)
+    p_pack_in = pack_sub.add_parser("install", help="Install tenant pack into KAI_HOME")
+    p_pack_in.add_argument("source", help="Local directory, .tar.gz path, or https URL")
+    p_pack_in.add_argument("--force", action="store_true", help="Overwrite existing files")
+    p_pack_in.set_defaults(func=cmd_pack_install)
+    p_pack_ex = pack_sub.add_parser("export", help="Export KAI_HOME as tar.gz")
+    p_pack_ex.add_argument("--output", default="")
+    p_pack_ex.add_argument("--home", default="")
+    p_pack_ex.add_argument(
+        "--include-runtime",
+        action="store_true",
+        help="Include compiled/ and data/ in export",
     )
-    p_init.add_argument("--force", action="store_true", help="Copy missing template files into existing workspace")
+    p_pack_ex.set_defaults(func=cmd_pack_export)
+
+    p_init = sub.add_parser("init", help="[deprecated] Use: kai workspace init")
+    p_init.add_argument("--workspace", default=str(resolve_kai_home()), help="Target KAI_HOME")
+    p_init.add_argument("--force", action="store_true")
     p_init.set_defaults(func=cmd_init)
 
     for name in ("doctor", "validate"):
-        p = sub.add_parser(name, help="Validate workspace manifest, paths, FAQ compile, tools")
-        p.add_argument("--skip-compile", action="store_true", help="Do not compile FAQ")
-        p.add_argument("--ping-llm", action="store_true", help="Ping LLM provider (uses API key)")
+        p = sub.add_parser(name, help="Validate KAI_HOME layout, FAQ, tools")
+        p.add_argument("--skip-compile", action="store_true")
+        p.add_argument("--ping-llm", action="store_true")
         p.set_defaults(func=cmd_doctor)
 
-    p_compile = sub.add_parser("compile", help="Compile master_faq.md to kb_chunks.jsonl")
+    p_compile = sub.add_parser("compile", help="Compile master FAQ to kb_chunks.jsonl")
     p_compile.set_defaults(func=cmd_compile)
 
     p_port = sub.add_parser("port-check", help="Show deps and env hints for this workspace")
     p_port.set_defaults(func=cmd_port_check)
 
-    p_paths = sub.add_parser("paths", help="Print resolved workspace file paths")
+    p_paths = sub.add_parser("paths", help="Print resolved KAI_HOME paths")
     p_paths.set_defaults(func=cmd_paths)
 
-    p_plugin = sub.add_parser("init-plugin", help="Scaffold a plugin under 03_tools/plugins/")
-    p_plugin.add_argument("plugin_id", help="Plugin directory name")
+    p_plugin = sub.add_parser("init-plugin", help="Scaffold a plugin under tools/plugins/")
+    p_plugin.add_argument("plugin_id")
     p_plugin.add_argument("--force", action="store_true")
     p_plugin.set_defaults(func=cmd_init_plugin)
 
-    p_export = sub.add_parser("export-pack", help="Tar.gz the workspace directory")
-    p_export.add_argument("--workspace", default=str(get_settings().agent_workspace))
+    p_export = sub.add_parser("export-pack", help="[deprecated] Use: kai pack export")
+    p_export.add_argument("--workspace", default="")
     p_export.add_argument("--output", default="")
-    p_export.set_defaults(func=cmd_export_pack)
+    p_export.add_argument("--include-runtime", action="store_true")
+    p_export.set_defaults(
+        func=lambda ns: cmd_pack_export(
+            argparse.Namespace(
+                output=ns.output,
+                home=ns.workspace or str(get_settings().kai_home),
+                include_runtime=ns.include_runtime,
+            )
+        )
+    )
 
     return parser
 

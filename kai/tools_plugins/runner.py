@@ -15,10 +15,13 @@ def resolve_plugin_script(plugin_id: str, params: dict[str, Any]) -> Path | None
     if explicit and Path(explicit).is_file():
         return Path(explicit)
 
-    ws = get_settings().agent_workspace
+    from kai.workspace.manifest import load_workspace_manifest
+
+    ws = get_settings().kai_home
+    plugins_dir = load_workspace_manifest().paths.tools_plugins_dir
     candidates = [
-        ws / "03_tools" / "plugins" / plugin_id / "main.py",
-        ws / "03_tools" / "plugins" / f"{plugin_id}.py",
+        ws / plugins_dir / plugin_id / "main.py",
+        ws / plugins_dir / f"{plugin_id}.py",
     ]
     return next((p for p in candidates if p.is_file()), None)
 

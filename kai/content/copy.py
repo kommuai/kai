@@ -7,6 +7,7 @@ from pathlib import Path
 import yaml
 
 from kai.settings import get_settings
+from kai.workspace.manifest import load_workspace_data, load_workspace_manifest
 
 
 @dataclass(frozen=True)
@@ -37,14 +38,10 @@ class ChatCopy:
 
 
 def _load_yaml() -> dict:
-    from kai.content.loader import manifest_relative_path
-
-    rel = manifest_relative_path("chat_copy", "05_copy/chat_copy.yaml")
-    path = get_settings().agent_workspace / rel
-    if not path.is_file():
-        return {}
-    with path.open(encoding="utf-8") as fh:
-        return yaml.safe_load(fh) or {}
+    inline = load_workspace_data().get("copy")
+    if isinstance(inline, dict) and inline:
+        return inline
+    return {}
 
 
 @lru_cache(maxsize=1)
@@ -105,4 +102,5 @@ def get_chat_copy() -> ChatCopy:
 
 def reload_chat_copy() -> ChatCopy:
     get_chat_copy.cache_clear()
+    load_workspace_data.cache_clear()
     return get_chat_copy()

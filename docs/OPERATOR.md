@@ -1,89 +1,35 @@
-# Kai operator guide
+# Operator guide
 
-One-page map of **where to edit** the WhatsApp bot without hunting Python modules.
+All tenant edits happen under **`KAI_HOME`** (default `~/.kai/`).
 
-Production security (gateway-only chat, admin token, debug gating): [`SECURITY.md`](SECURITY.md).
+## What to edit
 
-## Edit map
+| What | Path under `KAI_HOME` |
+|------|------------------------|
+| Tenant config (channels, copy, tools) | `workspace.yaml` |
+| Bot instructions | `system_prompt.md` |
+| FAQ | `knowledge/master_faq.md` |
+| Tool plugins | `tools/plugins/<id>/main.py` |
+| Optional skills docs | `skills/` |
+| Secrets | `.env` |
 
-| What you change | File or command |
-|-----------------|-----------------|
-| Bot personality, tool rules, JSON response format | [`agent_workspace/01_core/system_prompt.md`](../agent_workspace/01_core/system_prompt.md) |
-| FAQ answers (pricing, install, warranty, office, …) | [`agent_workspace/02_knowledge/faq/master_faq.md`](../agent_workspace/02_knowledge/faq/master_faq.md) |
-| SOP install region (Google Doc sync) | Same file, between `<!-- sop-sync:start -->` and `<!-- sop-sync:end -->` |
-| Handover / resume / footer text | [`agent_workspace/05_copy/chat_copy.yaml`](../agent_workspace/05_copy/chat_copy.yaml) |
-| Office hours, LA/resume keywords, media policy | [`agent_workspace/04_channels/handover.yaml`](../agent_workspace/04_channels/handover.yaml) |
-| Non-secret defaults (session length, agent steps) | [`agent_workspace/settings.yaml`](../agent_workspace/settings.yaml) |
-| Secrets and overrides | `.env` (never commit) |
-| Path registry | [`agent_workspace/00_manifest.yaml`](../agent_workspace/00_manifest.yaml) (or legacy `00_manifest.md`) |
-| Enabled agent tools | [`agent_workspace/03_tools/tools.yaml`](../agent_workspace/03_tools/tools.yaml) |
-
-After FAQ or prompt edits, refresh runtime knowledge:
+## After edits
 
 ```bash
+kai compile
 curl -X POST http://127.0.0.1:6090/admin/refresh-sop -H "x-admin-token: $ADMIN_TOKEN"
 # or
-cd /home/ting/workspace/kai && python3 tools/merge_learn_queue.py --apply <id> --compile
+kai doctor
 ```
 
-## FAQ learn queue (post handoff)
+## Learn queue
 
-When users type **resume** after a live-agent segment, proposals land in:
+Post-handover FAQ proposals: `knowledge/learn_queue/<proposal_id>/`
 
-`agent_workspace/02_knowledge/faq/learn_queue/<proposal_id>/`
+## Chatwoot (direct Agent Bot)
 
-```bash
-python3 tools/merge_learn_queue.py --list
-python3 tools/merge_learn_queue.py --show <proposal_id>
-python3 tools/merge_learn_queue.py --apply <proposal_id> --compile
-```
+Production can use Chatwoot Agent Bot → Kai `/webhooks/chatwoot` instead of n8n. See [CHATWOOT.md](CHATWOOT.md) for env vars and cutover steps.
 
-## SOP sync
+## Install / porting
 
-```bash
-cd /home/ting/workspace/kai && ./tools/force_sop_sync.py
-```
-
-## Workspace health check
-
-```bash
-python3 tools/kai doctor
-python3 tools/kai compile
-```
-
-New tenant from template:
-
-```bash
-python3 tools/kai init --workspace ./agent_workspace
-```
-
-See [`docs/SETUP.md`](SETUP.md) and [`docs/architecture/workspace_v2.md`](architecture/workspace_v2.md).
-
-## Test the API locally
-
-```bash
-python3 tools/kai_api_cli.py message "What cars are supported?"
-python3 tools/kai_api_cli.py chat --phone test-user
-```
-
-Set `KAI_API_BASE_URL` if not on `http://127.0.0.1:6090`.
-
-## Code layout (developers)
-
-| Package | Role |
-|---------|------|
-| `kai/content/` | Load prompts, FAQ cache, chat copy from `agent_workspace/` |
-| `kai/settings/` | All env configuration |
-| `kai/services/` | `pre_router`, footers, `turn_ingest` |
-| `kai/support_runtime/` | ReAct loop, tools, compiler |
-| `kai/workspace/` | Manifest, tools YAML, validation, runtime settings |
-| `config.py` | Backward-compatible re-exports |
-
-## Verification
-
-```bash
-cd /home/ting/workspace/kai
-pytest tests/test_chat_copy_parity.py tests/test_prompt_assembly_snapshot.py \
-  tests/test_api_contracts.py tests/test_architecture_import_boundaries.py -q
-pytest tests/ --ignore=tests/test_support_runtime.py -q
-```
+See [INSTALL.md](INSTALL.md) and [PORTING.md](PORTING.md).

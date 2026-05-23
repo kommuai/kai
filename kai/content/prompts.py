@@ -10,7 +10,7 @@ from kai.settings import get_settings
 
 
 def load_system_prompt_body() -> str:
-    rel = manifest_relative_path("system_prompt", "01_core/system_prompt.md")
+    rel = manifest_relative_path("system_prompt", "system_prompt.md")
     return read_text_file(rel).strip()
 
 

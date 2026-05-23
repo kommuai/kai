@@ -8,7 +8,8 @@ from typing import Any
 import yaml
 
 from kai.support_runtime.tools.catalog import resolve_builtin_id
-from kai.workspace.manifest import load_workspace_manifest
+from kai.settings import get_settings
+from kai.workspace.manifest import load_workspace_data, load_workspace_manifest, workspace_yaml_path
 
 
 @dataclass(frozen=True)
@@ -31,9 +32,19 @@ class ToolsConfig:
         return [e for e in self.entries if e.enabled]
 
 
-def _tools_yaml_path() -> Path:
-    manifest = load_workspace_manifest()
-    return manifest.resolve(manifest.paths.tools)
+def _tools_config_path() -> Path:
+    return workspace_yaml_path()
+
+
+def _tools_raw_dict() -> dict[str, Any]:
+    data = load_workspace_data()
+    for key in ("tools_profile", "tools"):
+        block = data.get(key)
+        if isinstance(block, dict) and (
+            "active_profile" in block or "profiles" in block or "tools" in block or "profile_overrides" in block
+        ):
+            return block
+    return {}
 
 
 def _parse_tools_list(data: list[Any]) -> list[ToolConfigEntry]:
@@ -79,16 +90,14 @@ def _profile_tool_ids(raw: dict[str, Any]) -> list[str]:
 
 @lru_cache(maxsize=1)
 def load_tools_config() -> ToolsConfig:
-    path = _tools_yaml_path()
-    if not path.is_file():
+    path = _tools_config_path()
+    raw = _tools_raw_dict()
+    if not raw:
         manifest = load_workspace_manifest()
         ids = list(manifest.tools_enabled) or _default_builtin_ids()
         entries = [ToolConfigEntry(id=i, builtin=i, enabled=True) for i in ids]
         return ToolsConfig(path=path, entries=tuple(entries), raw={})
 
-    raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
-    if not isinstance(raw, dict):
-        raw = {}
     tools_list = raw.get("tools")
     if not isinstance(tools_list, list):
         tools_list = []
@@ -114,6 +123,7 @@ def load_tools_config() -> ToolsConfig:
 
 def reload_tools_config() -> ToolsConfig:
     load_tools_config.cache_clear()
+    load_workspace_data.cache_clear()
     return load_tools_config()
 
 

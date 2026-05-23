@@ -111,27 +111,7 @@ def summarize_issue(
 
 
 def _load_github_backlog_skill():
-    from kai.settings.loader import BASE_DIR
-
-    root = BASE_DIR
-    candidates = [
-        root / "agent_workspace" / "03_skills" / "github_backlog_search" / "handler.py",
-        root / "agent_workspace" / "03_skills" / "bukapilot_backlog_search" / "handler.py",
-    ]
-    skill_path = next((p for p in candidates if p.is_file()), candidates[-1])
-    skill_path = str(skill_path)
-    if not os.path.isfile(skill_path):
-        return None
-    try:
-        spec = importlib.util.spec_from_file_location("kai_github_backlog_skill", skill_path)
-        if not spec or not spec.loader:
-            return None
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        cls = getattr(mod, "BukapilotBacklogSearchSkill", None)
-        return cls() if cls else None
-    except Exception:
-        return None
+    return None
 
 
 def github_repo_agentic_search(
