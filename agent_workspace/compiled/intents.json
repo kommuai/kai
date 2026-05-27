@@ -570,6 +570,93 @@
     }
   },
   {
+    "intent_id": "international_shipping_regions",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "international shipping",
+      "ship overseas",
+      "ship outside malaysia",
+      "ship to indonesia",
+      "ship to netherlands",
+      "ship to europe",
+      "ship to brazil",
+      "ship to kuwait",
+      "overseas delivery",
+      "export",
+      "distributor overseas",
+      "malaysia only",
+      "only sell in malaysia",
+      "do you ship internationally"
+    ],
+    "canonical_answer": "**Policy (do not contradict this in chat):**\n\n- **Do not** tell customers Kommu \"only ships within Malaysia\", \"does not ship to Indonesia\", or that a country is \"not available\" unless this FAQ is explicitly updated with that restriction.\n- Kommu has fulfilled **international orders** (including Indonesia and other regions). Shipping cost, customs, and lead time depend on **delivery address**, vehicle/model, and logistics.\n- For any country-specific shipping question, ask for **full delivery address / postcode** (and car model if relevant), then direct them to **support@kommu.ai** \u2014 a **live agent** confirms current options, quote, and payment.\n\nIf you are unsure about a country, say you will have the team confirm \u2014 **do not invent** regional limits.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 21,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "indonesia_market",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "indonesia",
+      "di indonesia",
+      "bisa di indonesia",
+      "kommu indonesia",
+      "customer indonesia",
+      "byd indonesia",
+      "indonesian traffic",
+      "distributor indonesia"
+    ],
+    "canonical_answer": "**Indonesia / overseas customers:**\n\n- **Do not** say KommuAssist is \"not available in Indonesia\" or \"Malaysia only\" \u2014 that is incorrect unless this FAQ is updated.\n- Whether the **vehicle** is supported is separate from shipping \u2014 use official support list + ACC/LKA/CAN rules (`search_kommu_support` when needed).\n- For **shipping to Indonesia**, pricing in IDR, local partners, or regional testing: collect **address/postcode** and **car brand/model/year**, then **support@kommu.ai** or type **LA** for a live agent. Do not claim there is \"no distributor\" or \"no testing in Indonesian traffic\" unless stated here.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 22,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
+    "intent_id": "lhd_rhd_steering",
+    "route_type": "known_faq_intent",
+    "aliases": [
+      "lhd",
+      "rhd",
+      "left hand drive",
+      "right hand drive",
+      "left-hand drive",
+      "right-hand drive",
+      "steering wheel side",
+      "left hand steering"
+    ],
+    "canonical_answer": "**LHD / RHD policy (do not contradict this in chat):**\n\n- **Do not** state that KommuAssist is **\"RHD only\"**, **\"designed only for right-hand drive\"**, or that **LHD is not supported** as a blanket rule.\n- Steering-wheel side alone does **not** decide compatibility \u2014 factory **ACC + LKA**, CAN bus vs FlexRay, and the correct **car fingerprint** matter.\n- For **LHD** vehicles (or any unclear fit), collect **brand, model, year, market/trim** and email **support@kommu.ai** or type **LA** \u2014 a live agent confirms fit before purchase/install.\n- If the car is on the official support list, say so from the list; do not add invented regional or steering-side exclusions.",
+    "policy_flags": [
+      "grounded_only"
+    ],
+    "confidence_threshold": 0.75,
+    "metadata": {
+      "source": "master_faq",
+      "index": 23,
+      "product": "KA",
+      "audience": "customer",
+      "version": "v1",
+      "recency": "current"
+    }
+  },
+  {
     "intent_id": "sim_usage",
     "route_type": "known_faq_intent",
     "aliases": [
@@ -586,7 +673,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 21,
+      "index": 24,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -610,7 +697,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 22,
+      "index": 25,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -634,7 +721,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 23,
+      "index": 26,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -658,7 +745,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 24,
+      "index": 27,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -685,7 +772,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 25,
+      "index": 28,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -710,7 +797,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 26,
+      "index": 29,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -734,7 +821,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 27,
+      "index": 30,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -758,7 +845,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 28,
+      "index": 31,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -784,7 +871,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 29,
+      "index": 32,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -809,7 +896,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 30,
+      "index": 33,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -834,7 +921,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 31,
+      "index": 34,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -859,7 +946,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 32,
+      "index": 35,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -882,7 +969,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 33,
+      "index": 36,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -905,7 +992,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 34,
+      "index": 37,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -929,7 +1016,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 35,
+      "index": 38,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -954,7 +1041,7 @@
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 36,
+      "index": 39,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -978,7 +1065,7 @@
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 37,
+      "index": 40,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1003,7 +1090,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 38,
+      "index": 41,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1026,7 +1113,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 39,
+      "index": 42,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1048,7 +1135,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 40,
+      "index": 43,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1073,7 +1160,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 41,
+      "index": 44,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1094,7 +1181,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 42,
+      "index": 45,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1117,7 +1204,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 43,
+      "index": 46,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1141,7 +1228,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 44,
+      "index": 47,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1163,7 +1250,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 45,
+      "index": 48,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1188,7 +1275,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 46,
+      "index": 49,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1215,7 +1302,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 47,
+      "index": 50,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1249,7 +1336,7 @@
     "confidence_threshold": 0.75,
     "metadata": {
       "source": "master_faq",
-      "index": 48,
+      "index": 51,
       "product": "KA",
       "audience": "customer",
       "version": "v1",
@@ -1270,7 +1357,7 @@
     "confidence_threshold": 0.62,
     "metadata": {
       "source": "master_faq",
-      "index": 49,
+      "index": 52,
       "product": "KA",
       "audience": "customer",
       "version": "v1",

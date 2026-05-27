@@ -1,6 +1,6 @@
 # KOMMU MASTER FAQ (FULL REBUILD - SINGLE SOURCE OF TRUTH)
 
-Last updated: 29 Mar 2026 (install positioning: self-install encouraged)
+Last updated: 25 May 2026 (international shipping + LHD/RHD policy; unverified-answer footnote gate)
 
 # SECTION 1: INTENTS (CUSTOMER-FACING)
 
@@ -356,6 +356,66 @@ aliases:
 - delivery time
 answer:
 We ship on Wednesdays and Fridays when stock is available. If batch assembly affects timing, we'll provide the latest ETA.
+
+## intent: international_shipping_regions
+aliases:
+- international shipping
+- ship overseas
+- ship outside malaysia
+- ship to indonesia
+- ship to netherlands
+- ship to europe
+- ship to brazil
+- ship to kuwait
+- overseas delivery
+- export
+- distributor overseas
+- malaysia only
+- only sell in malaysia
+- do you ship internationally
+answer:
+**Policy (do not contradict this in chat):**
+
+- **Do not** tell customers Kommu "only ships within Malaysia", "does not ship to Indonesia", or that a country is "not available" unless this FAQ is explicitly updated with that restriction.
+- Kommu has fulfilled **international orders** (including Indonesia and other regions). Shipping cost, customs, and lead time depend on **delivery address**, vehicle/model, and logistics.
+- For any country-specific shipping question, ask for **full delivery address / postcode** (and car model if relevant), then direct them to **support@kommu.ai** — a **live agent** confirms current options, quote, and payment.
+
+If you are unsure about a country, say you will have the team confirm — **do not invent** regional limits.
+
+## intent: indonesia_market
+aliases:
+- indonesia
+- di indonesia
+- bisa di indonesia
+- kommu indonesia
+- customer indonesia
+- byd indonesia
+- indonesian traffic
+- distributor indonesia
+answer:
+**Indonesia / overseas customers:**
+
+- **Do not** say KommuAssist is "not available in Indonesia" or "Malaysia only" — that is incorrect unless this FAQ is updated.
+- Whether the **vehicle** is supported is separate from shipping — use official support list + ACC/LKA/CAN rules (`search_kommu_support` when needed).
+- For **shipping to Indonesia**, pricing in IDR, local partners, or regional testing: collect **address/postcode** and **car brand/model/year**, then **support@kommu.ai** or type **LA** for a live agent. Do not claim there is "no distributor" or "no testing in Indonesian traffic" unless stated here.
+
+## intent: lhd_rhd_steering
+aliases:
+- lhd
+- rhd
+- left hand drive
+- right hand drive
+- left-hand drive
+- right-hand drive
+- steering wheel side
+- left hand steering
+answer:
+**LHD / RHD policy (do not contradict this in chat):**
+
+- **Do not** state that KommuAssist is **"RHD only"**, **"designed only for right-hand drive"**, or that **LHD is not supported** as a blanket rule.
+- Steering-wheel side alone does **not** decide compatibility — factory **ACC + LKA**, CAN bus vs FlexRay, and the correct **car fingerprint** matter.
+- For **LHD** vehicles (or any unclear fit), collect **brand, model, year, market/trim** and email **support@kommu.ai** or type **LA** — a live agent confirms fit before purchase/install.
+- If the car is on the official support list, say so from the list; do not add invented regional or steering-side exclusions.
 
 ## intent: sim_usage
 aliases:

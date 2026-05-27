@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **FAQ:** `international_shipping_regions`, `indonesia_market`, `lhd_rhd_steering` — stop invented "Malaysia only" / "no Indonesia" / "RHD-only" claims; route country and LHD questions to support@kommu.ai or LA.
+- **`faq_grounding.py`:** on `direct_answer` without FAQ/tool evidence, append a short footnote that the detail is not in the official FAQ and will be reviewed by a live agent (type LA); skips generic greetings.
+
+### Changed
+
+- **Agent prompts:** require FAQ intents for international shipping and LHD/RHD; recommend `source_ids` with `faq:<intent_id>` on grounded replies.
+
+### Added
+
 - **Full FAQ context:** every agent turn injects complete `master_faq.md` into the system prompt (`faq_context.py`); session chat is the full message list for the active session (default **24h** idle timeout, up to **100** turns).
 - `SESSION_IDLE_HOURS`, `SESSION_MAX_HISTORY_MESSAGES` config; `ensure_active_session()` resets history after idle window.
 - `docs/architecture/turn_orchestrator.md` — proposed state-driven turn pipeline (ConversationState, PolicyRouter, CanonicalExecutor, workflow compiler metadata) to replace FAQ-hint + implicit ReAct routing.

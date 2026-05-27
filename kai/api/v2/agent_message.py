@@ -13,7 +13,9 @@ from kai.services.chatwoot_handover import enforce_live_agent_handover
 from kai.services.container import kai_service, support_runtime_service
 from kai.lib.session_state import append_human_segment_turn, freeze, start_human_segment
 from kai.services.chatwoot_handover import extract_chatwoot_conversation_id
+from kai.support_runtime.faq_grounding import apply_grounding_footnote_if_needed
 from kai.support_runtime.tech_backlog import list_backlog_sheet_tabs
+from kai.support_runtime.agent_loop import _looks_like_chitchat
 
 log = logging.getLogger("kai.v2")
 router = APIRouter()
@@ -122,6 +124,19 @@ def _process_agent_message_data(data: dict) -> dict:
         freeze(user_id, True)
         payload = {"type": "handover", "message": result.answer, "next_state": "human", "handover_applied": True}
     else:
+        observations = ((result.metadata or {}).get("evidence") or {}).get("observations") or []
+        answer_text = result.answer
+        if result.decision == "direct_answer":
+            answer_text = apply_grounding_footnote_if_needed(
+                answer_text,
+                user_text=text,
+                lang=lang,
+                source_ids=result.source_ids,
+                observations=observations,
+                retriever=support_runtime_service.retriever,
+                capability_used=result.capability_used or "",
+                skip_chitchat=_looks_like_chitchat(text),
+            )
         # Suppress the "type LA" footer when the bot is clearly helping:
         #   - FAQ canonical answers (`canonical_answer` capability), or
         #   - direct answers backed by sources / tool evidence.
@@ -129,7 +144,7 @@ def _process_agent_message_data(data: dict) -> dict:
         suppress_footer = result.decision in ("direct_answer", "clarifying_question")
         payload = {
             "type": "reply",
-            "message": kai_service.add_footer(user_id, result.answer, lang, suppress=suppress_footer),
+            "message": kai_service.add_footer(user_id, answer_text, lang, suppress=suppress_footer),
             "next_state": "bot",
             "confidence": result.confidence,
             "source_ids": result.source_ids,
