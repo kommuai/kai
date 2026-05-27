@@ -1,1 +1,1 @@
-{"type":"reply","message":"Bot resumed. How can I help?","next_state":"bot","trace_id":"11bae549-3f72-4582-bcdd-c420442f9dda","route_mode":"hybrid","capability_used":"pre_router","latency_ms":30}
+{"type":"reply","message":"Bot resumed. How can I help?","next_state":"bot","trace_id":"164b902e-6ada-49bd-bf8e-05c46144e201","route_mode":"hybrid","capability_used":"pre_router","latency_ms":35}

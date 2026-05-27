@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Refactor migration:** merged `origin/refactor` (workspace v2 / `KAI_HOME`); `docker-compose.kommu.yml` for Kommu production; `docker-compose.staging.yml` + `migration/` scripts (baseline, validate, rollback).
+- **Compat:** pre-router uses `freeze()` and handoff segments; n8n `message_type` media guard; `MASTER_FAQ_PATH` keeps legacy `agent_workspace/02_knowledge/faq/master_faq.md`.
+
+### Added
+
 - **FAQ:** `international_shipping_regions`, `indonesia_market`, `lhd_rhd_steering` — stop invented "Malaysia only" / "no Indonesia" / "RHD-only" claims; route country and LHD questions to support@kommu.ai or LA.
 - **`faq_grounding.py`:** on `direct_answer` without FAQ/tool evidence, append a short footnote that the detail is not in the official FAQ and will be reviewed by a live agent (type LA); skips generic greetings.
 
