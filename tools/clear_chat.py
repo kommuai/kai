@@ -13,7 +13,6 @@ In Docker, run against the mounted DB:
 from __future__ import annotations
 
 import argparse
-import re
 import sys
 from pathlib import Path
 
@@ -21,6 +20,11 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from kai.lib.phone_identity import (  # noqa: E402
+    canonical_my_mobile,
+    candidate_user_ids,
+    digits_only,
+)
 from kai.lib.session_state import (  # noqa: E402
     DB_PATH,
     get_all_user_ids,
@@ -28,35 +32,6 @@ from kai.lib.session_state import (  # noqa: E402
     init_db,
     reset_memory,
 )
-
-
-def _digits_only(value: str) -> str:
-    return re.sub(r"\D", "", value or "")
-
-
-def canonical_my_mobile(raw: str) -> str:
-    """Normalize Malaysian mobile to +60XXXXXXXXX for matching."""
-    d = _digits_only(raw)
-    if not d:
-        return ""
-    if d.startswith("60"):
-        return f"+{d}"
-    if d.startswith("0"):
-        return f"+60{d[1:]}"
-    return f"+{d}"
-
-
-def candidate_user_ids(raw: str) -> list[str]:
-    """Possible session keys stored by n8n / Chatwoot."""
-    raw = (raw or "").strip()
-    canon = canonical_my_mobile(raw)
-    d = _digits_only(raw)
-    out: list[str] = []
-    for item in (raw, canon, f"0{canon[3:]}" if canon.startswith("+60") else "", d, f"+{d}"):
-        item = (item or "").strip()
-        if item and item not in out:
-            out.append(item)
-    return out
 
 
 def find_matching_user_ids(phone_input: str) -> list[str]:

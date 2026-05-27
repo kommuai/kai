@@ -1,14 +1,11 @@
-import os, io, csv, requests, re, json, base64
+import io
+import csv
+import re
+import json
+import base64
 from urllib.parse import parse_qs, urlparse
 
-# Primary warranty sheet
-WARRANTY_CSV_URL = os.getenv("WARRANTY_CSV_URL", "")
-# Secondary warranty sheet
-EXTRA_WARRANTY_CSV_URL = os.getenv("EXTRA_WARRANTY_CSV_URL", "")
-GOOGLE_SHEETS_CREDENTIALS_JSON = os.getenv("GOOGLE_SHEETS_CREDENTIALS_JSON", "")
-GOOGLE_SHEETS_WARRANTY_SHEET_ID = os.getenv("GOOGLE_SHEETS_WARRANTY_SHEET_ID", "")
-GOOGLE_SHEETS_WARRANTY_GID = os.getenv("GOOGLE_SHEETS_WARRANTY_GID", "")
-GOOGLE_SHEETS_WARRANTY_EXTRA_GID = os.getenv("GOOGLE_SHEETS_WARRANTY_EXTRA_GID", "")
+from kai.settings import get_settings
 
 # In-memory stores
 WARRANTY_DB = {}         
@@ -17,7 +14,9 @@ WARRANTY_BY_DONGLE = {}
 def _fetch_csv_rows(url: str):
     if not url:
         return []
-    r = requests.get(url, timeout=20, headers={"User-Agent":"Kai/Sheets/1.0"})
+    import requests
+
+    r = requests.get(url, timeout=20, headers={"User-Agent": "Kai/Sheets/1.0"})
     r.raise_for_status()
     content = r.content.decode("utf-8", errors="ignore")
     return list(csv.DictReader(io.StringIO(content)))
@@ -51,7 +50,8 @@ def _gid_to_title(service, spreadsheet_id: str, gid: str) -> str:
 
 
 def _fetch_sheet_rows_api(spreadsheet_id: str, gid: str) -> list[dict]:
-    if not spreadsheet_id or not gid or not GOOGLE_SHEETS_CREDENTIALS_JSON:
+    creds_json = (get_settings().google_sheets_credentials_json or "").strip()
+    if not spreadsheet_id or not gid or not creds_json:
         return []
     try:
         from google.oauth2 import service_account
@@ -94,7 +94,9 @@ def _fetch_sheet_rows_api(spreadsheet_id: str, gid: str) -> list[dict]:
 
 
 def _load_service_account_info() -> dict:
-    raw = (GOOGLE_SHEETS_CREDENTIALS_JSON or "").strip()
+    import os
+
+    raw = (get_settings().google_sheets_credentials_json or "").strip()
     if not raw:
         return {}
     # 1) direct JSON string
@@ -193,32 +195,36 @@ def fetch_warranty_all():
 
     total_rows = 0
 
-    # API-first for private sheets, CSV fallback.
-    primary_sid = GOOGLE_SHEETS_WARRANTY_SHEET_ID
-    primary_gid = GOOGLE_SHEETS_WARRANTY_GID
-    extra_gid = GOOGLE_SHEETS_WARRANTY_EXTRA_GID
-    if not primary_sid and WARRANTY_CSV_URL:
-        sid, gid = _extract_sheet_id_and_gid_from_url(WARRANTY_CSV_URL)
+    s = get_settings()
+    warranty_csv = (s.warranty_csv_url or "").strip()
+    extra_csv = (s.extra_warranty_csv_url or "").strip()
+    creds_json = (s.google_sheets_credentials_json or "").strip()
+
+    primary_sid = (s.google_sheets_warranty_sheet_id or "").strip()
+    primary_gid = (s.google_sheets_warranty_gid or "").strip()
+    extra_gid = (s.google_sheets_warranty_extra_gid or "").strip()
+    if not primary_sid and warranty_csv:
+        sid, gid = _extract_sheet_id_and_gid_from_url(warranty_csv)
         primary_sid = sid
         if not primary_gid:
             primary_gid = gid
-    if not primary_sid and EXTRA_WARRANTY_CSV_URL:
-        sid, gid = _extract_sheet_id_and_gid_from_url(EXTRA_WARRANTY_CSV_URL)
+    if not primary_sid and extra_csv:
+        sid, gid = _extract_sheet_id_and_gid_from_url(extra_csv)
         primary_sid = sid
         if not extra_gid:
             extra_gid = gid
 
     primary_rows = []
-    if GOOGLE_SHEETS_CREDENTIALS_JSON and primary_sid and primary_gid:
+    if creds_json and primary_sid and primary_gid:
         primary_rows = _fetch_sheet_rows_api(primary_sid, primary_gid)
 
     if primary_rows:
         print(f"[WARRANTY] Primary rows (Sheets API): {len(primary_rows)}")
         _merge_rows_into_indexes(primary_rows, source_tag="primary")
         total_rows += len(primary_rows)
-    elif WARRANTY_CSV_URL:
+    elif warranty_csv:
         try:
-            rows = _fetch_csv_rows(WARRANTY_CSV_URL)
+            rows = _fetch_csv_rows(warranty_csv)
             print(f"[WARRANTY] Primary rows: {len(rows)}")
             _merge_rows_into_indexes(rows, source_tag="primary")
             total_rows += len(rows)
@@ -226,16 +232,16 @@ def fetch_warranty_all():
             print(f"[WARRANTY] Primary fetch failed: {e}")
 
     extra_rows = []
-    if GOOGLE_SHEETS_CREDENTIALS_JSON and primary_sid and extra_gid:
+    if creds_json and primary_sid and extra_gid:
         extra_rows = _fetch_sheet_rows_api(primary_sid, extra_gid)
 
     if extra_rows:
         print(f"[WARRANTY] Extra rows (Sheets API): {len(extra_rows)}")
         _merge_rows_into_indexes(extra_rows, source_tag="extra")
         total_rows += len(extra_rows)
-    elif EXTRA_WARRANTY_CSV_URL:
+    elif extra_csv:
         try:
-            rows2 = _fetch_csv_rows(EXTRA_WARRANTY_CSV_URL)
+            rows2 = _fetch_csv_rows(extra_csv)
             print(f"[WARRANTY] Extra rows: {len(rows2)}")
             _merge_rows_into_indexes(rows2, source_tag="extra")
             total_rows += len(rows2)
@@ -245,9 +251,6 @@ def fetch_warranty_all():
     print(f"[WARRANTY] Loaded total rows: {total_rows}; "
           f"{len(WARRANTY_BY_DONGLE)} unique dongle ids; {len(WARRANTY_DB)} phone/serial keys.")
 
-def warranty_lookup(identifier: str):
-    """Legacy lookup by normalized phone/serial key."""
-    return WARRANTY_DB.get(_norm_key(identifier))
 
 def warranty_lookup_by_dongle(dongle_id: str):
     """Primary lookup by Dongle ID (merged)."""

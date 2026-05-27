@@ -7,18 +7,18 @@ from pathlib import Path
 import re
 from typing import Any
 
-from config import GOOGLE_DOCS_SOP_DOC_ID, KAI_SOP_WRITEBACK_ENABLED, MASTER_FAQ_PATH
+from kai.settings import get_settings
 
 SOP_SYNC_START = "<!-- sop-sync:start -->"
 SOP_SYNC_END = "<!-- sop-sync:end -->"
 
 
 def _is_enabled() -> bool:
-    return str(KAI_SOP_WRITEBACK_ENABLED).strip().lower() in {"1", "true", "yes", "on"}
+    return bool(get_settings().kai_sop_writeback_enabled)
 
 
 def _load_service_account_info() -> dict[str, Any]:
-    raw = (os.getenv("GOOGLE_SHEETS_CREDENTIALS_JSON", "") or "").strip()
+    raw = (get_settings().google_sheets_credentials_json or "").strip()
     if not raw:
         return {}
     if raw.startswith("{"):
@@ -77,9 +77,10 @@ def _doc_index_for_offset(segments: list[tuple[int, int, str]], target_offset: i
 def push_master_faq_to_google_doc() -> dict[str, Any]:
     if not _is_enabled():
         return {"ok": False, "error": "writeback_disabled"}
-    if not GOOGLE_DOCS_SOP_DOC_ID:
+    doc_id = (get_settings().google_docs_sop_doc_id or "").strip()
+    if not doc_id:
         return {"ok": False, "error": "missing_google_docs_doc_id"}
-    faq_path = Path(MASTER_FAQ_PATH)
+    faq_path = get_settings().resolve_master_faq_path()
     if not faq_path.exists():
         return {"ok": False, "error": "master_faq_not_found"}
     text = faq_path.read_text(encoding="utf-8")
@@ -105,7 +106,7 @@ def push_master_faq_to_google_doc() -> dict[str, Any]:
             info, scopes=["https://www.googleapis.com/auth/documents", "https://www.googleapis.com/auth/drive"]
         )
         docs = build("docs", "v1", credentials=creds, cache_discovery=False)
-        doc = docs.documents().get(documentId=GOOGLE_DOCS_SOP_DOC_ID).execute()
+        doc = docs.documents().get(documentId=doc_id).execute()
         doc_text, segments = _flatten_doc_text_segments(doc)
         if SOP_SYNC_START not in doc_text or SOP_SYNC_END not in doc_text:
             return {"ok": False, "error": "missing_sop_sync_markers_in_google_doc"}
@@ -135,7 +136,7 @@ def push_master_faq_to_google_doc() -> dict[str, Any]:
                 )
             cursor += len(line)
 
-        docs.documents().batchUpdate(documentId=GOOGLE_DOCS_SOP_DOC_ID, body={"requests": requests}).execute()
-        return {"ok": True, "doc_id": GOOGLE_DOCS_SOP_DOC_ID, "mode": "sync_region_only"}
+        docs.documents().batchUpdate(documentId=doc_id, body={"requests": requests}).execute()
+        return {"ok": True, "doc_id": doc_id, "mode": "sync_region_only"}
     except Exception as exc:  # noqa: BLE001
         return {"ok": False, "error": f"google_docs_write_failed:{exc}"}

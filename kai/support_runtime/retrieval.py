@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
-import os
+import logging
 from pathlib import Path
 import re
 from math import sqrt
 
-from config import AGENT_WORKSPACE
+from kai.settings import get_settings
 from kai.support_runtime.models import RetrievalItem
 from kai.support_runtime.providers import ChatProvider
 
@@ -15,8 +15,11 @@ try:
 except Exception:  # noqa: BLE001
     QdrantClient = None
 
+_log = logging.getLogger("kai.retrieval")
 
-CHUNKS_PATH = Path(AGENT_WORKSPACE) / "compiled" / "kb_chunks.jsonl"
+
+def _chunks_path() -> Path:
+    return get_settings().kai_home / "compiled" / "kb_chunks.jsonl"
 
 
 def _terms(text: str) -> set[str]:
@@ -29,15 +32,17 @@ class HybridRetriever:
     def __init__(self, provider: ChatProvider | None = None) -> None:
         self.items: list[dict] = []
         self.provider = provider
-        self.collection = os.getenv("KAI_QDRANT_COLLECTION", "kai_support")
-        self.use_qdrant = os.getenv("KAI_QDRANT_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
+        s = get_settings()
+        self.collection = s.kai_qdrant_collection
+        self.use_qdrant = s.kai_qdrant_enabled
         self.client = None
 
     def load(self) -> None:
         self.items = []
-        if not CHUNKS_PATH.exists():
+        chunks_path = _chunks_path()
+        if not chunks_path.exists():
             return
-        for line in CHUNKS_PATH.read_text(encoding="utf-8").splitlines():
+        for line in chunks_path.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line:
                 continue
@@ -45,11 +50,16 @@ class HybridRetriever:
                 self.items.append(json.loads(line))
             except Exception:
                 continue
+        if self.use_qdrant and not QdrantClient:
+            _log.warning(
+                "KAI_QDRANT_ENABLED is set but qdrant-client is not installed; using local retrieval only"
+            )
         if self.use_qdrant and QdrantClient:
             try:
+                s = get_settings()
                 self.client = QdrantClient(
-                    url=os.getenv("KAI_QDRANT_URL", "http://127.0.0.1:6333"),
-                    api_key=os.getenv("KAI_QDRANT_API_KEY", "") or None,
+                    url=s.kai_qdrant_url,
+                    api_key=s.kai_qdrant_api_key or None,
                 )
             except Exception:
                 self.client = None
@@ -156,7 +166,7 @@ class SimpleReranker:
 
     def __init__(self, provider: ChatProvider | None = None) -> None:
         self.provider = provider
-        self.backend = os.getenv("KAI_RERANKER_BACKEND", "provider").strip().lower()
+        self.backend = get_settings().kai_reranker_backend.strip().lower()
 
     def rerank(self, query: str, items: list[RetrievalItem], *, top_k: int = 4) -> list[RetrievalItem]:
         if self.provider and items:
@@ -192,19 +202,3 @@ class SimpleReranker:
                 )
             )
         return sorted(rescored, key=lambda x: x.score, reverse=True)[:top_k]
-
-
-def diagnostic_exact_score(query: str, items: list[RetrievalItem]) -> float:
-    """Heuristic exactness score for diagnostic symptoms/codes."""
-    q = _terms(query)
-    if not q or not items:
-        return 0.0
-    best = 0.0
-    for item in items:
-        t = _terms(item.text)
-        overlap = len(q.intersection(t)) / max(1, len(q))
-        # weight with retrieval score to avoid lexical-only false positives
-        score = min(1.0, 0.65 * overlap + 0.35 * item.score)
-        if score > best:
-            best = score
-    return best

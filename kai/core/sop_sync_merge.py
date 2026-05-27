@@ -8,7 +8,7 @@ from typing import Any
 
 import pytz
 
-from config import MASTER_FAQ_PATH, SOP_SYNC_STATE_PATH, TZ_REGION
+from kai.settings import get_settings
 from kai.core.faq_markdown import (
     SOP_SYNC_END_DEFAULT,
     SOP_SYNC_START_DEFAULT,
@@ -20,7 +20,21 @@ from kai.core.faq_markdown import (
 from kai.lib.sop_doc_loader import fetch_sop_sync_region_from_google_doc
 from kai.support_runtime.sop_writeback import push_master_faq_to_google_doc
 
-STATE_PATH = Path(SOP_SYNC_STATE_PATH)
+def _master_faq_path() -> Path:
+    return get_settings().resolve_master_faq_path()
+
+
+def _state_path() -> Path:
+    return get_settings().sop_sync_state_path
+
+
+def _tz_region() -> str:
+    return get_settings().tz_region
+
+
+def state_path() -> Path:
+    """Public accessor for scheduler/tests."""
+    return _state_path()
 
 
 def _extract_local_sync_region(full_text: str) -> str:
@@ -32,7 +46,7 @@ def _extract_local_sync_region(full_text: str) -> str:
 
 
 def read_local_region() -> str:
-    path = Path(MASTER_FAQ_PATH)
+    path = _master_faq_path()
     if not path.exists():
         return ""
     return _extract_local_sync_region(path.read_text(encoding="utf-8"))
@@ -152,21 +166,23 @@ def _normalized_hash(obj: Any) -> str:
 
 
 def _state_now_iso() -> str:
-    return datetime.now(tz=pytz.timezone(TZ_REGION)).isoformat()
+    return datetime.now(tz=pytz.timezone(_tz_region())).isoformat()
 
 
 def _load_state() -> dict[str, Any]:
-    if not STATE_PATH.exists():
+    sp = _state_path()
+    if not sp.exists():
         return {}
     try:
-        return json.loads(STATE_PATH.read_text(encoding="utf-8"))
+        return json.loads(sp.read_text(encoding="utf-8"))
     except Exception:
         return {}
 
 
 def _save_state(state: dict[str, Any]) -> None:
-    STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-    STATE_PATH.write_text(json.dumps(state, indent=2, ensure_ascii=True), encoding="utf-8")
+    sp = _state_path()
+    sp.parent.mkdir(parents=True, exist_ok=True)
+    sp.write_text(json.dumps(state, indent=2, ensure_ascii=True), encoding="utf-8")
 
 
 def sync_sop_regions() -> dict[str, Any]:
@@ -180,18 +196,21 @@ def sync_sop_regions() -> dict[str, Any]:
     merged_schema = merge_schemas(local_schema, google_schema)
     merged_region = render_merged_schema_to_markdown(merged_schema).strip("\n")
 
-    path = Path(MASTER_FAQ_PATH)
+    path = _master_faq_path()
     current = path.read_text(encoding="utf-8") if path.exists() else ""
     current = ensure_sop_sync_markers(current)
     updated = replace_sop_sync_region(current, merged_region)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(updated, encoding="utf-8")
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    tmp.write_text(updated, encoding="utf-8")
+    tmp.replace(path)
 
     writeback = push_master_faq_to_google_doc()
+    writeback_ok = bool(writeback.get("ok")) or writeback.get("error") == "writeback_disabled"
 
     state = _load_state()
     state["last_sync_at"] = _state_now_iso()
-    state["last_sync_date"] = datetime.now(tz=pytz.timezone(TZ_REGION)).strftime("%Y-%m-%d")
+    state["last_sync_date"] = datetime.now(tz=pytz.timezone(_tz_region())).strftime("%Y-%m-%d")
     state["hashes"] = {
         "local_before": _normalized_hash(local_schema),
         "google_before": _normalized_hash(google_schema),
@@ -202,9 +221,9 @@ def sync_sop_regions() -> dict[str, Any]:
     _save_state(state)
 
     return {
-        "ok": bool(writeback.get("ok")),
+        "ok": writeback_ok,
         "local_updated": True,
         "google_writeback": writeback,
         "counts": state["counts"],
-        "state_path": str(STATE_PATH),
+        "state_path": str(_state_path()),
     }

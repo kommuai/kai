@@ -1,0 +1,41 @@
+{
+  "event": "message_created",
+  "id": 9001,
+  "account": {
+    "id": 1,
+    "name": "Kommu"
+  },
+  "inbox": {
+    "id": 12,
+    "name": "WhatsApp"
+  },
+  "conversation": {
+    "id": 456,
+    "display_id": 456,
+    "status": "open",
+    "meta": {
+      "sender": {
+        "phone_number": "0173611088",
+        "name": "Test User"
+      }
+    },
+    "contact": {
+      "id": 99,
+      "phone_number": "0173611088",
+      "name": "Test User"
+    }
+  },
+  "message": {
+    "id": 10001,
+    "content": "Can I install today?",
+    "message_type": "incoming",
+    "content_type": "text",
+    "private": false,
+    "source_id": "60173611088",
+    "sender": {
+      "id": 99,
+      "name": "Test User",
+      "type": "contact"
+    }
+  }
+}

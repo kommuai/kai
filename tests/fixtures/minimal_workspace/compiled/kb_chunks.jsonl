@@ -1,0 +1,2 @@
+{"source_id": "faq:greeting", "text": "Q: hello\nA: Hello! How can I help you today?", "metadata": {"category": "known_faq_intent", "intent_id": "greeting", "source": "master_faq", "product": "KA", "audience": "customer", "version": "v1"}}
+{"source_id": "faq:hours", "text": "Q: office hours\nA: Mon\u2013Fri 9AM\u20135PM UTC.", "metadata": {"category": "known_faq_intent", "intent_id": "hours", "source": "master_faq", "product": "KA", "audience": "customer", "version": "v1"}}

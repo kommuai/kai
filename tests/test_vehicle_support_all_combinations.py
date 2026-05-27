@@ -8,11 +8,10 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from kai.support_runtime.agent_tools import (
+from kai.support_runtime.tools.site_search import (
     _expand_years,
-    _match_official_vehicle,
     _normalize_vehicle_query,
-    _official_supported_vehicles,
+    match_vehicle_catalog,
 )
 
 RAW_VEHICLES = [
@@ -77,12 +76,12 @@ FIXTURE = _build_fixture()
 
 
 def _patched_match(query: str):
-    """Run _match_official_vehicle with cached data replaced by fixture."""
+    """Run vehicle matcher with fixture catalog."""
     with patch(
-        "kai.support_runtime.agent_tools._official_supported_vehicles",
+        "kai.support_runtime.tools.site_search._load_vehicle_catalog",
         return_value=FIXTURE,
     ):
-        return _match_official_vehicle(query)
+        return match_vehicle_catalog(query, vehicles_json_url="test-fixture", timeout=1)
 
 
 class TestBrandModelQuery(unittest.TestCase):

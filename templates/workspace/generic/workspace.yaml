@@ -1,0 +1,101 @@
+version: '2'
+tenant:
+  id: generic-support
+  display_name: Support Bot
+  default_lang: en
+  timezone: UTC
+paths:
+  system_prompt: system_prompt.md
+  knowledge_primary: knowledge/master_faq.md
+  knowledge_compiled_dir: compiled
+  knowledge_learnt_faq: knowledge/learnt_faq.md
+  knowledge_learn_queue: knowledge/learn_queue
+  tools_plugins_dir: tools/plugins
+knowledge:
+  format: master_faq_v1
+  compile: kb_chunks.jsonl
+  inject_mode: retrieval_first
+  faq_preamble: |
+    ## Authoritative FAQ
+
+    Use this FAQ as the source of truth. Use tools when the FAQ does not cover the request.
+tools:
+  enabled: []
+channels:
+  office:
+    timezone: UTC
+    weekdays: [0, 1, 2, 3, 4]
+    start_hour: 9
+    end_hour: 17
+  handover:
+    dropoff_keyword: DROPOFF
+    live_agent_keywords: [LA]
+    resume_keywords: [resume]
+  frozen:
+    idle_hours: 24
+  media:
+    blocked_types: [image, video, audio, voice]
+  fallbacks:
+    no_signal_en: What do you need help with?
+    post_tool_en: Can you share more detail about your question?
+  whatsapp:
+    max_reply_chars: 4096
+sop_sync:
+  enabled: false
+session_store:
+  backend: sqlite
+  path: data/sessions.db
+session:
+  idle_hours: 24
+  max_history_messages: 100
+agent:
+  max_steps: 8
+  footer_history_threshold: 10
+compile:
+  extra_artifacts: false
+faq_learn:
+  use_queue: true
+  legacy_append: false
+copy:
+  keywords:
+    dropoff: DROPOFF
+    live_agent: [LA]
+  footer:
+    en: |
+
+
+      For a live agent, type LA
+    bm: |
+
+
+      Taip LA untuk ejen
+    history_threshold: 10
+  after_hours:
+    en: |
+
+
+      PS: We are outside office hours.
+    bm: |
+
+
+      PS: Di luar waktu pejabat.
+  handover:
+    dropoff_en: Please share dropoff details. Type *resume* to continue with the bot.
+    dropoff_bm: Sila berikan butiran. Taip *resume* untuk teruskan.
+    live_agent_en: A live agent will assist you soon. Type *resume* to continue with the bot.
+    live_agent_bm: Ejen akan membantu anda. Taip *resume* untuk teruskan.
+  resume:
+    en: Bot resumed. How can I help?
+    bm: Bot disambung semula.
+  media_guard:
+    en: Please describe your issue in text; media is not supported yet.
+tools_profile:
+  active_profile: minimal
+  profiles:
+    minimal:
+    - search_faq
+    - search_session_memory
+    - escalate_to_human
+  profile_overrides: {}
+  tools: []
+contexts: []

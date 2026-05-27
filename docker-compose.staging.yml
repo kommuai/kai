@@ -1,0 +1,29 @@
+# Isolated staging for refactor branch (does not replace production kommu_chatbot).
+# Usage: docker compose -f docker-compose.staging.yml up -d --build
+services:
+  kai-staging:
+    build:
+      context: .
+    container_name: kommu_chatbot_staging
+    restart: unless-stopped
+    ports:
+      - "6091:8000"
+    env_file:
+      - ../kai-main/.env
+    volumes:
+      - ../kai-main/data:/kai-home/data
+      - ../kai-main/agent_workspace:/app/agent_workspace:ro
+      - ../kai-main/secrets:/app/secrets:ro
+      - ../kai-main/.env:/kai-home/.env:ro
+    environment:
+      - TZ=Asia/Kuala_Lumpur
+      - TZ_REGION=Asia/Kuala_Lumpur
+      - KAI_HOME=/kai-home
+      - KAI_ENV_FILE=/kai-home/.env
+      - MASTER_FAQ_PATH=/app/agent_workspace/02_knowledge/faq/master_faq.md
+      - FAQ_LEARN_QUEUE_DIR=/app/agent_workspace/02_knowledge/faq/learn_queue
+      - SESSION_DB_PATH=/kai-home/data/sessions.db
+      - DB_PATH=/kai-home/data/sessions.db
+      - GOOGLE_SHEETS_CREDENTIALS_JSON=/app/secrets/google_service_account.json
+      - AGENT_WORKSPACE=/app/agent_workspace
+      - WORKSPACE_MANIFEST_PATH=/app/agent_workspace/00_manifest.md

@@ -1,0 +1,1 @@
+{"type":"reply","message":"Hi! How can I help you today?","next_state":"bot","confidence":1.0,"source_ids":[],"decision":"direct_answer","tool_needed":false,"escalate_needed":false,"trace_id":"782a28cc-d1a9-41c6-997e-e312d4ab60f8","route_mode":"hybrid","capability_used":"react_agent_loop","latency_ms":2469}

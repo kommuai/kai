@@ -10,7 +10,7 @@ from typing import Any
 
 import requests
 
-from config import BUKAPILOT_BRANCH, BUKAPILOT_REPO, TECH_ACTIVE_TAB_NAME, TECH_BACKLOG_SHEET_ID, TECH_BACKLOG_TAB_NAME
+from config import GITHUB_BRANCH, GITHUB_REPO, TECH_ACTIVE_TAB_NAME, TECH_BACKLOG_SHEET_ID, TECH_BACKLOG_TAB_NAME
 
 
 def _load_service_account_info() -> dict[str, Any]:
@@ -110,34 +110,20 @@ def summarize_issue(
     return " ; ".join(parts)[:1200]
 
 
-def _load_bukapilot_skill():
-    from config import BASE_DIR
-
-    root = BASE_DIR
-    skill_path = os.path.join(
-        root,
-        "agent_workspace",
-        "03_skills",
-        "bukapilot_backlog_search",
-        "handler.py",
-    )
-    if not os.path.isfile(skill_path):
-        return None
-    try:
-        spec = importlib.util.spec_from_file_location("kai_bukapilot_skill", skill_path)
-        if not spec or not spec.loader:
-            return None
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
-        cls = getattr(mod, "BukapilotBacklogSearchSkill", None)
-        return cls() if cls else None
-    except Exception:
-        return None
+def _load_github_backlog_skill():
+    return None
 
 
-def bukapilot_agentic_search(issue_text: str, *, branch: str | None = None, max_hits: int = 3) -> dict[str, Any]:
-    branch = (branch or BUKAPILOT_BRANCH).strip() or "release_ka2"
-    skill = _load_bukapilot_skill()
+def github_repo_agentic_search(
+    issue_text: str,
+    *,
+    branch: str | None = None,
+    max_hits: int = 3,
+    repo: str | None = None,
+) -> dict[str, Any]:
+    repo_name = (repo or GITHUB_REPO).strip().strip("/")
+    branch = (branch or GITHUB_BRANCH).strip() or "main"
+    skill = _load_github_backlog_skill()
     if skill:
         try:
             hits = skill.search_hits(issue_text, branch=branch, max_hits=max_hits)
@@ -147,7 +133,7 @@ def bukapilot_agentic_search(issue_text: str, *, branch: str | None = None, max_
     tokens = [t for t in re.split(r"[^a-z0-9]+", issue_text.lower()) if len(t) >= 4][:6]
     if not tokens:
         return {"ok": True, "branch": branch, "hits": []}
-    query = "+".join(tokens + [f"repo:{BUKAPILOT_REPO}"])
+    query = "+".join(tokens + [f"repo:{repo_name}"])
     headers = {}
     if os.getenv("KAI_GITHUB_TOKEN"):
         headers["Authorization"] = f"Bearer {os.getenv('KAI_GITHUB_TOKEN')}"
@@ -163,7 +149,9 @@ def bukapilot_agentic_search(issue_text: str, *, branch: str | None = None, max_
         hits = []
         for item in items:
             path = item.get("path", "")
-            repo_html = (((item.get("repository") or {}).get("html_url")) or f"https://github.com/{BUKAPILOT_REPO}").rstrip("/")
+            repo_html = (
+                ((item.get("repository") or {}).get("html_url")) or f"https://github.com/{repo_name}"
+            ).rstrip("/")
             if not path:
                 continue
             hits.append(
@@ -180,12 +168,12 @@ def bukapilot_agentic_search(issue_text: str, *, branch: str | None = None, max_
         return {"ok": False, "branch": branch, "hits": [], "error": f"search_exception:{exc}"}
 
 
-def infer_possible_solution_from_bukapilot(issue_text: str) -> str:
-    search = bukapilot_agentic_search(issue_text, branch=BUKAPILOT_BRANCH, max_hits=3)
+def infer_possible_solution_from_github(issue_text: str) -> str:
+    search = github_repo_agentic_search(issue_text, branch=GITHUB_BRANCH, max_hits=3)
     hits = search.get("hits", [])
     if not hits:
         return (
-            f"No high-confidence code hit yet. Cross-check {BUKAPILOT_REPO} branch {BUKAPILOT_BRANCH} "
+            f"No high-confidence code hit yet. Cross-check {GITHUB_REPO} branch {GITHUB_BRANCH} "
             "for diagnostics/recovery paths, reproduce on bench, then ship patch after validation."
         )
     refs = []
@@ -196,9 +184,14 @@ def infer_possible_solution_from_bukapilot(issue_text: str) -> str:
             refs.append(f"{path} ({url})")
     joined = "; ".join(refs[:3])
     return (
-        f"Cross-check suggests potential fix areas on {BUKAPILOT_BRANCH}: {joined}. "
+        f"Cross-check suggests potential fix areas on {GITHUB_BRANCH}: {joined}. "
         "Validate root cause with logs, apply targeted patch, and include regression test before release."
     )[:1500]
+
+
+# Legacy names (workspace YAML / older tests)
+bukapilot_agentic_search = github_repo_agentic_search
+infer_possible_solution_from_bukapilot = infer_possible_solution_from_github
 
 
 def append_backlog_issue(

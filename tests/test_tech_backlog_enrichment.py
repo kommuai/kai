@@ -27,7 +27,7 @@ class TechBacklogEnrichmentTests(unittest.TestCase):
         self.assertIn("Category=connectivity", out)
 
     @patch(
-        "kai.support_runtime.tech_backlog.bukapilot_agentic_search",
+        "kai.support_runtime.tech_backlog.github_repo_agentic_search",
         return_value={
             "ok": True,
             "branch": "release_ka2",

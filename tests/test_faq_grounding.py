@@ -39,7 +39,10 @@ class FaqGroundingTests(unittest.TestCase):
                             "source_id": "faq:international_shipping_regions",
                             "score": 0.9,
                             "text": "Q: ship\nA: Do not say Malaysia only.",
-                            "metadata": {"category": "known_faq_intent", "intent_id": "international_shipping_regions"},
+                            "metadata": {
+                                "category": "known_faq_intent",
+                                "intent_id": "international_shipping_regions",
+                            },
                         }
                     ],
                 },

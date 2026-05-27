@@ -1,0 +1,1 @@
+{"type":"handover","message":"A live agent will assist you soon. Type *resume* to continue with the bot.\n\nPS: We’re currently outside office hours. A live agent will follow up later.","next_state":"human","trace_id":"4f64d9e2-a0ad-4985-a69a-32dd7c0ea266","route_mode":"hybrid","capability_used":"pre_router","latency_ms":27}

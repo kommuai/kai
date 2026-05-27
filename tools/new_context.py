@@ -12,21 +12,21 @@ if str(_ROOT) not in sys.path:
 def main():
     import yaml
 
-    from config import CONTEXT_REGISTRY_YAML
+    from kai.workspace.manifest import load_workspace_data, workspace_yaml_path
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--id", required=True, help="context id, e.g. public_repo")
     args = ap.parse_args()
     context_id = args.id.strip()
-    path = Path(CONTEXT_REGISTRY_YAML)
+    path = workspace_yaml_path()
     path.parent.mkdir(parents=True, exist_ok=True)
 
     if path.is_file():
         doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     else:
-        doc = {"contexts": []}
+        doc = {"version": "2", "contexts": []}
     if not isinstance(doc, dict):
-        doc = {"contexts": []}
+        doc = {"version": "2", "contexts": []}
     items = doc.get("contexts")
     if not isinstance(items, list):
         items = []
@@ -44,7 +44,10 @@ def main():
             "config": {"notes": "fill provider config"},
         }
     )
-    path.write_text(yaml.safe_dump(doc, default_flow_style=False, sort_keys=False, allow_unicode=True), encoding="utf-8")
+    path.write_text(
+        yaml.safe_dump(doc, default_flow_style=False, sort_keys=False, allow_unicode=True),
+        encoding="utf-8",
+    )
     print(f"Appended context to {path}")
 
 

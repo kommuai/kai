@@ -38,14 +38,23 @@ def parse_frontmatter_markdown(path: Path) -> tuple[dict[str, Any], str]:
         return {}, body
 
 
-def log_session_store_hint(manifest_path: Path) -> None:
-    """Log where SQLite session DB is configured (from manifest if present)."""
-    meta, _ = parse_frontmatter_markdown(manifest_path)
-    ss = meta.get("session_store")
+def log_session_store_hint(manifest_path: Path | None = None) -> None:
+    """Log session DB location from workspace.yaml session_store or env."""
+    import logging
+
+    from kai.settings import get_settings
+
+    log = logging.getLogger("kai.workspace")
+    settings = get_settings()
+    from kai.workspace.manifest import load_workspace_data
+
+    ss = load_workspace_data().get("session_store")
+    db_path = settings.session_db_path
     if isinstance(ss, dict):
         log.info(
-            "[workspace] session_store backend=%s env=%s docker_path=%s",
-            ss.get("backend"),
-            ss.get("env_path_var"),
-            ss.get("docker_container_path"),
+            "[workspace] session_store backend=%s path=%s",
+            ss.get("backend", "sqlite"),
+            db_path,
         )
+    else:
+        log.info("[workspace] session_db=%s", db_path)

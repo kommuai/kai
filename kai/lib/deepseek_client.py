@@ -1,23 +1,32 @@
+from __future__ import annotations
+
 from openai import OpenAI
-import os
 
-_api_key = os.getenv("DEEPSEEK_API_KEY", "")
-_base = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com/v1")
-_model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+from kai.settings import get_settings
 
-_client = OpenAI(api_key=_api_key, base_url=_base)
+_client: OpenAI | None = None
 
-def chat_completion(system_prompt: str, user_prompt: str) -> str:
-    if not _api_key:
+
+def _get_client() -> OpenAI:
+    global _client
+    if _client is None:
+        s = get_settings()
+        _client = OpenAI(api_key=s.deepseek_api_key, base_url=s.deepseek_base_url)
+    return _client
+
+
+def chat_completion(system_prompt: str, user_prompt: str, temperature: float = 0.2, max_tokens: int = 500) -> str:
+    s = get_settings()
+    if not (s.deepseek_api_key or "").strip():
         print("[LLM] SKIP — no DEEPSEEK_API_KEY")
         return ""
-    resp = _client.chat.completions.create(
-        model=_model,
+    resp = _get_client().chat.completions.create(
+        model=s.deepseek_model,
         messages=[
-            {"role":"system","content":system_prompt},
-            {"role":"user","content":user_prompt}
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
         ],
-        temperature=0.3,
-        max_tokens=450,
+        temperature=temperature,
+        max_tokens=max_tokens,
     )
     return (resp.choices[0].message.content or "").strip()

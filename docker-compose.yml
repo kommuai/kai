@@ -1,22 +1,19 @@
 services:
   kai:
-    build: .
-    container_name: kommu_chatbot
+    build:
+      context: .
+    container_name: kai
     restart: unless-stopped
     ports:
-      - "6090:8000"   
-    env_file: .env
+      - "6090:8000"
+    env_file:
+      - ${KAI_ENV_FILE:-${KAI_HOME:-~/.kai}/.env}
     volumes:
-      - ./data:/data
-      - ./media:/app/media
-      - ./logs:/app/logs
-      - ./agent_workspace:/app/agent_workspace
-      # Service account JSON path from GOOGLE_SHEETS_CREDENTIALS_JSON (e.g. ./secrets/google_service_account.json)
-      - ./secrets:/app/secrets:ro
+      - ${KAI_HOME:-~/.kai}:/kai-home
     environment:
       - TZ=Asia/Kuala_Lumpur
       - TZ_REGION=Asia/Kuala_Lumpur
-      - AGENT_WORKSPACE=/app/agent_workspace
-      - SESSION_DB_PATH=/data/sessions.db
-      - DB_PATH=/data/sessions.db
-
+      - KAI_HOME=/kai-home
+      - KAI_ENV_FILE=/kai-home/.env
+      - SESSION_DB_PATH=/kai-home/data/sessions.db
+      - DB_PATH=/kai-home/data/sessions.db

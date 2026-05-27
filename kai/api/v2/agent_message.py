@@ -7,31 +7,43 @@ from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import PlainTextResponse
 
 from kai.core.policy.settings import RouteMode, get_route_mode
-from config import ADMIN_TOKEN, KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER, KAI_ROUTE_AGENT_DEBUG_ENABLED
+from kai.content.channels import get_channel_config
+from kai.engine.metrics import inc as metrics_inc
+from kai.engine.refresh import refresh_runtime_knowledge
+from kai.settings import get_settings
+
 from kai.lib.lang_detect import is_malay
-from kai.services.chatwoot_handover import enforce_live_agent_handover
+from kai.services.chatwoot_handover import (
+    enforce_live_agent_handover,
+)
 from kai.services.container import kai_service, support_runtime_service
-from kai.lib.session_state import append_human_segment_turn, freeze, start_human_segment
-from kai.services.chatwoot_handover import extract_chatwoot_conversation_id
-from kai.support_runtime.faq_grounding import apply_grounding_footnote_if_needed
-from kai.support_runtime.tech_backlog import list_backlog_sheet_tabs
+from kai.lib.session_state import freeze
 from kai.support_runtime.agent_loop import _looks_like_chitchat
+from kai.support_runtime.faq_grounding import apply_grounding_footnote_if_needed
 
 log = logging.getLogger("kai.v2")
 router = APIRouter()
 
+_SAFE_ERROR_REPLY = (
+    "Sorry, something went wrong on our side. Please try again in a moment or type LA for a live agent."
+)
+
 
 def _require_admin(x_admin_token: str | None) -> None:
     token = x_admin_token.strip() if isinstance(x_admin_token, str) else ""
-    expected = str(ADMIN_TOKEN or "").strip()
+    expected = str(get_settings().admin_token or "").strip()
     if not expected or not hmac.compare_digest(token, expected):
         raise HTTPException(status_code=401, detail="Unauthorized admin client")
 
 
+def _admin_token_valid(x_admin_token: str | None) -> bool:
+    token = x_admin_token.strip() if isinstance(x_admin_token, str) else ""
+    expected = str(get_settings().admin_token or "").strip()
+    return bool(expected) and hmac.compare_digest(token, expected)
+
+
 def _refresh_all_knowledge() -> dict:
-    """Single refresh path for active support runtime knowledge."""
-    runtime_out = support_runtime_service.refresh_knowledge()
-    return {"ok": True, "runtime_refresh": runtime_out}
+    return refresh_runtime_knowledge(compile_kb=True)
 
 
 def _merge_trace(
@@ -43,31 +55,28 @@ def _merge_trace(
     start: float,
     fallback_reason: str = "",
 ) -> dict:
-    out = dict(payload)
-    out.update(
-        {
-            "trace_id": trace_id,
-            "route_mode": mode.value,
-            "capability_used": capability_used,
-            "latency_ms": int((time.time() - start) * 1000),
-        }
-    )
+    payload = dict(payload)
+    payload["trace_id"] = trace_id
+    payload["route_mode"] = mode.value if hasattr(mode, "value") else str(mode)
+    payload["capability_used"] = capability_used
+    payload["latency_ms"] = int((time.time() - start) * 1000)
     if fallback_reason:
-        out["fallback_reason"] = fallback_reason
-    return out
+        payload["fallback_reason"] = fallback_reason
+    return payload
 
 
-def _process_agent_message_data(data: dict) -> dict:
-    if not data:
-        raise ValueError("Invalid n8n payload")
+def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None) -> dict:
+    if not isinstance(data, dict):
+        raise ValueError("payload_must_be_object")
+
+    ch = get_channel_config()
     msg_type = (data.get("type") or data.get("message_type") or "").strip().lower()
-    if msg_type in {"image", "video", "audio", "voice"}:
+    if msg_type and ch.is_blocked_media_type(msg_type):
+        start = time.time()
+        lang_media = "BM" if is_malay(data.get("content", "") or "") else "EN"
         payload = {
             "type": "reply",
-            "message": (
-                "I am a front-line diagnostic AI and do not support image/video/audio analysis yet. "
-                "Please describe the issue in text and tell me what car you are driving (brand/model/year)."
-            ),
+            "message": ch.media_guard_en if lang_media == "EN" else ch.media_guard_bm,
             "next_state": "bot",
         }
         return _merge_trace(
@@ -75,7 +84,23 @@ def _process_agent_message_data(data: dict) -> dict:
             trace_id=str(uuid4()),
             mode=get_route_mode(),
             capability_used="media_capability_guard",
-            start=time.time(),
+            start=start,
+            fallback_reason="media_not_supported_text_only",
+        )
+    if data.get("media_url") and ch.blocked_media_types:
+        start = time.time()
+        lang_media = "BM" if is_malay(data.get("content", "") or "") else "EN"
+        payload = {
+            "type": "reply",
+            "message": ch.media_guard_en if lang_media == "EN" else ch.media_guard_bm,
+            "next_state": "bot",
+        }
+        return _merge_trace(
+            payload,
+            trace_id=str(uuid4()),
+            mode=get_route_mode(),
+            capability_used="media_capability_guard",
+            start=start,
             fallback_reason="media_not_supported_text_only",
         )
     text = data.get("content", "").strip()
@@ -89,16 +114,84 @@ def _process_agent_message_data(data: dict) -> dict:
     if not text:
         return _merge_trace({"ok": True}, trace_id=trace_id, mode=mode, capability_used="empty", start=start)
 
+    metrics_inc("agent_message.requests")
+    s = get_settings()
     pre = kai_service.pre_router(data)
     if pre is not None:
+        if pre.get("type") == "handover" and bool(s.kai_chatwoot_enforce_live_handover):
+            applied, handover_error = enforce_live_agent_handover(data)
+            pre = dict(pre)
+            if applied:
+                pre["handover_applied"] = True
+            else:
+                pre = {
+                    "type": "handover_failed",
+                    "message": (
+                        "Live-agent handover was requested but could not be completed. "
+                        "Please retry or contact support."
+                    ),
+                    "next_state": "human",
+                    "handover_applied": False,
+                    "handover_error": handover_error,
+                }
         return _merge_trace(pre, trace_id=trace_id, mode=mode, capability_used="pre_router", start=start)
 
-    result = support_runtime_service.execute(text=text, lang=lang, user_id=user_id)
-    debug_enabled = str(KAI_ROUTE_AGENT_DEBUG_ENABLED).strip().lower() in {"1", "true", "yes", "on"}
+    try:
+        from kai.workspace.admin_config import get_admin_config
+        _admin_cfg = get_admin_config()
+        _is_admin = _admin_cfg.is_admin(user_id)
+    except Exception:
+        _admin_cfg = None
+        _is_admin = False
+
+    try:
+        result = support_runtime_service.execute(text=text, lang=lang, user_id=user_id)
+    except Exception:
+        metrics_inc("agent_message.runtime_errors")
+        log.exception("support_runtime.execute failed trace_id=%s user_id=%s", trace_id, user_id)
+        payload = {
+            "type": "reply",
+            "message": _SAFE_ERROR_REPLY,
+            "next_state": "bot",
+            "decision": "escalate_human",
+            "escalate_needed": True,
+        }
+        return _merge_trace(
+            payload,
+            trace_id=trace_id,
+            mode=mode,
+            capability_used="support_runtime_error",
+            start=start,
+            fallback_reason="runtime_exception",
+        )
+
+    if (
+        not _is_admin
+        and _admin_cfg is not None
+        and _admin_cfg.learning.enabled
+        and result.confidence is not None
+        and result.confidence < _admin_cfg.learning.min_confidence
+    ):
+        try:
+            from kai.lib.learning_events import record_event
+            record_event(
+                user_id=user_id,
+                user_text=text,
+                decision=result.decision or "",
+                confidence=float(result.confidence),
+                fallback_reason=result.fallback_reason or "",
+                trace_id=trace_id,
+            )
+        except Exception:
+            pass
+
+    debug_env = bool(s.kai_route_agent_debug_enabled)
     debug_requested = bool(data.get("debug_route_agent"))
-    include_debug = debug_enabled or debug_requested
+    include_debug = debug_env and (debug_requested and _admin_token_valid(x_admin_token))
+
     if result.decision == "escalate_human":
-        enforce = str(KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER).strip().lower() in {"1", "true", "yes", "on"}
+        metrics_inc("agent_message.escalations")
+        enforce = bool(s.kai_chatwoot_enforce_live_handover)
         if enforce:
             applied, handover_error = enforce_live_agent_handover(data)
             if not applied:
@@ -117,12 +210,13 @@ def _process_agent_message_data(data: dict) -> dict:
                     start=start,
                     fallback_reason=(result.fallback_reason or "escalation_handover_failed"),
                 )
-        cw_live = extract_chatwoot_conversation_id(data)
-        start_human_segment(user_id, cw_live or None)
-        append_human_segment_turn(user_id, "user", text)
-        append_human_segment_turn(user_id, "assistant", result.answer)
         freeze(user_id, True)
-        payload = {"type": "handover", "message": result.answer, "next_state": "human", "handover_applied": True}
+        payload = {
+            "type": "handover",
+            "message": kai_service.finalize_reply(user_id, result.answer, lang, suppress=True),
+            "next_state": "human",
+            "handover_applied": True,
+        }
     else:
         observations = ((result.metadata or {}).get("evidence") or {}).get("observations") or []
         answer_text = result.answer
@@ -137,14 +231,10 @@ def _process_agent_message_data(data: dict) -> dict:
                 capability_used=result.capability_used or "",
                 skip_chitchat=_looks_like_chitchat(text),
             )
-        # Suppress the "type LA" footer when the bot is clearly helping:
-        #   - FAQ canonical answers (`canonical_answer` capability), or
-        #   - direct answers backed by sources / tool evidence.
-        # This stops the long-thread LA-nag pattern visible in chat history.
         suppress_footer = result.decision in ("direct_answer", "clarifying_question")
         payload = {
             "type": "reply",
-            "message": kai_service.add_footer(user_id, answer_text, lang, suppress=suppress_footer),
+            "message": kai_service.finalize_reply(user_id, answer_text, lang, suppress=suppress_footer),
             "next_state": "bot",
             "confidence": result.confidence,
             "source_ids": result.source_ids,
@@ -169,22 +259,27 @@ def _process_agent_message_data(data: dict) -> dict:
 
 
 @router.post("/agent/message")
-async def agent_message(request: Request):
-    data = await request.json()
+async def agent_message(request: Request, x_admin_token: str | None = Header(default=None)):
     try:
-        return _process_agent_message_data(data)
+        data = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="invalid_json") from exc
+    try:
+        return _process_agent_message_data(data, x_admin_token=x_admin_token)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
 @router.post("/v2/agent/message")
-async def agent_message_v2(request: Request):
-    data = await request.json()
+async def agent_message_v2(request: Request, x_admin_token: str | None = Header(default=None)):
     try:
-        out = _process_agent_message_data(data)
+        data = await request.json()
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail="invalid_json") from exc
+    try:
+        return _process_agent_message_data(data, x_admin_token=x_admin_token)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    return out
 
 
 @router.post("/admin/reset_memory")
@@ -203,5 +298,7 @@ def refresh_sop_endpoint(x_admin_token: str | None = Header(default=None)):
 
 @router.get("/admin/tech-backlog/tabs")
 def admin_tech_backlog_tabs(x_admin_token: str | None = Header(default=None)):
+    from kai.support_runtime.tech_backlog import list_backlog_sheet_tabs
+
     _require_admin(x_admin_token)
     return {"ok": True, "tabs": list_backlog_sheet_tabs()}

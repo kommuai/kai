@@ -9,13 +9,14 @@ from pathlib import Path
 
 
 def _load_create_visitor_pass_module():
-    mod_path = (
-        Path(__file__).resolve().parents[1]
-        / "kai"
-        / "integrations"
-        / "smartserva"
-        / "create_visitor_pass.py"
-    )
+    root = Path(__file__).resolve().parents[1]
+    candidates = [
+        root.parent / "kai-tenant-kommu" / "tools" / "plugins" / "smartserva_visitor_pass" / "main.py",
+        root / "tests" / "fixtures" / "kommu_plugin" / "main.py",
+    ]
+    mod_path = next((p for p in candidates if p.is_file()), None)
+    if mod_path is None:
+        raise unittest.SkipTest("smartserva_visitor_pass plugin not found (install kommu tenant pack)")
     spec = importlib.util.spec_from_file_location("smartserva_create_visitor_pass", mod_path)
     if spec is None or spec.loader is None:
         raise RuntimeError("failed to load create_visitor_pass module")

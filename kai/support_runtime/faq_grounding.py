@@ -84,7 +84,6 @@ def _answer_aligns_with_canonical(answer: str, canonical: str) -> bool:
     overlap = len(a & c) / max(len(a), 1)
     if overlap >= 0.12:
         return True
-    # URLs or RM amounts from FAQ
     for blob in re.findall(r"https?://\S+|RM\s?[\d,]+", canonical, flags=re.I):
         if blob.lower() in answer.lower():
             return True

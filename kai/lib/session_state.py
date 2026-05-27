@@ -1,15 +1,17 @@
 import sqlite3, json, os, re
 from datetime import datetime, timedelta, timezone
-from config import (
-    MEMORY_SUMMARY_MAX_CHARS,
-    MEMORY_TTL_PREFERENCES_DAYS,
-    MEMORY_TTL_DEVICE_ACCOUNT_DAYS,
-    MEMORY_TTL_TEMP_ISSUE_DAYS,
-    SESSION_IDLE_HOURS,
-    SESSION_MAX_HISTORY_MESSAGES,
-)
 
-DB_PATH = os.getenv("SESSION_DB_PATH", "data/sessions.db")
+from kai.settings import get_settings
+
+_s = get_settings()
+MEMORY_SUMMARY_MAX_CHARS = _s.memory_summary_max_chars
+MEMORY_TTL_PREFERENCES_DAYS = _s.memory_ttl_preferences_days
+MEMORY_TTL_DEVICE_ACCOUNT_DAYS = _s.memory_ttl_device_account_days
+MEMORY_TTL_TEMP_ISSUE_DAYS = _s.memory_ttl_temp_issue_days
+SESSION_IDLE_HOURS = _s.session_idle_hours
+SESSION_MAX_HISTORY_MESSAGES = _s.session_max_history_messages
+
+DB_PATH = _s.session_db_path
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 # ----------------- Database Init -----------------
@@ -44,6 +46,12 @@ def init_db():
         ensure_message_index_schema()
     except Exception:
         pass
+    try:
+        from kai.lib.learning_events import init_learning_events_table
+
+        init_learning_events_table()
+    except Exception:
+        pass
 
 # ----------------- Core Session Ops -----------------
 def get_session(user_id: str):
@@ -61,16 +69,10 @@ def get_session(user_id: str):
     return {
         "lang": None,
         "frozen": False,
-        "reply_count": 0,
-        "greeted": False,
-        "last_intent": None,
         "history": [],
         "session_summary": "",
         "session_started_at": None,
         "last_activity_at": None,
-        "human_segment_open": False,
-        "human_segment_messages": [],
-        "human_segment_cw_conversation_id": "",
     }
 
 def save_session(user_id: str, data: dict):
@@ -102,16 +104,10 @@ def _default_session_fields() -> dict:
     return {
         "lang": None,
         "frozen": False,
-        "reply_count": 0,
-        "greeted": False,
-        "last_intent": None,
         "history": [],
         "session_summary": "",
         "session_started_at": None,
         "last_activity_at": None,
-        "human_segment_open": False,
-        "human_segment_messages": [],
-        "human_segment_cw_conversation_id": "",
     }
 
 
@@ -184,30 +180,8 @@ def auto_unfreeze_stale_handoff(user_id: str, *, idle_hours: int | None = None) 
         return False
     sess["frozen"] = False
     sess.pop("frozen_at", None)
-    sess["human_segment_open"] = False
     save_session(user_id, sess)
     return True
-
-def update_reply_state(user_id: str):
-    sess = get_session(user_id)
-    sess["reply_count"] = sess.get("reply_count", 0) + 1
-    save_session(user_id, sess)
-
-def log_qna(user_id: str, q: str, a: str):
-    sess = get_session(user_id)
-    logs = sess.get("logs", [])
-    logs.append({"q": q, "a": a, "t": datetime.utcnow().isoformat()})
-    sess["logs"] = logs[-50:]  # Keep last 50 pairs
-    save_session(user_id, sess)
-
-def set_last_intent(user_id: str, intent: str | None):
-    sess = get_session(user_id)
-    sess["last_intent"] = intent
-    save_session(user_id, sess)
-
-def get_last_intent(user_id: str):
-    sess = get_session(user_id)
-    return sess.get("last_intent")
 
 # ----------------- Multi-Turn Memory -----------------
 def add_message_to_history(user_id: str, role: str, text: str):
@@ -258,34 +232,6 @@ def update_session_summary(user_id: str, role: str, text: str):
 
 def get_session_summary(user_id: str) -> str:
     return (get_session(user_id).get("session_summary") or "").strip()
-
-
-def build_short_term_context(user_id: str) -> str:
-    """Compact session memory for the ReAct loop (summary + durable facts).
-
-    Injected on follow-up turns so the agent sees what was already discussed
-    without re-asking for car/year/dongle facts from earlier in the thread.
-    """
-    if not user_id:
-        return ""
-    parts: list[str] = []
-    summary = get_session_summary(user_id)
-    if summary:
-        parts.append(f"### Session summary (this chat)\n{summary}")
-    facts = get_memory_facts(user_id)
-    if facts:
-        lines = [
-            f"- {f['fact_type']}/{f['fact_key']}: {f['fact_value']}"
-            for f in facts[:20]
-        ]
-        parts.append("### Remembered facts (do not re-ask if already known)\n" + "\n".join(lines))
-    if not parts:
-        return ""
-    return (
-        "## Short-term session memory\n"
-        "Use this with the recent turns below. Do not repeat questions the user already answered.\n\n"
-        + "\n\n".join(parts)
-    )
 
 
 def prune_expired_memory_facts(user_id: str | None = None):
@@ -466,61 +412,5 @@ def get_all_user_ids():
     rows = [r[0] for r in c.fetchall()]
     conn.close()
     return rows
-
-
-def _ensure_human_segment_fields(sess: dict) -> None:
-    sess.setdefault("human_segment_open", False)
-    sess.setdefault("human_segment_messages", [])
-    sess.setdefault("human_segment_cw_conversation_id", "")
-
-
-def start_human_segment(user_id: str, cw_conversation_id: str | None = None) -> None:
-    """Begin capturing turns for post-handback FAQ learning."""
-    sess = get_session(user_id)
-    _ensure_human_segment_fields(sess)
-    sess["human_segment_open"] = True
-    sess["human_segment_messages"] = []
-    if cw_conversation_id:
-        sess["human_segment_cw_conversation_id"] = str(cw_conversation_id)
-    else:
-        sess["human_segment_cw_conversation_id"] = ""
-    save_session(user_id, sess)
-
-
-def append_human_segment_turn(user_id: str, role: str, text: str) -> None:
-    """Append one line to the live-agent window (user / assistant / human_agent)."""
-    sess = get_session(user_id)
-    _ensure_human_segment_fields(sess)
-    if not sess.get("human_segment_open"):
-        return
-    msg = (text or "").strip()
-    if not msg:
-        return
-    hist = sess.get("human_segment_messages") or []
-    hist.append({"role": role, "text": msg, "ts": _now_iso()})
-    sess["human_segment_messages"] = hist[-400:]
-    save_session(user_id, sess)
-
-
-def snapshot_human_segment_for_learn(user_id: str) -> tuple[list[dict], str]:
-    """Read current human segment without closing it."""
-    sess = get_session(user_id)
-    _ensure_human_segment_fields(sess)
-    msgs = list(sess.get("human_segment_messages") or [])
-    cw = str(sess.get("human_segment_cw_conversation_id") or "")
-    return msgs, cw
-
-
-def pop_human_segment_for_learn(user_id: str) -> tuple[list[dict], str]:
-    """Close the segment and return (messages, chatwoot_conversation_id)."""
-    sess = get_session(user_id)
-    _ensure_human_segment_fields(sess)
-    msgs = list(sess.get("human_segment_messages") or [])
-    cw = str(sess.get("human_segment_cw_conversation_id") or "")
-    sess["human_segment_open"] = False
-    sess["human_segment_messages"] = []
-    sess["human_segment_cw_conversation_id"] = ""
-    save_session(user_id, sess)
-    return msgs, cw
 
 

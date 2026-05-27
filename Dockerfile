@@ -1,30 +1,26 @@
-# -------- Backend + FastAPI --------
+# -------- Kai engine (tenant content via KAI_HOME volume) --------
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# System dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc libpq-dev git && \
+    build-essential gcc git && \
     rm -rf /var/lib/apt/lists/*
 
-# Large wheels (e.g. torch via sentence-transformers) need a longer read timeout.
 ENV PIP_DEFAULT_TIMEOUT=1000
 ENV PIP_RETRIES=10
 
-# Install backend dependencies
-COPY requirements.txt .
+COPY requirements.txt ./
 RUN pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
 
-# Copy backend source
 COPY . .
 
+ENV KAI_STARTUP_COMPILE=auto
+ENV KAI_HOME=/kai-home
+ENV SESSION_DB_PATH=/kai-home/data/sessions.db
 
-# Create persistent dirs
-RUN mkdir -p /app/media /app/logs
+RUN mkdir -p /app/logs && chmod +x /app/scripts/docker-entrypoint.sh
 
-# Internal FastAPI port
 EXPOSE 8000
 
-# Start FastAPI
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]

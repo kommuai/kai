@@ -1,4 +1,4 @@
-import os
+from kai.settings import get_settings
 
 
 def _parse_scoped_keys() -> dict[str, set[str]]:
@@ -6,7 +6,7 @@ def _parse_scoped_keys() -> dict[str, set[str]]:
     Format:
     KAI_SERVICE_KEYS="key1:public_info.read|repo.read,key2:public_info.read"
     """
-    raw = os.getenv("KAI_SERVICE_KEYS", "")
+    raw = get_settings().kai_service_keys_raw
     mapping: dict[str, set[str]] = {}
     for item in [x.strip() for x in raw.split(",") if x.strip()]:
         if ":" not in item:
