@@ -18,6 +18,8 @@ from kai.services.chatwoot_handover import (
 )
 from kai.services.container import kai_service, support_runtime_service
 from kai.lib.session_state import freeze
+from kai.support_runtime.agent_loop import _looks_like_chitchat
+from kai.support_runtime.faq_grounding import apply_grounding_footnote_if_needed
 
 log = logging.getLogger("kai.v2")
 router = APIRouter()
@@ -198,10 +200,23 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
             "handover_applied": True,
         }
     else:
+        observations = ((result.metadata or {}).get("evidence") or {}).get("observations") or []
+        answer_text = result.answer
+        if result.decision == "direct_answer":
+            answer_text = apply_grounding_footnote_if_needed(
+                answer_text,
+                user_text=text,
+                lang=lang,
+                source_ids=result.source_ids,
+                observations=observations,
+                retriever=support_runtime_service.retriever,
+                capability_used=result.capability_used or "",
+                skip_chitchat=_looks_like_chitchat(text),
+            )
         suppress_footer = result.decision in ("direct_answer", "clarifying_question")
         payload = {
             "type": "reply",
-            "message": kai_service.finalize_reply(user_id, result.answer, lang, suppress=suppress_footer),
+            "message": kai_service.finalize_reply(user_id, answer_text, lang, suppress=suppress_footer),
             "next_state": "bot",
             "confidence": result.confidence,
             "source_ids": result.source_ids,
