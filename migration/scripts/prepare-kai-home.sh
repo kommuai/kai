@@ -2,7 +2,7 @@
 # Port Kommu legacy agent_workspace + data into KAI_HOME layout (for full refactor tenant mode).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-KAI_HOME="${1:-$ROOT/migration/kai-home}"
+KAI_HOME="${1:-$HOME/.kai}"
 SRC_WS="$ROOT/agent_workspace"
 mkdir -p "$KAI_HOME"/{knowledge/learn_queue,compiled,data/sop,tools/plugins,skills}
 cp -f "$SRC_WS/02_knowledge/faq/master_faq.md" "$KAI_HOME/knowledge/master_faq.md"

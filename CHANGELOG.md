@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Refactor migration:** merged `origin/refactor` (workspace v2 / `KAI_HOME`); `docker-compose.kommu.yml` for Kommu production; `docker-compose.staging.yml` + `migration/` scripts (baseline, validate, rollback).
 - **Compat:** pre-router uses `freeze()` and handoff segments; n8n `message_type` media guard; `MASTER_FAQ_PATH` keeps legacy `agent_workspace/02_knowledge/faq/master_faq.md`.
+- **Kommu tenant restore:** runtime now uses host `~/.kai` (`workspace.yaml` + `system_prompt.md`) mounted into `/kai-home` so refactor loads Kommu tone/rules and full tools profile (vehicle support, warranty, backlog, visitor pass).
+- **Admin whitelist:** added `+60173611088` / `0173611088` to `workspace.yaml` `admin.whitelist_numbers` for `/admin` and `/learning` commands.
+- **KAI_HOME migration:** moved runtime tenant state to host `~/.kai` and updated compose to mount `~/.kai:/kai-home` (includes `.env`, `workspace.yaml`, `system_prompt.md`, `knowledge/master_faq.md`, and `data/sessions.db`).
 
 ### Added
 

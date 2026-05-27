@@ -11,10 +11,10 @@ services:
     env_file:
       - ../kai-main/.env
     volumes:
-      - ../kai-main/data:/kai-home/data
+      - ~/.kai:/kai-home
       - ../kai-main/agent_workspace:/app/agent_workspace:ro
       - ../kai-main/secrets:/app/secrets:ro
-      - ../kai-main/.env:/kai-home/.env:ro
+      - ~/.kai/.env:/kai-home/.env:ro
     environment:
       - TZ=Asia/Kuala_Lumpur
       - TZ_REGION=Asia/Kuala_Lumpur
