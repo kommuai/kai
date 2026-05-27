@@ -21,7 +21,7 @@ _FIXTURE_FAQ_BLOCK = (
     "## intent: snapshot_test\naliases:\n- test\nanswer:\nhello\n"
 )
 
-_EXPECTED_HASH = "7437588636bc40188b1b786ab10a5b38754d03a989f3ccd1c12f8343018d87d3"
+_EXPECTED_HASH = "3fb7a7904e73b1190cce97fcf4e433736afd6565307676df1b476aed46518bc2"
 
 
 def _sha256(text: str) -> str:

@@ -1,0 +1,39 @@
+# Kai Studio — separate stack from the Kai engine (../docker-compose.yml).
+# Launch:  cd studio && docker compose up -d --build
+
+services:
+  studio-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: kai-studio-api
+    restart: unless-stopped
+    ports:
+      - "${STUDIO_API_PORT:-8080}:8080"
+    env_file:
+      - ${STUDIO_ENV_FILE:-./backend/.env}
+    environment:
+      KAI_REPO: ${KAI_REPO:-/kai-engine}
+      KAI_TENANTS_ROOT: /tenants
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+    volumes:
+      # .. = monorepo root (kai/); ../.. = parent of repo (often ~/workspace with kai-tenant-* dirs)
+      - ${KAI_REPO_HOST:-..}:/kai-engine:ro
+      - ${KAI_TENANTS_ROOT_HOST:-../..}:/tenants
+      - studio-admin-data:/app/data
+
+  studio-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+    container_name: kai-studio-web
+    restart: unless-stopped
+    ports:
+      - "${STUDIO_WEB_PORT:-5173}:80"
+    depends_on:
+      - studio-api
+
+volumes:
+  studio-admin-data:

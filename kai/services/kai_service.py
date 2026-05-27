@@ -22,7 +22,6 @@ from kai.lib.session_state import (
     set_lang,
     update_session_summary,
 )
-from kai.services.chatwoot_handover import extract_chatwoot_conversation_id
 from kai.services.turn_ingest import ingest_user_turn
 from kai.settings import get_settings
 
@@ -295,12 +294,20 @@ class KaiService:
 
         lower = re.sub(r"\s+", " ", (text or "").lower()).strip()
         ensure_active_session(conversation_id)
+        from kai.services.chatwoot_handover import extract_chatwoot_conversation_id
+
+        cw_conv = extract_chatwoot_conversation_id(data)
+        if cw_conv:
+            sess_cw = get_session(conversation_id)
+            if sess_cw.get("chatwoot_conversation_id") != cw_conv:
+                sess_cw["chatwoot_conversation_id"] = cw_conv
+                save_session(conversation_id, sess_cw)
+
         sess = get_session(conversation_id)
         lang = "BM" if is_malay(text) else "EN"
         set_lang(conversation_id, lang)
         aft = not self.is_office_hours()
         ingest_user_turn(conversation_id, text, record_history=False)
-        cw_id = extract_chatwoot_conversation_id(data) or None
         cp = self._copy
         ch = self._channels
 
@@ -316,12 +323,10 @@ class KaiService:
 
         if text == ch.dropoff_keyword and not sess.get("frozen") and not sess.get("handover"):
             add_message_to_history(conversation_id, "user", text)
-            self._start_handoff_segment(conversation_id, cw_id, text)
             freeze(conversation_id, True)
             msg_out = cp.handover_dropoff_en if lang == "EN" else cp.handover_dropoff_bm
             if aft:
                 msg_out += self.after_hours_suffix(lang)
-            self._append_handoff_assistant(conversation_id, msg_out)
             return {
                 "type": "handover",
                 "message": self.finalize_reply(conversation_id, msg_out, lang, suppress=True),
@@ -330,12 +335,10 @@ class KaiService:
 
         if ch.is_live_agent_keyword(text) and not sess.get("frozen") and not sess.get("handover"):
             add_message_to_history(conversation_id, "user", text)
-            self._start_handoff_segment(conversation_id, cw_id, text)
             freeze(conversation_id, True)
             msg_out = cp.handover_live_agent_en if lang == "EN" else cp.handover_live_agent_bm
             if aft:
                 msg_out += self.after_hours_suffix(lang)
-            self._append_handoff_assistant(conversation_id, msg_out)
             return {
                 "type": "handover",
                 "message": self.finalize_reply(conversation_id, msg_out, lang, suppress=True),
@@ -350,11 +353,9 @@ class KaiService:
                     idle_h,
                     conversation_id,
                 )
-                self._schedule_faq_learn_after_handback(conversation_id)
                 sess = get_session(conversation_id)
             elif ch.is_resume_keyword(text):
                 add_message_to_history(conversation_id, "user", text)
-                self._schedule_faq_learn_after_handback(conversation_id)
                 freeze(conversation_id, False)
                 msg_out = cp.resume_en if lang == "EN" else cp.resume_bm
                 add_message_to_history(conversation_id, "assistant", msg_out)
@@ -366,44 +367,6 @@ class KaiService:
                 }
             else:
                 add_message_to_history(conversation_id, "user", text)
-                self._append_handoff_user(conversation_id, text)
                 return {"type": "frozen", "message": "", "next_state": "human"}
 
         return None
-
-    @staticmethod
-    def _start_handoff_segment(conversation_id: str, cw_id: str | None, user_text: str) -> None:
-        try:
-            from kai.lib.session_state import append_human_segment_turn, start_human_segment
-
-            start_human_segment(conversation_id, cw_id)
-            append_human_segment_turn(conversation_id, "user", user_text)
-        except Exception as exc:  # noqa: BLE001
-            log.debug("handoff segment start skipped: %s", exc)
-
-    @staticmethod
-    def _append_handoff_assistant(conversation_id: str, text: str) -> None:
-        try:
-            from kai.lib.session_state import append_human_segment_turn
-
-            append_human_segment_turn(conversation_id, "assistant", text)
-        except Exception as exc:  # noqa: BLE001
-            log.debug("handoff segment assistant skipped: %s", exc)
-
-    @staticmethod
-    def _append_handoff_user(conversation_id: str, text: str) -> None:
-        try:
-            from kai.lib.session_state import append_human_segment_turn
-
-            append_human_segment_turn(conversation_id, "user", text)
-        except Exception as exc:  # noqa: BLE001
-            log.debug("handoff segment user skipped: %s", exc)
-
-    @staticmethod
-    def _schedule_faq_learn_after_handback(conversation_id: str) -> None:
-        try:
-            from kai.support_runtime.background_review import schedule_faq_learn_after_handback
-
-            schedule_faq_learn_after_handback(conversation_id)
-        except Exception as exc:  # noqa: BLE001
-            log.debug("faq learn schedule skipped: %s", exc)

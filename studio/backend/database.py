@@ -1,0 +1,107 @@
+"""Database setup."""
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker, Session
+
+from models import Base
+
+DB_DIR = Path(os.getenv("KAI_ADMIN_DB_DIR", Path(__file__).parent / "data"))
+DB_DIR.mkdir(parents=True, exist_ok=True)
+DATABASE_URL = f"sqlite:///{DB_DIR / 'admin.db'}"
+
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
+
+def init_db() -> None:
+    Base.metadata.create_all(bind=engine)
+
+    # Minimal migration: create tenant_memberships + backfill owners.
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS tenant_memberships (
+                  id TEXT PRIMARY KEY,
+                  tenant_id TEXT NOT NULL,
+                  user_id TEXT NOT NULL,
+                  role TEXT NOT NULL DEFAULT 'owner',
+                  created_at DATETIME,
+                  CONSTRAINT uq_tenant_membership UNIQUE (tenant_id, user_id),
+                  FOREIGN KEY(tenant_id) REFERENCES tenants(id),
+                  FOREIGN KEY(user_id) REFERENCES users(id)
+                )
+                """
+            )
+        )
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_tenant_memberships_tenant_id ON tenant_memberships(tenant_id)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_tenant_memberships_user_id ON tenant_memberships(user_id)"))
+
+        # Backfill from tenants.owner_id if missing.
+        conn.execute(
+            text(
+                """
+                INSERT OR IGNORE INTO tenant_memberships (id, tenant_id, user_id, role, created_at)
+                SELECT
+                  lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-' || lower(hex(randomblob(2))) || '-' ||
+                  lower(hex(randomblob(2))) || '-' || lower(hex(randomblob(6))) AS id,
+                  t.id AS tenant_id,
+                  t.owner_id AS user_id,
+                  'owner' AS role,
+                  COALESCE(t.created_at, CURRENT_TIMESTAMP) AS created_at
+                FROM tenants t
+                """
+            )
+        )
+
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS tenant_invites (
+                  id TEXT PRIMARY KEY,
+                  tenant_id TEXT NOT NULL,
+                  email TEXT NOT NULL,
+                  token TEXT NOT NULL,
+                  status TEXT NOT NULL DEFAULT 'pending',
+                  created_by_user_id TEXT NOT NULL,
+                  created_at DATETIME,
+                  expires_at DATETIME,
+                  CONSTRAINT uq_tenant_invite_token UNIQUE (token),
+                  FOREIGN KEY(tenant_id) REFERENCES tenants(id),
+                  FOREIGN KEY(created_by_user_id) REFERENCES users(id)
+                )
+                """
+            )
+        )
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_tenant_invites_tenant_id ON tenant_invites(tenant_id)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_tenant_invites_email ON tenant_invites(email)"))
+
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS contact_tags (
+                  id TEXT PRIMARY KEY,
+                  tenant_id TEXT NOT NULL,
+                  user_id TEXT NOT NULL,
+                  tag TEXT NOT NULL,
+                  created_at DATETIME,
+                  CONSTRAINT uq_contact_tag UNIQUE (tenant_id, user_id, tag),
+                  FOREIGN KEY(tenant_id) REFERENCES tenants(id)
+                )
+                """
+            )
+        )
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_contact_tags_tenant_id ON contact_tags(tenant_id)"))
+        conn.execute(text("CREATE INDEX IF NOT EXISTS ix_contact_tags_user_id ON contact_tags(user_id)"))
+
+
+def get_db():
+    db: Session = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
