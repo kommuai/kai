@@ -22,14 +22,12 @@ class RuntimeSettings:
     footer_history_threshold: int
     whatsapp_max_reply_chars: int
     compile_extra_artifacts: bool
-    faq_learn_use_queue: bool
 
     @classmethod
     def from_sources(cls, settings: Settings, workspace_yaml: dict[str, Any]) -> RuntimeSettings:
         session = workspace_yaml.get("session") if isinstance(workspace_yaml.get("session"), dict) else {}
         agent = workspace_yaml.get("agent") if isinstance(workspace_yaml.get("agent"), dict) else {}
         compile_block = workspace_yaml.get("compile") if isinstance(workspace_yaml.get("compile"), dict) else {}
-        faq_learn = workspace_yaml.get("faq_learn") if isinstance(workspace_yaml.get("faq_learn"), dict) else {}
         channels = workspace_yaml.get("channels") if isinstance(workspace_yaml.get("channels"), dict) else {}
         whatsapp = channels.get("whatsapp") if isinstance(channels.get("whatsapp"), dict) else {}
 
@@ -52,9 +50,6 @@ class RuntimeSettings:
                 compile_block.get("extra_artifacts")
                 if "extra_artifacts" in compile_block
                 else settings.kai_compile_extra_artifacts
-            ),
-            faq_learn_use_queue=bool(
-                faq_learn.get("use_queue") if "use_queue" in faq_learn else settings.kai_faq_learn_use_queue
             ),
         )
 

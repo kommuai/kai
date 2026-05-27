@@ -46,6 +46,12 @@ def init_db():
         ensure_message_index_schema()
     except Exception:
         pass
+    try:
+        from kai.lib.learning_events import init_learning_events_table
+
+        init_learning_events_table()
+    except Exception:
+        pass
 
 # ----------------- Core Session Ops -----------------
 def get_session(user_id: str):
@@ -67,9 +73,6 @@ def get_session(user_id: str):
         "session_summary": "",
         "session_started_at": None,
         "last_activity_at": None,
-        "human_segment_open": False,
-        "human_segment_messages": [],
-        "human_segment_cw_conversation_id": "",
     }
 
 def save_session(user_id: str, data: dict):
@@ -105,9 +108,6 @@ def _default_session_fields() -> dict:
         "session_summary": "",
         "session_started_at": None,
         "last_activity_at": None,
-        "human_segment_open": False,
-        "human_segment_messages": [],
-        "human_segment_cw_conversation_id": "",
     }
 
 
@@ -180,7 +180,6 @@ def auto_unfreeze_stale_handoff(user_id: str, *, idle_hours: int | None = None) 
         return False
     sess["frozen"] = False
     sess.pop("frozen_at", None)
-    sess["human_segment_open"] = False
     save_session(user_id, sess)
     return True
 
@@ -413,61 +412,5 @@ def get_all_user_ids():
     rows = [r[0] for r in c.fetchall()]
     conn.close()
     return rows
-
-
-def _ensure_human_segment_fields(sess: dict) -> None:
-    sess.setdefault("human_segment_open", False)
-    sess.setdefault("human_segment_messages", [])
-    sess.setdefault("human_segment_cw_conversation_id", "")
-
-
-def start_human_segment(user_id: str, cw_conversation_id: str | None = None) -> None:
-    """Begin capturing turns for post-handback FAQ learning."""
-    sess = get_session(user_id)
-    _ensure_human_segment_fields(sess)
-    sess["human_segment_open"] = True
-    sess["human_segment_messages"] = []
-    if cw_conversation_id:
-        sess["human_segment_cw_conversation_id"] = str(cw_conversation_id)
-    else:
-        sess["human_segment_cw_conversation_id"] = ""
-    save_session(user_id, sess)
-
-
-def append_human_segment_turn(user_id: str, role: str, text: str) -> None:
-    """Append one line to the live-agent window (user / assistant / human_agent)."""
-    sess = get_session(user_id)
-    _ensure_human_segment_fields(sess)
-    if not sess.get("human_segment_open"):
-        return
-    msg = (text or "").strip()
-    if not msg:
-        return
-    hist = sess.get("human_segment_messages") or []
-    hist.append({"role": role, "text": msg, "ts": _now_iso()})
-    sess["human_segment_messages"] = hist[-400:]
-    save_session(user_id, sess)
-
-
-def snapshot_human_segment_for_learn(user_id: str) -> tuple[list[dict], str]:
-    """Read current human segment without closing it."""
-    sess = get_session(user_id)
-    _ensure_human_segment_fields(sess)
-    msgs = list(sess.get("human_segment_messages") or [])
-    cw = str(sess.get("human_segment_cw_conversation_id") or "")
-    return msgs, cw
-
-
-def pop_human_segment_for_learn(user_id: str) -> tuple[list[dict], str]:
-    """Close the segment and return (messages, chatwoot_conversation_id)."""
-    sess = get_session(user_id)
-    _ensure_human_segment_fields(sess)
-    msgs = list(sess.get("human_segment_messages") or [])
-    cw = str(sess.get("human_segment_cw_conversation_id") or "")
-    sess["human_segment_open"] = False
-    sess["human_segment_messages"] = []
-    sess["human_segment_cw_conversation_id"] = ""
-    save_session(user_id, sess)
-    return msgs, cw
 
 

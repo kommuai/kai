@@ -15,10 +15,9 @@ from kai.settings import get_settings
 from kai.lib.lang_detect import is_malay
 from kai.services.chatwoot_handover import (
     enforce_live_agent_handover,
-    extract_chatwoot_conversation_id,
 )
 from kai.services.container import kai_service, support_runtime_service
-from kai.lib.session_state import append_human_segment_turn, freeze, start_human_segment
+from kai.lib.session_state import freeze
 
 log = logging.getLogger("kai.v2")
 router = APIRouter()
@@ -118,6 +117,14 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
         return _merge_trace(pre, trace_id=trace_id, mode=mode, capability_used="pre_router", start=start)
 
     try:
+        from kai.workspace.admin_config import get_admin_config
+        _admin_cfg = get_admin_config()
+        _is_admin = _admin_cfg.is_admin(user_id)
+    except Exception:
+        _admin_cfg = None
+        _is_admin = False
+
+    try:
         result = support_runtime_service.execute(text=text, lang=lang, user_id=user_id)
     except Exception:
         metrics_inc("agent_message.runtime_errors")
@@ -137,6 +144,26 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
             start=start,
             fallback_reason="runtime_exception",
         )
+
+    if (
+        not _is_admin
+        and _admin_cfg is not None
+        and _admin_cfg.learning.enabled
+        and result.confidence is not None
+        and result.confidence < _admin_cfg.learning.min_confidence
+    ):
+        try:
+            from kai.lib.learning_events import record_event
+            record_event(
+                user_id=user_id,
+                user_text=text,
+                decision=result.decision or "",
+                confidence=float(result.confidence),
+                fallback_reason=result.fallback_reason or "",
+                trace_id=trace_id,
+            )
+        except Exception:
+            pass
 
     debug_env = bool(s.kai_route_agent_debug_enabled)
     debug_requested = bool(data.get("debug_route_agent"))
@@ -163,10 +190,6 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
                     start=start,
                     fallback_reason=(result.fallback_reason or "escalation_handover_failed"),
                 )
-        cw_live = extract_chatwoot_conversation_id(data)
-        start_human_segment(user_id, cw_live or None)
-        append_human_segment_turn(user_id, "user", text)
-        append_human_segment_turn(user_id, "assistant", result.answer)
         freeze(user_id, True)
         payload = {
             "type": "handover",

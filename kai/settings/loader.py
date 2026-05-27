@@ -113,15 +113,6 @@ class Settings:
     kai_chatwoot_webhook_secret: str = ""
     kai_chatwoot_inbox_ids: tuple[int, ...] = ()
 
-    # FAQ learn
-    kai_faq_learn_enabled: bool = True
-    kai_faq_learn_async: bool = True
-    kai_faq_learn_fetch_chatwoot: bool = True
-    kai_faq_learn_master_faq_max_chars: int = 120000
-    kai_faq_learn_use_queue: bool = True
-    kai_faq_learn_legacy_append: bool = False
-    kai_faq_learn_on_handover: bool = False
-
     # SOP
     kai_sop_writeback_enabled: bool = False
     kai_sop_merge_sync_enabled: bool = False
@@ -155,7 +146,6 @@ class Settings:
     kai_home: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace")
     agent_workspace: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace")
     master_faq_path: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "knowledge" / "master_faq.md")
-    agent_learnt_faq_path: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "knowledge" / "learnt_faq.md")
     faq_learn_queue_dir: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "knowledge" / "learn_queue")
     workspace_manifest_path: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "workspace.yaml")
     sop_sync_state_path: Path = field(default_factory=lambda: BASE_DIR / "data" / "sop" / "sop_sync_state.json")
@@ -247,17 +237,6 @@ def _resolve_workspace_paths() -> tuple[Path, Path, Path, Path, Path, Path, str,
     else:
         master_faq = paths.master_faq
 
-    learnt = _env("AGENT_LEARNT_FAQ_PATH", "").strip()
-    if learnt:
-        agent_learnt = Path(learnt).expanduser()
-        if not agent_learnt.is_absolute():
-            agent_learnt = BASE_DIR / agent_learnt
-    else:
-        agent_learnt = paths.knowledge_dir / "learnt_faq.md"
-        if not agent_learnt.is_file():
-            legacy = kai_home / "faq" / "agent_learnt_faq.md"
-            agent_learnt = legacy if legacy.is_file() else agent_learnt
-
     queue = _env("FAQ_LEARN_QUEUE_DIR", "").strip()
     if queue:
         learn_queue = Path(queue).expanduser()
@@ -275,7 +254,6 @@ def _resolve_workspace_paths() -> tuple[Path, Path, Path, Path, Path, Path, str,
     return (
         kai_home,
         master_faq,
-        agent_learnt,
         learn_queue,
         workspace_manifest,
         resolve_sop_sync_state_path(kai_home),
@@ -290,7 +268,6 @@ def load_settings() -> Settings:
     (
         kai_home,
         master_faq,
-        agent_learnt,
         learn_queue,
         workspace_manifest,
         sop_sync_state,
@@ -325,13 +302,6 @@ def load_settings() -> Settings:
         kai_chatwoot_bot_enabled=_env_bool("KAI_CHATWOOT_BOT_ENABLED"),
         kai_chatwoot_webhook_secret=_env("KAI_CHATWOOT_WEBHOOK_SECRET"),
         kai_chatwoot_inbox_ids=_env_int_list("KAI_CHATWOOT_INBOX_IDS"),
-        kai_faq_learn_enabled=_env_bool("KAI_FAQ_LEARN_ENABLED", "1"),
-        kai_faq_learn_async=_env_bool("KAI_FAQ_LEARN_ASYNC", "1"),
-        kai_faq_learn_fetch_chatwoot=_env_bool("KAI_FAQ_LEARN_FETCH_CHATWOOT", "1"),
-        kai_faq_learn_master_faq_max_chars=_env_int("KAI_FAQ_LEARN_MASTER_FAQ_MAX_CHARS", 120000),
-        kai_faq_learn_use_queue=_env_bool("KAI_FAQ_LEARN_USE_QUEUE", "1"),
-        kai_faq_learn_legacy_append=_env_bool("KAI_FAQ_LEARN_LEGACY_APPEND"),
-        kai_faq_learn_on_handover=_env_bool("KAI_FAQ_LEARN_ON_HANDOVER"),
         kai_sop_writeback_enabled=_env_bool("KAI_SOP_WRITEBACK_ENABLED"),
         kai_sop_merge_sync_enabled=_env_bool("KAI_SOP_MERGE_SYNC_ENABLED"),
         kai_sop_merge_sync_hour=_env_int("KAI_SOP_MERGE_SYNC_HOUR", 8),
@@ -358,7 +328,6 @@ def load_settings() -> Settings:
         kai_home=kai_home,
         agent_workspace=agent_workspace,
         master_faq_path=master_faq,
-        agent_learnt_faq_path=agent_learnt,
         faq_learn_queue_dir=learn_queue,
         workspace_manifest_path=workspace_manifest,
         sop_sync_state_path=sop_sync_state,

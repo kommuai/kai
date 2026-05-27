@@ -21,9 +21,6 @@ _EXPORT_NAMES: frozenset[str] = frozenset({
     "KAI_GUARDRAILS_ENABLED",
     "KAI_CHATWOOT_API_BASE", "KAI_CHATWOOT_API_TOKEN", "KAI_CHATWOOT_ACCOUNT_ID",
     "KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER",
-    "KAI_FAQ_LEARN_ENABLED", "KAI_FAQ_LEARN_ASYNC", "KAI_FAQ_LEARN_FETCH_CHATWOOT",
-    "KAI_FAQ_LEARN_MASTER_FAQ_MAX_CHARS", "KAI_FAQ_LEARN_USE_QUEUE",
-    "KAI_FAQ_LEARN_LEGACY_APPEND", "KAI_FAQ_LEARN_ON_HANDOVER",
     "KAI_SOP_WRITEBACK_ENABLED", "KAI_SOP_MERGE_SYNC_ENABLED",
     "KAI_SOP_MERGE_SYNC_HOUR", "KAI_SOP_MERGE_SYNC_MINUTE",
     "GOOGLE_DOCS_SOP_DOC_ID",
@@ -32,7 +29,7 @@ _EXPORT_NAMES: frozenset[str] = frozenset({
     "CS_RECIPIENTS", "AGENT_NUMBERS", "ADMIN_TOKEN",
     "SOP_DOC_URL", "WARRANTY_CSV_URL",
     "GOOGLE_SHEETS_WARRANTY_SHEET_ID", "GOOGLE_SHEETS_WARRANTY_GID", "GOOGLE_SHEETS_WARRANTY_EXTRA_GID",
-    "SOP_SYNC_STATE_PATH", "AGENT_WORKSPACE", "MASTER_FAQ_PATH", "AGENT_LEARNT_FAQ_PATH",
+    "SOP_SYNC_STATE_PATH", "AGENT_WORKSPACE", "MASTER_FAQ_PATH",
     "FAQ_LEARN_QUEUE_DIR", "WORKSPACE_MANIFEST_PATH", "CONTEXT_REGISTRY_YAML",
     "BING_API_KEY", "VEHICLE_SUPPORT_OFFICIAL_URL", "VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS",
     "VEHICLE_SUPPORT_MIN_EVIDENCE_SCORE",
@@ -44,8 +41,6 @@ _EXPORT_NAMES: frozenset[str] = frozenset({
 
 _BOOL_EXPORTS = frozenset({
     "KAI_QDRANT_ENABLED", "KAI_GUARDRAILS_ENABLED", "KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER",
-    "KAI_FAQ_LEARN_ENABLED", "KAI_FAQ_LEARN_ASYNC", "KAI_FAQ_LEARN_FETCH_CHATWOOT",
-    "KAI_FAQ_LEARN_USE_QUEUE", "KAI_FAQ_LEARN_LEGACY_APPEND", "KAI_FAQ_LEARN_ON_HANDOVER",
     "KAI_SOP_WRITEBACK_ENABLED", "KAI_SOP_MERGE_SYNC_ENABLED",
     "KAI_ROUTE_AGENT_DEBUG_ENABLED", "KAI_COMPILE_EXTRA_ARTIFACTS",
 })
@@ -54,8 +49,6 @@ _BOOL_EXPORTS = frozenset({
 def _export_value(name: str, s: Settings) -> Any:
     if name in _BOOL_EXPORTS:
         return "1" if getattr(s, name.lower()) else "0"
-    if name == "KAI_FAQ_LEARN_MASTER_FAQ_MAX_CHARS":
-        return s.kai_faq_learn_master_faq_max_chars
     if name == "KAI_SOP_MERGE_SYNC_HOUR":
         return s.kai_sop_merge_sync_hour
     if name == "KAI_SOP_MERGE_SYNC_MINUTE":
@@ -74,8 +67,6 @@ def _export_value(name: str, s: Settings) -> Any:
         return str(s.sop_sync_state_path)
     if name == "AGENT_WORKSPACE":
         return str(s.agent_workspace)
-    if name == "AGENT_LEARNT_FAQ_PATH":
-        return str(s.agent_learnt_faq_path)
     if name == "FAQ_LEARN_QUEUE_DIR":
         return str(s.faq_learn_queue_dir)
     if name == "WORKSPACE_MANIFEST_PATH":
