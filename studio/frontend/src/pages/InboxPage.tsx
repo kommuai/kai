@@ -100,7 +100,7 @@ export default function InboxPage() {
             {(
               [
                 ["all", "All"],
-                ["active", "Bot active"],
+                ["active", "AI support agent active"],
                 ["frozen", "Handover"],
               ] as const
             ).map(([key, label]) => (
@@ -136,7 +136,7 @@ export default function InboxPage() {
           <div className="py-16 px-5 text-center text-sm text-gray-400">
             {showSearch
               ? "No matches found."
-              : "No conversations yet. When customers message the bot, they appear here."}
+              : "No conversations yet. When customers message the AI support agent, they appear here."}
           </div>
         ) : (
           <ul className="divide-y divide-gray-50">
@@ -158,7 +158,7 @@ export default function InboxPage() {
                         {row.conv.frozen ? (
                           <span className="badge-orange">Handover</span>
                         ) : (
-                          <span className="badge-green">Bot</span>
+                          <span className="badge-green">AI support agent</span>
                         )}
                       </div>
                       <p className="text-sm text-gray-600 truncate mt-0.5">

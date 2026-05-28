@@ -67,7 +67,7 @@ def get_chat_copy() -> ChatCopy:
         handover_dropoff_en=str(
             ho.get(
                 "dropoff_en",
-                "Please provide the date and time for the dropoff. Our staff will assist you soon. Type *resume* to continue with the bot.",
+                "Please provide the date and time for the dropoff. Our staff will assist you soon. Type *resume* to continue with the AI support agent.",
             )
         ),
         handover_dropoff_bm=str(
@@ -79,7 +79,7 @@ def get_chat_copy() -> ChatCopy:
         handover_live_agent_en=str(
             ho.get(
                 "live_agent_en",
-                "A live agent will assist you soon. Type *resume* to continue with the bot.",
+                "A live agent will assist you soon. Type *resume* to continue with the AI support agent.",
             )
         ),
         handover_live_agent_bm=str(
@@ -88,7 +88,7 @@ def get_chat_copy() -> ChatCopy:
                 "Ejen kami akan membantu anda. Taip *resume* untuk teruskan.",
             )
         ),
-        resume_en=str(res.get("en", "Bot resumed. How can I help?")),
+        resume_en=str(res.get("en", "AI support agent resumed. How can I help?")),
         resume_bm=str(res.get("bm", "Bot disambung semula. Ada apa saya boleh bantu?")),
         media_guard_en=str(
             media.get(

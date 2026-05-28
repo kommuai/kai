@@ -106,7 +106,7 @@ class KaiService:
             log.info("[Admin] admin_mode ON conv=%s", conversation_id)
             return self._admin_reply(
                 conversation_id,
-                "Admin mode on. Bot is frozen for this number.\n"
+                "Admin mode on. AI support agent is paused for this number.\n"
                 "Send /learning to review low-confidence questions, /test to switch to user mode.",
                 lang,
             )
@@ -120,7 +120,7 @@ class KaiService:
             log.info("[Admin] test_mode ON conv=%s", conversation_id)
             return self._admin_reply(
                 conversation_id,
-                "Test mode on. Bot will respond normally.",
+                "Test mode on. AI support agent will respond normally.",
                 lang,
             )
 

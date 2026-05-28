@@ -127,7 +127,7 @@ def list_conversations(
     if ro is None:
         raise HTTPException(
             status_code=503,
-            detail=f"No sessions database yet at {path}. Run the bot once to create sessions.",
+            detail=f"No sessions database yet at {path}. Run the AI support agent once to create sessions.",
         )
     try:
         cur = ro.execute("SELECT user_id, data FROM sessions")
@@ -421,7 +421,7 @@ def _send_studio_reply(tenant: Tenant, user_id: str, text: str) -> dict[str, Any
     if path and not path.is_file():
         raise HTTPException(
             status_code=503,
-            detail=f"No sessions database yet at {path}. Run the bot once to create sessions.",
+            detail=f"No sessions database yet at {path}. Run the AI support agent once to create sessions.",
         )
 
     env = {**os.environ, "KAI_HOME": tenant.workspace_home}
@@ -488,7 +488,7 @@ def list_contacts(
     if ro is None:
         raise HTTPException(
             status_code=503,
-            detail=f"No sessions database yet at {path}. Run the bot once to create sessions.",
+            detail=f"No sessions database yet at {path}. Run the AI support agent once to create sessions.",
         )
     user_ids: set[str] = set()
     session_meta: dict[str, dict[str, Any]] = {}

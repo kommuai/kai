@@ -53,6 +53,71 @@ class TenantCreate(BaseModel):
     display_name: str
     description: Optional[str] = ""
     slug: str
+    personality: Optional[str] = "friendly"
+    bot_name: Optional[str] = ""
+    company_name: Optional[str] = ""
+    product_summary: Optional[str] = ""
+    scope_cannot_answer: list[str] = []
+    escalation_rules: list[str] = []
+    fallback_behavior: Optional[str] = "escalate_if_unsure"
+
+    @field_validator("personality")
+    @classmethod
+    def personality_valid(cls, v: Optional[str]) -> str:
+        vv = (v or "friendly").strip().lower()
+        allowed = {
+            "friendly",
+            "professional",
+            "empathetic",
+            "direct",
+            "playful",
+            "premium",
+        }
+        if vv not in allowed:
+            raise ValueError(f"Personality must be one of: {', '.join(sorted(allowed))}")
+        return vv
+
+    @field_validator(
+        "bot_name",
+        "company_name",
+        "product_summary",
+        "fallback_behavior",
+    )
+    @classmethod
+    def trim_optional_text(cls, v: Optional[str]) -> str:
+        return (v or "").strip()
+
+    @field_validator("scope_cannot_answer", "escalation_rules")
+    @classmethod
+    def normalize_string_list(cls, v: list[str]) -> list[str]:
+        out: list[str] = []
+        for item in v or []:
+            s = str(item or "").strip()
+            if s:
+                out.append(s)
+        # stable unique preserve order
+        seen: set[str] = set()
+        uniq: list[str] = []
+        for s in out:
+            if s in seen:
+                continue
+            seen.add(s)
+            uniq.append(s)
+        return uniq
+
+    @field_validator("fallback_behavior")
+    @classmethod
+    def fallback_behavior_valid(cls, v: Optional[str]) -> str:
+        vv = (v or "escalate_if_unsure").strip().lower()
+        allowed = {
+            "ask_one_question_then_escalate",
+            "escalate_if_unsure",
+            "say_not_confirmed_and_escalate",
+            "best_effort_hallucination_risk",
+        }
+        if vv not in allowed:
+            raise ValueError(f"Fallback behavior must be one of: {', '.join(sorted(allowed))}")
+        return vv
 
     @field_validator("slug")
     @classmethod
@@ -66,6 +131,7 @@ class TenantCreate(BaseModel):
 
 class TenantOut(BaseModel):
     id: str
+    owner_id: str
     slug: str
     display_name: str
     description: str
@@ -75,6 +141,22 @@ class TenantOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class SkillCapabilityOut(BaseModel):
+    id: str
+    description: str
+    enabled: bool = True
+    source: str  # "profile" | "document"
+    path: str | None = None
+    builtin: str | None = None
+    canonical_builtin: str | None = None
+    plugin: str | None = None
+
+
+class TenantCapabilitiesOut(BaseModel):
+    active_profile: str
+    skills: list[SkillCapabilityOut]
 
 
 # ── Invites ───────────────────────────────────────────────────────────────────
@@ -99,6 +181,14 @@ class InviteOut(BaseModel):
 
 class InviteAccept(BaseModel):
     token: str
+
+
+class InvitePreviewOut(BaseModel):
+    email: EmailStr
+    tenant_name: str
+    tenant_slug: str
+    status: str
+    expired: bool = False
 
 
 # ── Tenant files ──────────────────────────────────────────────────────────────

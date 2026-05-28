@@ -1,7 +1,12 @@
 import axios from "axios";
 import type { AxiosError } from "axios";
 
-export const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
+/** In dev, use same-origin + Vite proxy. In production, set VITE_API_URL. */
+export const API_BASE = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL
+  : import.meta.env.DEV
+    ? ""
+    : "http://localhost:8080";
 
 const api = axios.create({ baseURL: API_BASE });
 
@@ -15,9 +20,18 @@ api.interceptors.response.use(
   (r) => r,
   (err: AxiosError) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem("kai_token");
-      localStorage.removeItem("kai_user");
-      window.location.href = "/login";
+      const path = window.location.pathname;
+      const isAuthRoute =
+        path === "/login" ||
+        path.startsWith("/auth/") ||
+        path.startsWith("/invite/") ||
+        path === "/terms" ||
+        path === "/privacy";
+      if (!isAuthRoute) {
+        localStorage.removeItem("kai_token");
+        localStorage.removeItem("kai_user");
+        window.location.href = "/login";
+      }
     }
     return Promise.reject(err);
   },
@@ -44,12 +58,29 @@ export interface TokenResponse {
 
 export interface Tenant {
   id: string;
+  owner_id: string;
   slug: string;
   display_name: string;
   description: string;
   workspace_home: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface SkillCapabilityOut {
+  id: string;
+  description: string;
+  enabled: boolean;
+  source: "profile" | "document";
+  path: string | null;
+  builtin: string | null;
+  canonical_builtin: string | null;
+  plugin: string | null;
+}
+
+export interface TenantCapabilitiesOut {
+  active_profile: string;
+  skills: SkillCapabilityOut[];
 }
 
 export interface FileContentOut {
@@ -72,6 +103,14 @@ export interface InviteOut {
   created_at: string;
   expires_at: string | null;
   invite_url?: string | null;
+}
+
+export interface InvitePreviewOut {
+  email: string;
+  tenant_name: string;
+  tenant_slug: string;
+  status: string;
+  expired: boolean;
 }
 
 // ── Inbox / Contacts ─────────────────────────────────────────────────────────
@@ -194,11 +233,30 @@ export const authApi = {
 export const tenantsApi = {
   list: () => api.get<Tenant[]>("/tenants").then((r) => r.data),
 
-  create: (data: { display_name: string; slug: string; description?: string }) =>
+  create: (data: {
+    display_name: string;
+    slug: string;
+    description?: string;
+    personality?: string;
+    bot_name?: string;
+    company_name?: string;
+    product_summary?: string;
+    scope_cannot_answer?: string[];
+    escalation_rules?: string[];
+    fallback_behavior?: string;
+  }) =>
     api.post<Tenant>("/tenants", data).then((r) => r.data),
 
   get: (id: string) => api.get<Tenant>(`/tenants/${id}`).then((r) => r.data),
   getBySlug: (slug: string) => api.get<Tenant>(`/tenants/by-slug/${slug}`).then((r) => r.data),
+
+  delete: (id: string, opts?: { deleteWorkspace?: boolean }) =>
+    api
+      .delete(`/tenants/${id}`, { params: { delete_workspace: opts?.deleteWorkspace ?? false } })
+      .then((r) => r.data),
+
+  capabilities: (id: string) =>
+    api.get<TenantCapabilitiesOut>(`/tenants/${id}/capabilities`).then((r) => r.data),
 
   getFile: (id: string, fileKey: string) =>
     api.get<FileContentOut>(`/tenants/${id}/files/${fileKey}`).then((r) => r.data),
@@ -217,6 +275,12 @@ export const tenantsApi = {
 
   revokeInvite: (tenantId: string, inviteId: string) =>
     api.delete<void>(`/tenants/${tenantId}/invites/${inviteId}`).then((r) => r.data),
+
+  invitePreview: (token: string) =>
+    api.get<InvitePreviewOut>(`/tenants/invites/${encodeURIComponent(token)}`).then((r) => r.data),
+
+  acceptInvite: (token: string) =>
+    api.post<Tenant>("/tenants/invites/accept", { token }).then((r) => r.data),
 };
 
 function encSeg(s: string) {

@@ -23,6 +23,9 @@ import clsx from "clsx";
 import { formatDistanceToNow } from "date-fns";
 import { tenantsApi, type CompileResult, type InviteOut, type Tenant } from "../lib/api";
 import Spinner from "../components/Spinner";
+import DeleteTenantPanel from "../components/DeleteTenantPanel";
+import TenantCapabilitiesPanel from "../components/TenantCapabilitiesPanel";
+import { useAuthStore } from "../lib/auth";
 
 type FileKey = "workspace" | "system_prompt" | "faq";
 
@@ -40,14 +43,14 @@ const TABS: Tab[] = [
     label: "Workspace",
     icon: <FileCode2 size={16} />,
     language: "yaml",
-    description: "Core configuration: tenant ID, channels, tools, and admin settings.",
+    description: "Core configuration: tenant ID, channels, skills, and admin settings.",
   },
   {
     key: "system_prompt",
     label: "System Prompt",
     icon: <FileText size={16} />,
     language: "markdown",
-    description: "Instructions that shape your bot's personality, rules, and response format.",
+    description: "Instructions that shape your AI support agent's personality, rules, and response format.",
   },
   {
     key: "faq",
@@ -133,6 +136,8 @@ export default function TenantEditorPage() {
   });
 
   const tenant = outletCtx?.tenant ?? tenantFetched;
+  const currentUserId = useAuthStore((s) => s.user?.id);
+  const isOwner = tenant && currentUserId && tenant.owner_id === currentUserId;
 
   // Load all files in parallel
   const tenantId = tenant?.id;
@@ -250,6 +255,8 @@ export default function TenantEditorPage() {
           </kbd>
         </button>
       </div>
+
+      {tenantId && <TenantCapabilitiesPanel tenantId={tenantId} />}
 
       {/* ── Editor card ── */}
       <div className="card overflow-hidden flex flex-col" style={{ height: "calc(100dvh - 180px)", minHeight: 480 }}>
@@ -373,6 +380,8 @@ export default function TenantEditorPage() {
           </div>
         )}
       </div>
+
+      {isOwner && tenant && <DeleteTenantPanel tenant={tenant} />}
     </div>
   );
 }

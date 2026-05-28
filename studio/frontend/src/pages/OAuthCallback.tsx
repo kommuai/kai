@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { authApi } from "../lib/api";
+import { formatApiError } from "../lib/apiErrors";
 import { useAuthStore } from "../lib/auth";
+import { finishAuthAndNavigate } from "../lib/invite";
 import Spinner from "../components/Spinner";
 
 export default function OAuthCallback() {
@@ -11,26 +13,35 @@ export default function OAuthCallback() {
   const setAuth = useAuthStore((s) => s.setAuth);
 
   useEffect(() => {
-    const token = params.get("token");
-    if (!token) {
-      toast.error("OAuth failed — no token received");
-      navigate("/login");
+    const oauthError = params.get("error") || params.get("error_description");
+    if (oauthError) {
+      toast.error(oauthError);
+      navigate("/login", { replace: true });
       return;
     }
-    // Store token then fetch user info
+
+    const token = params.get("token");
+    if (!token) {
+      toast.error("Sign-in was cancelled or failed. Please try again.");
+      navigate("/login", { replace: true });
+      return;
+    }
+
     localStorage.setItem("kai_token", token);
     authApi
       .me()
       .then((user) => {
         setAuth(token, user);
         toast.success(`Welcome, ${user.name || user.email}!`);
-        navigate("/dashboard");
+        return finishAuthAndNavigate(navigate);
       })
-      .catch(() => {
-        toast.error("Failed to verify token");
-        navigate("/login");
+      .catch((err) => {
+        const msg = formatApiError(err, "Could not verify your sign-in. Please try again.");
+        toast.error(msg);
+        localStorage.removeItem("kai_token");
+        navigate("/login", { replace: true });
       });
-  }, []);
+  }, [params, navigate, setAuth]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-muted">

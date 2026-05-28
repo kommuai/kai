@@ -2,6 +2,13 @@
 from __future__ import annotations
 
 import os
+import sys
+from pathlib import Path
+
+# Monorepo root so `import kai` works for compile/capabilities helpers.
+_repo = Path(__file__).resolve().parents[2]
+if (_repo / "kai").is_dir() and str(_repo) not in sys.path:
+    sys.path.insert(0, str(_repo))
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,9 +27,20 @@ FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 app = FastAPI(title="Kai Admin API", version="1.0.0", docs_url="/api/docs", redoc_url=None)
 
+_cors_origins = {
+    FRONTEND_URL,
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:4173",
+}
+_extra = os.getenv("CORS_EXTRA_ORIGINS", "")
+if _extra:
+    _cors_origins.update(o.strip() for o in _extra.split(",") if o.strip())
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[FRONTEND_URL, "http://localhost:5173", "http://localhost:4173"],
+    allow_origins=sorted(_cors_origins),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

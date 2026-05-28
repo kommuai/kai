@@ -115,7 +115,7 @@ def _tenant_from_dict(data: dict[str, Any]) -> tuple[str, str, str, str]:
     tenant = data.get("tenant") if isinstance(data.get("tenant"), dict) else {}
     return (
         str(tenant.get("id") or data.get("tenant_id") or "default"),
-        str(tenant.get("display_name") or data.get("agent_name") or "Support Bot"),
+        str(tenant.get("display_name") or data.get("agent_name") or "AI Support Agent"),
         str(tenant.get("default_lang") or "en"),
         str(tenant.get("timezone") or "Asia/Kuala_Lumpur"),
     )

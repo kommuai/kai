@@ -8,12 +8,14 @@ from typing import Any
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from auth import create_access_token, hash_password, verify_password
 from database import get_db
 from models import User
 from schemas import LoginRequest, SignupRequest, TokenResponse, UserOut
+from invite_service import redeem_pending_invites_for_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -50,13 +52,19 @@ def _make_token_response(user: User) -> dict:
 
 # ── Email / Password ──────────────────────────────────────────────────────────
 
+def _email_lookup(db: Session, email: str):
+    normalized = email.strip().lower()
+    return db.query(User).filter(func.lower(User.email) == normalized).first()
+
+
 @router.post("/signup", response_model=TokenResponse)
 def signup(body: SignupRequest, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == body.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
+    email = body.email.strip().lower()
+    if _email_lookup(db, email):
+        raise HTTPException(status_code=400, detail="An account with this email already exists. Try signing in.")
     user = User(
         id=str(uuid.uuid4()),
-        email=body.email,
+        email=email,
         name=body.name,
         password_hash=hash_password(body.password),
         provider="email",
@@ -65,14 +73,43 @@ def signup(body: SignupRequest, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
+    redeem_pending_invites_for_user(db, user)
     return _make_token_response(user)
 
 
 @router.post("/login", response_model=TokenResponse)
 def login(body: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == body.email).first()
-    if not user or not user.password_hash or not verify_password(body.password, user.password_hash):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+    email = body.email.strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required.")
+    if not body.password:
+        raise HTTPException(status_code=400, detail="Password is required.")
+
+    user = _email_lookup(db, email)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password.")
+
+    if not user.password_hash:
+        provider = (user.provider or "social").capitalize()
+        if user.provider == "google":
+            raise HTTPException(
+                status_code=401,
+                detail="This account uses Google sign-in. Use “Continue with Google” below.",
+            )
+        if user.provider == "facebook":
+            raise HTTPException(
+                status_code=401,
+                detail="This account uses Facebook sign-in. Use “Continue with Facebook” below.",
+            )
+        raise HTTPException(
+            status_code=401,
+            detail=f"This account uses {provider} sign-in, not a password.",
+        )
+
+    if not verify_password(body.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password.")
+
+    redeem_pending_invites_for_user(db, user)
     return _make_token_response(user)
 
 
@@ -123,7 +160,8 @@ def google_callback(code: str, db: Session = Depends(get_db)):
     if not email:
         raise HTTPException(status_code=400, detail="Google did not return an email")
 
-    user = db.query(User).filter(User.email == email).first()
+    email = email.strip().lower()
+    user = _email_lookup(db, email)
     if not user:
         user = User(
             id=str(uuid.uuid4()),
@@ -138,6 +176,7 @@ def google_callback(code: str, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(user)
 
+    redeem_pending_invites_for_user(db, user)
     jwt_token = create_access_token(user.id, user.email)
     return RedirectResponse(f"{FRONTEND_URL}/auth/callback?token={jwt_token}")
 
@@ -186,7 +225,8 @@ def facebook_callback(code: str, db: Session = Depends(get_db)):
     if not email:
         raise HTTPException(status_code=400, detail="Facebook did not return an email. Enable email permission.")
 
-    user = db.query(User).filter(User.email == email).first()
+    email = email.strip().lower()
+    user = _email_lookup(db, email)
     if not user:
         user = User(
             id=str(uuid.uuid4()),
@@ -201,6 +241,7 @@ def facebook_callback(code: str, db: Session = Depends(get_db)):
         db.commit()
         db.refresh(user)
 
+    redeem_pending_invites_for_user(db, user)
     jwt_token = create_access_token(user.id, user.email)
     return RedirectResponse(f"{FRONTEND_URL}/auth/callback?token={jwt_token}")
 

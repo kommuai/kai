@@ -8,9 +8,10 @@ echo "    Backend  →  http://localhost:8080"
 echo "    Frontend →  http://localhost:5173"
 echo ""
 
-# Backend
+# Backend (PYTHONPATH = monorepo root for kai package)
 (
   cd "$ROOT/backend"
+  export PYTHONPATH="${ROOT}/..${PYTHONPATH:+:$PYTHONPATH}"
   uvicorn main:app --host 0.0.0.0 --port 8080 --reload &
   echo "Backend PID: $!"
 )

@@ -2,7 +2,10 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "react-hot-toast";
 import AuthPage from "./pages/AuthPage";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage";
 import OAuthCallback from "./pages/OAuthCallback";
+import InvitePage from "./pages/InvitePage";
 import DashboardPage from "./pages/DashboardPage";
 import NewTenantPage from "./pages/NewTenantPage";
 import TenantEditorPage from "./pages/TenantEditorPage";
@@ -26,7 +29,10 @@ export default function App() {
         <Routes>
           {/* Public */}
           <Route path="/login" element={<AuthPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/auth/callback" element={<OAuthCallback />} />
+          <Route path="/invite/:token" element={<InvitePage />} />
 
           {/* Protected */}
           <Route element={<ProtectedRoute />}>

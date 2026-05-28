@@ -79,7 +79,7 @@ def generate_learning_proposal(
         master_body = master_body[:80000] + "\n\n[... truncated ...]\n"
 
     system = (
-        "You improve master_faq.md for a support bot based on a corrected Q&A pair provided by an admin. "
+        "You improve master_faq.md for an AI support agent based on a corrected Q&A pair provided by an admin. "
         "Respond with TWO parts in order:\n"
         "1) A JSON object in a ```json fenced block with keys:\n"
         "   - intent_id (string): existing or new intent slug\n"

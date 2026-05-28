@@ -7,7 +7,7 @@ All tenant edits happen under **`KAI_HOME`** (default `~/.kai/`).
 | What | Path under `KAI_HOME` |
 |------|------------------------|
 | Tenant config (channels, copy, tools) | `workspace.yaml` |
-| Bot instructions | `system_prompt.md` |
+| AI support agent instructions | `system_prompt.md` |
 | FAQ | `knowledge/master_faq.md` |
 | Tool plugins | `tools/plugins/<id>/main.py` |
 | Optional skills docs | `skills/` |
@@ -28,8 +28,8 @@ Admins (numbers listed in `workspace.yaml` under `admin.whitelist_numbers`) have
 
 | Command | Effect |
 |---------|--------|
-| `/admin` | Enters admin mode: bot is frozen for that number, bot will not respond to normal messages. |
-| `/test` | Enters test/user mode: bot is unfrozen and responds normally (for testing the bot as a user). |
+| `/admin` | Enters admin mode: AI support agent is paused for that number; it will not respond to normal messages. |
+| `/test` | Enters test/user mode: AI support agent is unpaused and responds normally (for testing the AI support agent as a user). |
 | `/learning` | (Requires admin mode) Presents low-confidence user questions one at a time for review. |
 | `/learning skip` | Skips the current question. |
 | `/learning stop` | Ends the learning session. |

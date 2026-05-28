@@ -120,7 +120,7 @@ export default function ConversationPage() {
   const resumeBotMut = useMutation({
     mutationFn: () => inboxApi.chatwootResumeBot(tenantId!, userId),
     onSuccess: () => {
-      toast.success("Bot resumed");
+      toast.success("AI support agent resumed");
       invalidateTags();
     },
     onError: (err: any) => toast.error(err?.response?.data?.detail || "Resume failed"),
@@ -219,9 +219,9 @@ export default function ConversationPage() {
   const isUser = (role: string) => role === "user" || role === "human";
 
   function bubbleStyle(role: string) {
-    if (isUser(role)) return "bg-brand-600 text-white rounded-br-md";
-    if (role === "agent") return "bg-emerald-600 text-white rounded-bl-md";
-    return "bg-white border border-gray-100 text-gray-800 rounded-bl-md";
+    if (isUser(role)) return "bg-brand-600 text-white rounded-bl-md";
+    if (role === "agent") return "bg-emerald-600 text-white rounded-br-md";
+    return "bg-white border border-gray-100 text-gray-800 rounded-br-md";
   }
 
   const tagCount = detail.tags.length;
@@ -279,7 +279,7 @@ export default function ConversationPage() {
       </div>
     ) : !cwMeta.conversation_id ? (
       <p className="text-xs text-gray-600">
-        No linked Chatwoot conversation yet. It is set automatically when messages arrive via the Agent Bot webhook.
+        No linked Chatwoot conversation yet. It is set automatically when messages arrive via the Agent AI support agent webhook.
       </p>
     ) : (
       <>
@@ -344,7 +344,7 @@ export default function ConversationPage() {
               disabled={resumeBotMut.isPending}
               onClick={() => resumeBotMut.mutate()}
             >
-              Resume bot
+              Resume AI support agent
             </button>
           </div>
         </div>
@@ -479,7 +479,7 @@ export default function ConversationPage() {
       {detail.frozen && (
         <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-amber-900 bg-amber-50 border-b border-amber-100 shrink-0">
           <Snowflake size={13} />
-          <span>Human handover — bot paused</span>
+          <span>Human handover — AI support agent paused</span>
         </div>
       )}
 
@@ -491,7 +491,7 @@ export default function ConversationPage() {
               <p className="text-sm text-gray-400 text-center py-12">No messages in session history.</p>
             ) : (
               detail.messages.map((m, idx) => (
-                <div key={idx} className={clsx("flex", isUser(m.role) ? "justify-end" : "justify-start")}>
+                <div key={idx} className={clsx("flex", isUser(m.role) ? "justify-start" : "justify-end")}>
                   <div
                     className={clsx(
                       "max-w-[min(100%,20rem)] sm:max-w-[min(100%,24rem)] rounded-2xl px-3 py-2 text-[13px] leading-snug shadow-sm",
@@ -499,7 +499,7 @@ export default function ConversationPage() {
                     )}
                   >
                     <div className="text-[9px] uppercase tracking-wide opacity-60 mb-0.5">
-                      {m.role === "assistant" ? "bot" : m.role}
+                      {m.role === "assistant" ? "ai support agent" : m.role}
                     </div>
                     <div className="whitespace-pre-wrap break-words">{m.text}</div>
                   </div>
