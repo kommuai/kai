@@ -138,7 +138,6 @@ class ReActAgentLoop:
             if role in ("user", "assistant") and content:
                 messages.append({"role": role, "content": content})
 
-        lang_hint = " (User writes in Malay)" if lang == "BM" else ""
         current = (text or "").strip()
         last = history[-1] if history else {}
         last_role = last.get("role", "")
@@ -149,7 +148,7 @@ class ReActAgentLoop:
             and (last.get("text") or "").strip() == current
         )
         if current and not already_last_user:
-            messages.append({"role": "user", "content": f"{current}{lang_hint}"})
+            messages.append({"role": "user", "content": current})
 
         source_ids: list[str] = []
         tool_trace: list[dict[str, Any]] = []

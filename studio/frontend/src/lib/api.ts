@@ -258,6 +258,9 @@ export const tenantsApi = {
   capabilities: (id: string) =>
     api.get<TenantCapabilitiesOut>(`/tenants/${id}/capabilities`).then((r) => r.data),
 
+  toggleSkill: (tenantId: string, skillId: string, data: { enabled: boolean; source: "profile" | "document"; path?: string | null }) =>
+    api.patch<TenantCapabilitiesOut>(`/tenants/${tenantId}/capabilities/skills/${encodeURIComponent(skillId)}`, data).then((r) => r.data),
+
   getFile: (id: string, fileKey: string) =>
     api.get<FileContentOut>(`/tenants/${id}/files/${fileKey}`).then((r) => r.data),
 
@@ -281,6 +284,47 @@ export const tenantsApi = {
 
   acceptInvite: (token: string) =>
     api.post<Tenant>("/tenants/invites/accept", { token }).then((r) => r.data),
+};
+
+export interface AiAssistPatch {
+  file: "workspace" | "system_prompt" | "faq";
+  path: string;
+  diff: string;
+}
+
+export interface AiAssistApplyResult {
+  ok: boolean;
+  applied: Array<{ file: string; path: string; diff: string; new_content: string }>;
+  summary: string;
+}
+
+export const aiAssistApi = {
+  /** Returns the raw fetch response (caller manages SSE stream). */
+  chat: (
+    tenantId: string,
+    messages: Array<{ role: "user" | "assistant"; content: string }>,
+  ): Promise<Response> =>
+    fetch(`/tenants/${tenantId}/ai-assist/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("kai_token") ?? ""}`,
+      },
+      body: JSON.stringify({ messages }),
+    }),
+
+  applyPatches: (
+    tenantId: string,
+    messages: Array<{ role: "user" | "assistant"; content: string }>,
+  ): Promise<AiAssistApplyResult> =>
+    fetch(`/tenants/${tenantId}/ai-assist/chat`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("kai_token") ?? ""}`,
+      },
+      body: JSON.stringify({ messages, apply_patches: true }),
+    }).then((r) => r.json()),
 };
 
 function encSeg(s: string) {

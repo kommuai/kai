@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Sparkles, Puzzle } from "lucide-react";
 import clsx from "clsx";
 import { tenantsApi } from "../lib/api";
@@ -13,12 +13,14 @@ function CapabilityCard({
   subtitle,
   description,
   badge,
+  topRight,
   disabled,
 }: {
   title: string;
   subtitle?: string;
   description: string;
   badge?: string;
+  topRight?: React.ReactNode;
   disabled?: boolean;
 }) {
   return (
@@ -28,12 +30,13 @@ function CapabilityCard({
         disabled && "opacity-60",
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="font-semibold text-gray-900 text-sm font-mono truncate">{title}</h3>
           {subtitle && <p className="text-[10px] text-gray-400 truncate mt-0.5">{subtitle}</p>}
+          {badge && <span className="badge-purple inline-flex mt-2 text-[10px]">{badge}</span>}
         </div>
-        {badge && <span className="badge-purple shrink-0 text-[10px]">{badge}</span>}
+        {topRight && <div className="shrink-0 pt-0.5">{topRight}</div>}
       </div>
       <p className="text-xs text-gray-600 leading-relaxed flex-1">{description}</p>
     </div>
@@ -66,10 +69,19 @@ function skillSubtitle(skill: {
 }
 
 export default function TenantCapabilitiesPanel({ tenantId }: TenantCapabilitiesPanelProps) {
+  const qc = useQueryClient();
   const { data, isLoading, error } = useQuery({
     queryKey: ["tenant-capabilities", tenantId],
     queryFn: () => tenantsApi.capabilities(tenantId),
     enabled: !!tenantId,
+  });
+
+  const toggleMut = useMutation({
+    mutationFn: (args: { id: string; enabled: boolean; source: "profile" | "document"; path?: string | null }) =>
+      tenantsApi.toggleSkill(tenantId, args.id, { enabled: args.enabled, source: args.source, path: args.path ?? null }),
+    onSuccess: (next) => {
+      qc.setQueryData(["tenant-capabilities", tenantId], next);
+    },
   });
 
   if (isLoading) {
@@ -116,14 +128,36 @@ export default function TenantCapabilitiesPanel({ tenantId }: TenantCapabilities
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
           {data.skills.map((skill) => (
-            <CapabilityCard
-              key={`${skill.source}:${skill.id}`}
-              title={skill.id}
-              subtitle={skillSubtitle(skill)}
-              description={skill.description}
-              badge={skillBadge(skill)}
-              disabled={!skill.enabled}
-            />
+            <div key={`${skill.source}:${skill.id}`}>
+              <CapabilityCard
+                title={skill.id}
+                subtitle={skillSubtitle(skill)}
+                description={skill.description}
+                badge={skillBadge(skill)}
+                disabled={!skill.enabled}
+                topRight={
+                  <label className="inline-flex items-center gap-2 text-[11px] text-gray-500 select-none">
+                    <span className={clsx(!skill.enabled && "text-gray-400")}>
+                      {skill.enabled ? "Enabled" : "Disabled"}
+                    </span>
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300"
+                      checked={skill.enabled}
+                      disabled={toggleMut.isPending}
+                      onChange={(e) =>
+                        toggleMut.mutate({
+                          id: skill.id,
+                          enabled: e.target.checked,
+                          source: skill.source,
+                          path: skill.path,
+                        })
+                      }
+                    />
+                  </label>
+                }
+              />
+            </div>
           ))}
         </div>
       )}

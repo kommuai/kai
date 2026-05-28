@@ -74,7 +74,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **v2-only HTTP surface:** removed `api/v1`; `POST /agent/message`, `POST /admin/*`, and `POST /v2/agent/message` are registered from [`kai/api/v2/agent_message.py`](kai/api/v2/agent_message.py).
 - **Chat pipeline:** `pre_router` → `SupportRuntimeService.execute` only (FAQ-first + ReAct loop); `KAI_ROUTE_MODE` is a trace label.
 - **LLM default:** `deepseek-v4-flash` via `KAI_LLM_MODEL` / `DEEPSEEK_MODEL`.
-- **Language:** message routes use `is_malay()` for BM/EN consistently.
+- **Language:** message routes auto-adapt to the user.
 - **Docs:** `README.md`, `AGENTS.md`, `docs/architecture/*` aligned with current runtime.
 - `tests/test_pre_router.py` — exercises `pre_router` and support runtime continuation.
 - `kai/services/kai_service.py` — slim module: session gates, footers, outbound prep, admin reset.

@@ -332,15 +332,6 @@ def _extract_purchase_state(text: str) -> str:
     return ""
 
 
-def _extract_lang_pref(text: str) -> str:
-    t = text.lower()
-    if "reply in bm" in t or "bahasa melayu" in t:
-        return "BM"
-    if "reply in english" in t or "english please" in t:
-        return "EN"
-    return ""
-
-
 def _extract_issue_state(text: str) -> str:
     t = text.lower()
     if any(k in t for k in ("error", "issue", "not working", "cannot", "can't", "problem")):
@@ -365,10 +356,6 @@ def extract_and_store_facts(user_id: str, text: str, source: str = "user"):
     name = _extract_name(text)
     if name:
         upsert_memory_fact(user_id, "identity", "name", name, source, MEMORY_TTL_PREFERENCES_DAYS)
-
-    lang_pref = _extract_lang_pref(text)
-    if lang_pref:
-        upsert_memory_fact(user_id, "preference", "language", lang_pref, source, MEMORY_TTL_PREFERENCES_DAYS)
 
     car = _extract_car(text)
     if car:

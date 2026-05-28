@@ -158,6 +158,11 @@ class TenantCapabilitiesOut(BaseModel):
     active_profile: str
     skills: list[SkillCapabilityOut]
 
+class SkillToggleIn(BaseModel):
+    enabled: bool
+    source: str  # "profile" | "document"
+    path: str | None = None
+
 
 # ── Invites ───────────────────────────────────────────────────────────────────
 

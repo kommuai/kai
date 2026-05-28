@@ -30,9 +30,11 @@ from schemas import (
     TenantCapabilitiesOut,
     TenantCreate,
     TenantOut,
+    SkillToggleIn,
 )
 from kai_paths import kai_repo_root, kai_tenants_root
 from kai_capabilities import get_capabilities
+from skill_toggle import set_document_skill_enabled, set_profile_skill_enabled
 from invite_service import _invite_expired, redeem_invite_token
 
 router = APIRouter(prefix="/tenants", tags=["tenants"])
@@ -214,6 +216,26 @@ def tenant_capabilities(tenant_id: str, user: User = Depends(get_current_user), 
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Could not load capabilities: {exc}") from exc
+    return TenantCapabilitiesOut.model_validate(data)
+
+
+@router.patch("/{tenant_id}/capabilities/skills/{skill_id}", response_model=TenantCapabilitiesOut)
+def toggle_skill(
+    tenant_id: str,
+    skill_id: str,
+    body: SkillToggleIn,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    t = _assert_tenant_member(tenant_id, user, db)
+    home = Path(t.workspace_home).resolve()
+    if body.source == "profile":
+        set_profile_skill_enabled(home, skill_id, body.enabled)
+    elif body.source == "document":
+        set_document_skill_enabled(home, body.path or "", body.enabled)
+    else:
+        raise HTTPException(status_code=400, detail="source must be profile or document")
+    data = get_capabilities(home)
     return TenantCapabilitiesOut.model_validate(data)
 
 
@@ -475,7 +497,6 @@ def _default_system_prompt(
     blocks: dict[str, str] = {
         "friendly": """## Your personality
 - Warm, helpful, and concise.
-- Reply in the language the user used.
 - Ask ONE clear clarifying question if information is missing.""",
         "professional": """## Your personality
 - Professional, structured, and calm.

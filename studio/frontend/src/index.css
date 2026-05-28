@@ -82,3 +82,14 @@
     @apply h-px bg-gray-100 my-4;
   }
 }
+
+@layer utilities {
+  /* Hide scrollbars for horizontal tab strips, etc. */
+  .scrollbar-hide {
+    -ms-overflow-style: none; /* IE/Edge legacy */
+    scrollbar-width: none; /* Firefox */
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+}

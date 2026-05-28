@@ -18,6 +18,8 @@ import {
   Copy,
   Plus,
   Trash2,
+  Sparkles,
+  Code2,
 } from "lucide-react";
 import clsx from "clsx";
 import { formatDistanceToNow } from "date-fns";
@@ -25,6 +27,7 @@ import { tenantsApi, type CompileResult, type InviteOut, type Tenant } from "../
 import Spinner from "../components/Spinner";
 import DeleteTenantPanel from "../components/DeleteTenantPanel";
 import TenantCapabilitiesPanel from "../components/TenantCapabilitiesPanel";
+import AiAssistPanel from "../components/AiAssistPanel";
 import { useAuthStore } from "../lib/auth";
 
 type FileKey = "workspace" | "system_prompt" | "faq";
@@ -117,6 +120,7 @@ export default function TenantEditorPage() {
   const outletCtx = useOutletContext<{ tenant?: Tenant } | undefined>();
   const qc = useQueryClient();
 
+  const [editorMode, setEditorMode] = useState<"edit" | "ai">("edit");
   const [activeTab, setActiveTab] = useState<FileKey>("workspace");
   const [content, setContent] = useState<Record<FileKey, string>>({
     workspace: "",
@@ -239,86 +243,133 @@ export default function TenantEditorPage() {
             Updated {formatDistanceToNow(new Date(tenant.updated_at), { addSuffix: true })}
           </p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={!dirty[activeTab] || saveMutation.isPending}
-          className={clsx("btn-primary btn-sm", !dirty[activeTab] && "opacity-50")}
-        >
-          {saveMutation.isPending ? (
-            <Spinner size="sm" className="text-white" />
-          ) : (
-            <Save size={14} />
-          )}
-          Save
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-brand-400/40 px-1.5 py-0.5 text-[10px] font-mono text-brand-200 ml-1">
-            ⌘S
-          </kbd>
-        </button>
+        {editorMode === "edit" && (
+          <button
+            onClick={handleSave}
+            disabled={!dirty[activeTab] || saveMutation.isPending}
+            className={clsx("btn-primary btn-sm", !dirty[activeTab] && "opacity-50")}
+          >
+            {saveMutation.isPending ? (
+              <Spinner size="sm" className="text-white" />
+            ) : (
+              <Save size={14} />
+            )}
+            Save
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-brand-400/40 px-1.5 py-0.5 text-[10px] font-mono text-brand-200 ml-1">
+              ⌘S
+            </kbd>
+          </button>
+        )}
       </div>
 
       {tenantId && <TenantCapabilitiesPanel tenantId={tenantId} />}
 
       {/* ── Editor card ── */}
       <div className="card overflow-hidden flex flex-col" style={{ height: "calc(100dvh - 180px)", minHeight: 480 }}>
-        {/* Tab bar */}
-        <div className="flex border-b border-gray-100 bg-gray-50/60 px-2 pt-2 gap-1 overflow-x-auto scrollbar-hide">
-          {TABS.map((tab) => (
+
+        {/* ── Mode toggle bar ── */}
+        <div className="flex items-center justify-between px-3 pt-2 pb-0 border-b border-gray-100 bg-gray-50/60">
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+            {editorMode === "edit" && TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={clsx(
+                  "flex items-center gap-2 px-3 py-2 rounded-t-lg text-sm font-medium whitespace-nowrap transition-all duration-150 border border-b-0",
+                  activeTab === tab.key
+                    ? "bg-white text-gray-900 border-gray-200 -mb-px z-10"
+                    : "text-gray-500 border-transparent hover:text-gray-700 hover:bg-white/60",
+                )}
+              >
+                {tab.icon}
+                {tab.label}
+                {dirty[tab.key] && (
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                )}
+              </button>
+            ))}
+            {editorMode === "ai" && (
+              <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-purple-700">
+                <Sparkles size={15} />
+                AI Config Assistant
+              </div>
+            )}
+          </div>
+
+          {/* Mode switcher pill */}
+          <div className="flex-shrink-0 ml-3 mb-1 flex items-center gap-0.5 bg-gray-100 rounded-xl p-0.5">
             <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => setEditorMode("edit")}
               className={clsx(
-                "flex items-center gap-2 px-3 py-2 rounded-t-lg text-sm font-medium whitespace-nowrap transition-all duration-150 border border-b-0",
-                activeTab === tab.key
-                  ? "bg-white text-gray-900 border-gray-200 -mb-px z-10"
-                  : "text-gray-500 border-transparent hover:text-gray-700 hover:bg-white/60",
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all",
+                editorMode === "edit"
+                  ? "bg-white text-gray-800 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700",
               )}
             >
-              {tab.icon}
-              {tab.label}
-              {dirty[tab.key] && (
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-              )}
+              <Code2 size={12} />
+              Edit
             </button>
-          ))}
+            <button
+              onClick={() => setEditorMode("ai")}
+              className={clsx(
+                "flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all",
+                editorMode === "ai"
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "text-gray-500 hover:text-gray-700",
+              )}
+            >
+              <Sparkles size={12} />
+              AI Assist
+            </button>
+          </div>
         </div>
 
-        {/* Description bar */}
-        <div className="px-4 py-2 bg-white border-b border-gray-100 text-xs text-gray-500 flex items-center gap-2">
-          {activeTabDef.icon}
-          {activeTabDef.description}
-        </div>
+        {editorMode === "edit" ? (
+          <>
+            {/* Description bar */}
+            <div className="px-4 py-2 bg-white border-b border-gray-100 text-xs text-gray-500 flex items-center gap-2">
+              {activeTabDef.icon}
+              {activeTabDef.description}
+            </div>
 
-        {/* Monaco editor */}
-        <div className="flex-1 overflow-hidden">
-          <Editor
-            language={activeTabDef.language}
-            value={content[activeTab]}
-            onChange={(v) => {
-              setContent((p) => ({ ...p, [activeTab]: v || "" }));
-              setDirty((p) => ({ ...p, [activeTab]: true }));
-            }}
-            theme="vs"
-            options={{
-              fontSize: 13,
-              lineHeight: 22,
-              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-              fontLigatures: true,
-              minimap: { enabled: false },
-              scrollBeyondLastLine: false,
-              wordWrap: "on",
-              renderLineHighlight: "gutter",
-              smoothScrolling: true,
-              padding: { top: 16, bottom: 16 },
-              overviewRulerLanes: 0,
-              folding: true,
-              lineNumbers: "on",
-              tabSize: 2,
-            }}
-          />
-        </div>
+            {/* Monaco editor */}
+            <div className="flex-1 overflow-hidden">
+              <Editor
+                language={activeTabDef.language}
+                value={content[activeTab]}
+                onChange={(v) => {
+                  setContent((p) => ({ ...p, [activeTab]: v || "" }));
+                  setDirty((p) => ({ ...p, [activeTab]: true }));
+                }}
+                theme="vs"
+                options={{
+                  fontSize: 13,
+                  lineHeight: 22,
+                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                  fontLigatures: true,
+                  minimap: { enabled: false },
+                  scrollBeyondLastLine: false,
+                  wordWrap: "on",
+                  renderLineHighlight: "gutter",
+                  smoothScrolling: true,
+                  padding: { top: 16, bottom: 16 },
+                  overviewRulerLanes: 0,
+                  folding: true,
+                  lineNumbers: "on",
+                  tabSize: 2,
+                }}
+              />
+            </div>
 
-        {/* Compile panel */}
-        {tenantId && <CompilePanel tenantId={tenantId} />}
+            {/* Compile panel */}
+            {tenantId && <CompilePanel tenantId={tenantId} />}
+          </>
+        ) : (
+          <div className="flex-1 overflow-hidden bg-gray-50/30">
+            {tenantId && <AiAssistPanel tenantId={tenantId} />}
+          </div>
+        )}
       </div>
 
       {/* ── Members / Invites ── */}

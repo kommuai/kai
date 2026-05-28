@@ -18,6 +18,7 @@ from auth import decode_token
 from database import get_db, init_db
 from deps import get_current_user
 from models import User
+from routers.ai_assist_router import router as ai_assist_router
 from routers.auth_router import router as auth_router
 from routers.inbox_router import router as inbox_router
 from routers.tenants_router import router as tenants_router
@@ -48,6 +49,7 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(tenants_router)
+app.include_router(ai_assist_router)
 app.include_router(inbox_router)
 
 
