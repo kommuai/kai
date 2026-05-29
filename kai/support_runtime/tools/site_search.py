@@ -46,6 +46,27 @@ _VEHICLE_QUERY_STOPWORDS: frozenset[str] = frozenset({
     "the", "a", "with", "have", "has", "does", "it", "for", "of", "on",
 })
 
+_CATALOG_LIST_RE = re.compile(
+    r"\b("
+    r"list\s+all|all\s+supported|which\s+cars?|what\s+cars?|"
+    r"supported\s+(cars?|vehicles?|models?)|cars?\s+supported|"
+    r"vehicle\s+list|models?\s+supported"
+    r")\b",
+    re.I,
+)
+
+
+def _tenant_display_name() -> str:
+    try:
+        from kai.workspace.manifest import load_workspace_manifest
+
+        name = (load_workspace_manifest().display_name or "").strip()
+        if name:
+            return name
+    except Exception:
+        pass
+    return "Official"
+
 
 def _normalize_vehicle_query(text: str) -> str:
     t = (text or "").lower().strip()
@@ -146,9 +167,7 @@ def match_vehicle_catalog(
 
 
 def is_catalog_list_query(text: str) -> bool:
-    from kai.support_runtime.vehicle_intent import is_catalog_list_query as _is_list
-
-    return _is_list(text)
+    return bool(_CATALOG_LIST_RE.search(text or ""))
 
 
 def format_catalog_list_text(vehicles: list[dict[str, Any]]) -> str:
@@ -163,12 +182,13 @@ def format_catalog_list_text(vehicles: list[dict[str, Any]]) -> str:
         else:
             names.append(name)
     names = sorted(set(names))
+    brand = _tenant_display_name()
     if not names:
-        return "Official Kommu supported-vehicle catalog is empty."
+        return f"{brand} supported-vehicle catalog is empty."
     preview = ", ".join(names[:35])
     suffix = f" …and {len(names) - 35} more" if len(names) > 35 else ""
     return (
-        f"Official Kommu supported vehicles ({len(names)} models): {preview}{suffix}. "
+        f"{brand} supported vehicles ({len(names)} models): {preview}{suffix}. "
         "Ask about a specific brand/model/year for a yes/no check."
     )
 
@@ -229,15 +249,16 @@ def catalog_miss_detail(
 
 
 def format_catalog_miss_text(detail: dict[str, Any]) -> str:
+    brand = _tenant_display_name()
     q = str(detail.get("query") or "This vehicle").strip()
     same = detail.get("listed_same_brand") or []
     if same:
         return (
-            f"{q} is **not** on the official Kommu supported-vehicle list. "
+            f"{q} is **not** on the official {brand} supported-vehicle list. "
             f"Listed models for that brand: {', '.join(same)}."
         )
     count = int(detail.get("catalog_vehicle_count") or 0)
     return (
-        f"{q} is **not** on the official Kommu supported-vehicle list "
+        f"{q} is **not** on the official {brand} supported-vehicle list "
         f"({count} supported vehicles in catalog)."
     )

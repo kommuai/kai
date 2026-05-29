@@ -19,9 +19,10 @@ from kai.workspace.runtime_settings import get_runtime_settings
 from kai.support_runtime.guardrails import safety_gate
 from kai.tools_plugins.contract import tool_failure_observation_message
 from kai.support_runtime.models import RuntimeResult
-from kai.support_runtime.vehicle_intent import VEHICLE_SUPPORT_TOOL, should_prefetch_vehicle_support
 
 log = logging.getLogger("kai.agent_loop")
+
+_LARGE_RESULT_TOOLS = frozenset({"read_github_file"})
 
 def _max_agent_steps() -> int:
     return get_runtime_settings().agent_max_steps
@@ -108,51 +109,6 @@ class ReActAgentLoop:
     def __init__(self, deps: AgentLoopDependencies) -> None:
         self.deps = deps
 
-    def _prefetch_vehicle_support(
-        self,
-        text: str,
-        *,
-        messages: list[dict[str, str]],
-        observations: list[dict[str, Any]],
-        tool_trace: list[dict[str, Any]],
-        source_ids: list[str],
-    ) -> None:
-        """Run search_kommu_support once before the LLM loop when intent is vehicle-related."""
-        if not should_prefetch_vehicle_support(text):
-            return
-        if not self.deps.tools.has_tool(VEHICLE_SUPPORT_TOOL):
-            return
-        if any(obs.get("tool") == VEHICLE_SUPPORT_TOOL for obs in observations):
-            return
-
-        args = {"query": (text or "").strip()}
-        result = self.deps.tools.call(VEHICLE_SUPPORT_TOOL, args)
-        tool_ok = bool(result.get("ok"))
-        observations.append({"tool": VEHICLE_SUPPORT_TOOL, "args": args, "result": result})
-        tool_trace.append({"step": 0, "tool": VEHICLE_SUPPORT_TOOL, "ok": tool_ok, "prefetch": True})
-        if tool_ok:
-            source_ids.append(f"tool:{VEHICLE_SUPPORT_TOOL}")
-
-        parsed = {
-            "action": "tool",
-            "tool": VEHICLE_SUPPORT_TOOL,
-            "args": args,
-            "reason": "vehicle_support_intent_prefetch",
-        }
-        result_summary = json.dumps(result, ensure_ascii=False, default=str)
-        if len(result_summary) > 2000:
-            result_summary = result_summary[:2000] + "..."
-        messages.append({"role": "assistant", "content": json.dumps(parsed, ensure_ascii=False)})
-        if tool_ok:
-            follow_up = (
-                f"Tool result for {VEHICLE_SUPPORT_TOOL} (prefetched — user asked about vehicle support):\n"
-                f"{result_summary}\n\n"
-                "Use this result in your reply. You may call more tools if needed, then give your final answer."
-            )
-        else:
-            follow_up = tool_failure_observation_message(VEHICLE_SUPPORT_TOOL, result) + f"\n\nRaw result:\n{result_summary}"
-        messages.append({"role": "user", "content": follow_up})
-
     def run(
         self,
         *,
@@ -209,13 +165,6 @@ class ReActAgentLoop:
         clarify_meta = ""
 
         ch = get_channel_config()
-        self._prefetch_vehicle_support(
-            text,
-            messages=messages,
-            observations=observations,
-            tool_trace=tool_trace,
-            source_ids=source_ids,
-        )
         for step in range(_max_agent_steps()):
             try:
                 raw = self.deps.provider.chat_messages(
@@ -264,7 +213,7 @@ class ReActAgentLoop:
                     source_ids.append(f"tool:{tool_name}")
 
                 result_summary = json.dumps(result, ensure_ascii=False, default=str)
-                max_tool_chars = 80_000 if tool_name in {"read_github_file", "read_bukapilot_file"} else 2000
+                max_tool_chars = 80_000 if tool_name in _LARGE_RESULT_TOOLS else 2000
                 if len(result_summary) > max_tool_chars:
                     result_summary = result_summary[:max_tool_chars] + "..."
 

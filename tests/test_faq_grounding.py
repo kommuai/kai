@@ -58,6 +58,25 @@ class FaqGroundingTests(unittest.TestCase):
         )
         self.assertNotIn(FOOTNOTE_MARKER, out)
 
+    def test_grounded_tool_from_workspace_yaml(self) -> None:
+        from kai.workspace.runtime_settings import reload_grounded_tools, reload_workspace_settings_yaml
+
+        reload_workspace_settings_yaml()
+        reload_grounded_tools()
+        obs = [
+            {
+                "tool": "search_kommu_support",
+                "result": {"ok": True, "on_official_list": False},
+            }
+        ]
+        self.assertTrue(
+            is_answer_faq_grounded(
+                answer="Your car is not on the official list.",
+                user_text="Proton X60",
+                observations=obs,
+            )
+        )
+
     def test_chitchat_greeting_skips_footnote(self):
         out = apply_grounding_footnote_if_needed(
             "Hi! How can I help you with KommuAssist today?",

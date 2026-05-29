@@ -66,7 +66,8 @@ class AgentToolRegistry:
 
         catalog = builtin_catalog()
         for entry in load_tools_config().enabled_entries():
-            self._tool_params[entry.id] = dict(entry.params or {})
+            params = dict(entry.params or {})
+            self._tool_params[entry.id] = params
 
             if entry.plugin:
                 plugin_id = entry.plugin
@@ -93,6 +94,10 @@ class AgentToolRegistry:
                 continue
 
             canonical = resolve_builtin_id(entry.builtin)
+            if canonical and canonical != entry.id:
+                merged = dict(self._tool_params.get(canonical) or {})
+                merged.update(params)
+                self._tool_params[canonical] = merged
             spec = catalog.get(canonical)
             if not spec:
                 continue

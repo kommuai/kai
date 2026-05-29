@@ -25,6 +25,15 @@ Plugins under `tools/plugins/<id>/main.py` must:
 
 Validated by `kai/tools_plugins/contract.py` on workspace validate and Studio AI Assist apply.
 
+## Tenant-owned tool behavior
+
+- **Tool ids** and legacy aliases live in tenant `workspace.yaml` → `tools_profile.tool_aliases`.
+- **Plugins** stay under `KAI_HOME/tools/plugins/`; profile lists tenant-facing ids (e.g. `search_kommu_support`).
+- **Grounded tools** (skip unverified footnote when tool succeeds): `agent.grounded_tools` in `workspace.yaml`.
+- **Canonical builtins** are defined only in `kai/support_runtime/tools/catalog.py` (platform repo).
+
+The repo-root `agent_workspace/` tree is removed; production uses `KAI_HOME` (e.g. `kai-tenant-kommu` or `~/.kai`).
+
 ## Unified entry
 
 All channels should call `kai/support_runtime/gateway.run_support_turn()` so handover, grounding, and runtime behavior match WhatsApp and HTTP.

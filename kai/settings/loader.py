@@ -134,11 +134,11 @@ class Settings:
 
     # Paths
     base_dir: Path = field(default_factory=lambda: BASE_DIR)
-    kai_home: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace")
-    agent_workspace: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace")
-    master_faq_path: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "knowledge" / "master_faq.md")
-    faq_learn_queue_dir: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "knowledge" / "learn_queue")
-    workspace_manifest_path: Path = field(default_factory=lambda: BASE_DIR / "agent_workspace" / "workspace.yaml")
+    kai_home: Path = field(default_factory=lambda: Path.home() / ".kai")
+    agent_workspace: Path = field(default_factory=lambda: Path.home() / ".kai")
+    master_faq_path: Path = field(default_factory=lambda: Path.home() / ".kai" / "knowledge" / "master_faq.md")
+    faq_learn_queue_dir: Path = field(default_factory=lambda: Path.home() / ".kai" / "knowledge" / "learn_queue")
+    workspace_manifest_path: Path = field(default_factory=lambda: Path.home() / ".kai" / "workspace.yaml")
     sop_sync_state_path: Path = field(default_factory=lambda: BASE_DIR / "data" / "sop" / "sop_sync_state.json")
     session_db_path: str = "data/sessions.db"
     env_file: Path = field(default_factory=lambda: BASE_DIR / ".env")

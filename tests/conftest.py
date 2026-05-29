@@ -11,10 +11,15 @@ def _apply_kai_home(path: Path) -> None:
     os.environ["KAI_HOME"] = str(path)
     os.environ.pop("AGENT_WORKSPACE", None)
     from kai.settings import reload_settings
+    from kai.support_runtime.tools.catalog import reload_tool_aliases
     from kai.workspace.manifest import reload_workspace_manifest
+    from kai.workspace.runtime_settings import reload_grounded_tools, reload_workspace_settings_yaml
 
     reload_settings()
     reload_workspace_manifest()
+    reload_workspace_settings_yaml()
+    reload_tool_aliases()
+    reload_grounded_tools()
 
 
 def pytest_configure(config):

@@ -12,7 +12,6 @@ services:
       - .env
     volumes:
       - ~/.kai:/kai-home
-      - ./agent_workspace:/app/agent_workspace:ro
       - ./media:/app/media
       - ./logs:/app/logs
       - ./secrets:/app/secrets:ro
@@ -22,10 +21,6 @@ services:
       - TZ_REGION=Asia/Kuala_Lumpur
       - KAI_HOME=/kai-home
       - KAI_ENV_FILE=/kai-home/.env
-      - MASTER_FAQ_PATH=/app/agent_workspace/02_knowledge/faq/master_faq.md
-      - FAQ_LEARN_QUEUE_DIR=/app/agent_workspace/02_knowledge/faq/learn_queue
       - SESSION_DB_PATH=/kai-home/data/sessions.db
       - DB_PATH=/kai-home/data/sessions.db
       - GOOGLE_SHEETS_CREDENTIALS_JSON=/app/secrets/google_service_account.json
-      - AGENT_WORKSPACE=/app/agent_workspace
-      - WORKSPACE_MANIFEST_PATH=/app/agent_workspace/00_manifest.md

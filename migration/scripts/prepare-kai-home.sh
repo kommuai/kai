@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
-# Port Kommu legacy agent_workspace + data into KAI_HOME layout (for full refactor tenant mode).
+# Prepare KAI_HOME from a tenant pack (sibling kai-tenant-* repo or explicit path).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 KAI_HOME="${1:-$HOME/.kai}"
-SRC_WS="$ROOT/agent_workspace"
+TENANT_SRC="${2:-$(dirname "$ROOT")/kai-tenant-kommu}"
+if [ ! -d "$TENANT_SRC" ]; then
+  echo "Tenant source not found: $TENANT_SRC" >&2
+  echo "Usage: $0 [KAI_HOME] [tenant_pack_dir]" >&2
+  exit 1
+fi
 mkdir -p "$KAI_HOME"/{knowledge/learn_queue,compiled,data/sop,tools/plugins,skills}
-cp -f "$SRC_WS/02_knowledge/faq/master_faq.md" "$KAI_HOME/knowledge/master_faq.md"
-[ -f "$SRC_WS/02_knowledge/faq/agent_learnt_faq.md" ] && \
-  cp -f "$SRC_WS/02_knowledge/faq/agent_learnt_faq.md" "$KAI_HOME/knowledge/learnt_faq.md" || true
-[ -d "$SRC_WS/02_knowledge/faq/learn_queue" ] && \
-  cp -R "$SRC_WS/02_knowledge/faq/learn_queue/." "$KAI_HOME/knowledge/learn_queue/" || true
+rsync -a --exclude='.git' "$TENANT_SRC/" "$KAI_HOME/"
 [ -d "$ROOT/data" ] && cp -R "$ROOT/data/." "$KAI_HOME/data/" || true
 [ -f "$ROOT/.env" ] && cp -f "$ROOT/.env" "$KAI_HOME/.env" || true
-if [ ! -f "$KAI_HOME/workspace.yaml" ]; then
-  cp -f "$(dirname "$ROOT")/kai-main-refactor/templates/workspace/generic/workspace.yaml" "$KAI_HOME/workspace.yaml" 2>/dev/null || true
-fi
-echo "Prepared KAI_HOME at $KAI_HOME"
+echo "Prepared KAI_HOME at $KAI_HOME from $TENANT_SRC"

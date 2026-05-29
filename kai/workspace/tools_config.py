@@ -138,9 +138,7 @@ def enabled_canonical_builtins() -> set[str]:
 
 
 def needs_warranty_cache() -> bool:
-    return "lookup_sheet_record" in enabled_canonical_builtins() or "lookup_warranty" in {
-        e.id for e in load_tools_config().enabled_entries()
-    }
+    return "lookup_sheet_record" in enabled_canonical_builtins()
 
 
 def needs_sheet_backlog() -> bool:

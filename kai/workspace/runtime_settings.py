@@ -62,6 +62,7 @@ def load_workspace_settings_yaml() -> dict[str, Any]:
 def reload_workspace_settings_yaml() -> dict[str, Any]:
     load_workspace_settings_yaml.cache_clear()
     get_runtime_settings.cache_clear()
+    load_grounded_tools.cache_clear()
     load_workspace_data.cache_clear()
     return load_workspace_settings_yaml()
 
@@ -69,3 +70,20 @@ def reload_workspace_settings_yaml() -> dict[str, Any]:
 @lru_cache(maxsize=1)
 def get_runtime_settings() -> RuntimeSettings:
     return RuntimeSettings.from_sources(get_settings(), load_workspace_settings_yaml())
+
+
+@lru_cache(maxsize=1)
+def load_grounded_tools() -> frozenset[str]:
+    """Tenant tool ids that count as grounded evidence (no unverified footnote)."""
+    data = load_workspace_settings_yaml()
+    agent = data.get("agent") if isinstance(data.get("agent"), dict) else {}
+    raw = agent.get("grounded_tools")
+    if not isinstance(raw, list):
+        return frozenset({"search_faq"})
+    ids = {str(x).strip() for x in raw if str(x).strip()}
+    return frozenset(ids) if ids else frozenset({"search_faq"})
+
+
+def reload_grounded_tools() -> frozenset[str]:
+    load_grounded_tools.cache_clear()
+    return load_grounded_tools()

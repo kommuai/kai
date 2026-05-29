@@ -15,9 +15,9 @@ docker compose -f docker-compose.kommu.yml up -d --build
 Uses:
 
 - Port **6090** → `kommu_chatbot`
-- `./data` → `/kai-home/data` (sessions.db preserved)
-- `./agent_workspace` → FAQ via `MASTER_FAQ_PATH`
-- `./secrets`, `.env` unchanged
+- `~/.kai` (or mounted tenant pack) as `KAI_HOME` — FAQ, `workspace.yaml`, plugins
+- `./secrets`, repo `.env` unchanged
+- Prepare tenant home: `bash migration/scripts/prepare-kai-home.sh ~/.kai /path/to/kai-tenant-kommu`
 
 ## Staging (side-by-side)
 
@@ -35,7 +35,7 @@ git reset --hard 5bdc5892068e52e8083c333769231cecab85b033  # or: git checkout mi
 docker compose up -d --build   # legacy docker-compose.yml
 ```
 
-Do **not** delete `./data` or `./agent_workspace`.
+Do **not** delete `./data` or your `KAI_HOME` tenant pack (`~/.kai`).
 
 ## Rollback triggers
 

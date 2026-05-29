@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from kai.support_runtime.tech_backlog import infer_possible_solution_from_bukapilot, summarize_issue
+from kai.support_runtime.tech_backlog import infer_possible_solution_from_github, summarize_issue
 
 
 class TechBacklogEnrichmentTests(unittest.TestCase):
@@ -40,7 +40,7 @@ class TechBacklogEnrichmentTests(unittest.TestCase):
         },
     )
     def test_possible_solution_includes_file_link(self, _search):
-        out = infer_possible_solution_from_bukapilot("KA2 error 1003 reboot loop")
+        out = infer_possible_solution_from_github("KA2 error 1003 reboot loop")
         self.assertIn("release_ka2", out)
         self.assertIn("selfdrive/diagnostics/recovery.py", out)
         self.assertIn("https://github.com/bukapilot/bukapilot/blob/release_ka2", out)

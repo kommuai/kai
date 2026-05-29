@@ -1,18 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Any
 
-# Legacy workspace/tool ids → canonical handler ids
-BUILTIN_ALIASES: dict[str, str] = {
-    "search_kommu_support": "search_official_site",
-    "search_bukapilot": "search_github_repo",
-    "read_bukapilot_file": "read_github_file",
-    "lookup_warranty": "lookup_sheet_record",
-    "lookup_backlog": "lookup_sheet_backlog",
-    "log_backlog": "log_sheet_backlog",
-    "create_visitor_pass": "plugin_visitor_pass",
-}
+from kai.workspace.manifest import load_workspace_data
 
 CORE_TOOL_IDS: tuple[str, ...] = (
     "search_faq",
@@ -36,8 +28,28 @@ class BuiltinToolSpec:
     schema: dict[str, Any]
 
 
+@lru_cache(maxsize=1)
+def load_tool_aliases() -> dict[str, str]:
+    """Tenant-defined legacy tool id → canonical builtin handler id."""
+    data = load_workspace_data()
+    tp = data.get("tools_profile") if isinstance(data.get("tools_profile"), dict) else {}
+    raw = tp.get("tool_aliases")
+    if not isinstance(raw, dict):
+        return {}
+    return {str(k).strip(): str(v).strip() for k, v in raw.items() if str(k).strip() and str(v).strip()}
+
+
+def reload_tool_aliases() -> dict[str, str]:
+    load_tool_aliases.cache_clear()
+    load_workspace_data.cache_clear()
+    return load_tool_aliases()
+
+
 def resolve_builtin_id(builtin: str) -> str:
-    return BUILTIN_ALIASES.get(builtin.strip(), builtin.strip())
+    bid = (builtin or "").strip()
+    if not bid:
+        return bid
+    return load_tool_aliases().get(bid, bid)
 
 
 def _schema_object(*, props: dict[str, Any], required: list[str] | None = None) -> dict[str, Any]:

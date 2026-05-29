@@ -16,7 +16,6 @@ logs
 data
 media
 archive_legacy
-agent_workspace/compiled
 secrets
 *.sqlite
 *.db

@@ -189,11 +189,6 @@ def infer_possible_solution_from_github(issue_text: str) -> str:
     )[:1500]
 
 
-# Legacy names (workspace YAML / older tests)
-bukapilot_agentic_search = github_repo_agentic_search
-infer_possible_solution_from_bukapilot = infer_possible_solution_from_github
-
-
 def append_backlog_issue(
     *,
     device: str,

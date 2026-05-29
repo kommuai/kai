@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 from kai.support_runtime.canonical_faq import pick_best_canonical, result_row_to_canonical
+from kai.workspace.runtime_settings import load_grounded_tools
 
 FOOTNOTE_MARKER = "not in our official FAQ yet"
 
@@ -18,12 +19,15 @@ UNVERIFIED_FOOTNOTE_BM = (
     "Ejen langsung akan semak apabila dalam talian — taip **LA** untuk bercakap dengan ejen sekarang._"
 )
 
-_GROUNDED_TOOL_PREFIXES = (
-    "tool:lookup_warranty",
-    "tool:search_kommu_support",
-    "tool:create_visitor_pass",
-)
 _FAQ_SOURCE_PREFIXES = ("faq:", "intent:")
+
+
+def _grounded_tool_ids() -> frozenset[str]:
+    return load_grounded_tools()
+
+
+def _grounded_tool_prefixes() -> tuple[str, ...]:
+    return tuple(f"tool:{tid}" for tid in sorted(_grounded_tool_ids()))
 
 _GENERIC_GREETING_RE = re.compile(
     r"^(hi|hello|hai|hey)[!.]?\s*(how can i help|how can i assist|what can i help)",
@@ -49,7 +53,7 @@ def _source_ids_grounded(source_ids: list[str]) -> bool:
         s = (sid or "").strip().lower()
         if any(s.startswith(p) for p in _FAQ_SOURCE_PREFIXES):
             return True
-        if any(s.startswith(p) for p in _GROUNDED_TOOL_PREFIXES):
+        if any(s.startswith(p) for p in _grounded_tool_prefixes()):
             return True
     return False
 
@@ -64,7 +68,7 @@ def _observations_grounded(observations: list[dict[str, Any]]) -> bool:
             best = pick_best_canonical(result, min_score=0.42)
             if best:
                 return True
-        if tool in ("lookup_warranty", "search_kommu_support", "create_visitor_pass"):
+        if tool in _grounded_tool_ids():
             return True
     return False
 

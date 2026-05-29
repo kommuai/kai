@@ -29,4 +29,4 @@ git checkout main
 docker compose build kai && docker compose up -d kai
 ```
 
-Preserve `./data`, `./agent_workspace`, `./secrets`, `.env`.
+Preserve `./data`, `KAI_HOME` (`~/.kai` tenant pack), `./secrets`, `.env`.

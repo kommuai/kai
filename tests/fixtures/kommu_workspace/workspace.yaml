@@ -84,6 +84,10 @@ session:
 agent:
   max_steps: 8
   footer_history_threshold: 10
+  grounded_tools:
+  - search_kommu_support
+  - lookup_warranty
+  - create_visitor_pass
 compile:
   extra_artifacts: false
 faq_learn:
@@ -129,6 +133,14 @@ copy:
       yet. Please describe the issue in text and tell me what car you are driving
       (brand/model/year).
 tools_profile:
+  tool_aliases:
+    search_kommu_support: search_official_site
+    search_bukapilot: search_github_repo
+    read_bukapilot_file: read_github_file
+    lookup_warranty: lookup_sheet_record
+    lookup_backlog: lookup_sheet_backlog
+    log_backlog: log_sheet_backlog
+    create_visitor_pass: plugin_visitor_pass
   active_profile: kommu
   profiles:
     minimal:

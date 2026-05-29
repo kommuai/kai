@@ -10,6 +10,7 @@ import requests
 
 from kai.support_runtime.canonical_faq import extract_answer_from_chunk, pick_best_canonical
 from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
+from kai.support_runtime.tools.catalog import resolve_builtin_id
 from kai.support_runtime.tools.site_search import match_vehicle_catalog, support_site_corpus
 
 
@@ -21,8 +22,16 @@ class ToolHandlers:
         self.retriever = retriever
         self.reranker = reranker
 
-    def _params(self, tool_id: str) -> dict[str, Any]:
-        return dict(getattr(self._registry, "_tool_params", {}).get(tool_id) or {})
+    def _params(self, canonical_id: str) -> dict[str, Any]:
+        """Params for a canonical builtin; falls back to any enabled tool id that aliases to it."""
+        store = getattr(self._registry, "_tool_params", {})
+        direct = dict(store.get(canonical_id) or {})
+        if direct:
+            return direct
+        for tid, params in store.items():
+            if resolve_builtin_id(tid) == canonical_id:
+                return dict(params or {})
+        return {}
 
     def _http_timeout(self) -> int:
         try:
@@ -82,7 +91,7 @@ class ToolHandlers:
             return {"ok": False, "error": f"bing_exception:{exc}", "results": []}
 
     def search_official_site(self, query: str) -> dict[str, Any]:
-        p = self._params("search_official_site") or self._params("search_kommu_support")
+        p = self._params("search_official_site")
         official_url = str(p.get("official_url") or "").strip()
         vehicles_url = str(p.get("vehicles_json_url") or p.get("vehicles_url") or "").strip()
 
@@ -145,13 +154,13 @@ class ToolHandlers:
     def search_github_repo(self, query: str, branch: str = "") -> dict[str, Any]:
         from kai.support_runtime.tech_backlog import github_repo_agentic_search
 
-        p = self._params("search_github_repo") or self._params("search_bukapilot")
+        p = self._params("search_github_repo")
         repo = str(p.get("repo") or os.getenv("KAI_GITHUB_REPO", "")).strip().strip("/")
         br = (branch or str(p.get("branch") or os.getenv("KAI_GITHUB_BRANCH", ""))).strip()
         return github_repo_agentic_search(query, branch=br or None, max_hits=5, repo=repo or None)
 
     def read_github_file(self, path: str, branch: str = "") -> dict[str, Any]:
-        p = self._params("read_github_file") or self._params("read_bukapilot_file")
+        p = self._params("read_github_file")
         repo = str(p.get("repo") or os.getenv("KAI_GITHUB_REPO", "")).strip().strip("/")
         br = (branch or str(p.get("branch") or os.getenv("KAI_GITHUB_BRANCH", "main"))).strip() or "main"
         rel = (path or "").strip().lstrip("/")
