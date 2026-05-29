@@ -16,10 +16,12 @@ class ToolProfileTests(unittest.TestCase):
         )
         self.assertEqual(ids, ["search_faq", "escalate_to_human"])
 
-    def test_kommu_workspace_has_explicit_tools(self):
+    def test_minimal_workspace_loads_enabled_tools(self):
         reload_tools_config()
         cfg = load_tools_config()
-        self.assertGreaterEqual(len(cfg.enabled_entries()), 10)
+        ids = {e.id for e in cfg.enabled_entries()}
+        self.assertIn("search_faq", ids)
+        self.assertGreaterEqual(len(ids), 3)
 
 
 if __name__ == "__main__":

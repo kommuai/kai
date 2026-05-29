@@ -66,6 +66,16 @@ class DeepSeekProvider:
             temperature=temperature,
             max_tokens=max_tokens,
         )
+        try:
+            from kai.lib.llm_usage_record import record_openai_usage
+
+            record_openai_usage(
+                model=self.cfg.model,
+                usage=getattr(resp, "usage", None),
+                source="engine_chat",
+            )
+        except Exception:
+            pass
         return (resp.choices[0].message.content or "").strip()
 
     def embed(self, texts: list[str]) -> list[list[float]]:
@@ -119,6 +129,16 @@ class OpenAICompatibleProvider:
             temperature=temperature,
             max_tokens=max_tokens,
         )
+        try:
+            from kai.lib.llm_usage_record import record_openai_usage
+
+            record_openai_usage(
+                model=self.cfg.model,
+                usage=getattr(resp, "usage", None),
+                source="engine_chat",
+            )
+        except Exception:
+            pass
         return (resp.choices[0].message.content or "").strip()
 
     def embed(self, texts: list[str]) -> list[list[float]]:

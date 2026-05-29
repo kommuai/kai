@@ -175,10 +175,19 @@ export default function TenantEditorPage() {
   const saveMutation = useMutation({
     mutationFn: ({ key, text }: { key: FileKey; text: string }) =>
       tenantsApi.putFile(tenantId!, key, text),
-    onSuccess: (_, { key }) => {
+    onSuccess: (saved, { key }) => {
       setDirty((p) => ({ ...p, [key]: false }));
       qc.invalidateQueries({ queryKey: ["file", tenantId, key] });
-      toast.success("Saved!");
+      if (saved.compile) {
+        if (saved.compile.ok) {
+          const n = saved.compile.intents != null ? ` (${saved.compile.intents} intents)` : "";
+          toast.success(`Saved and compiled FAQ${n}`);
+        } else {
+          toast.error("Saved, but FAQ compile failed");
+        }
+      } else {
+        toast.success("Saved!");
+      }
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.detail || "Save failed");

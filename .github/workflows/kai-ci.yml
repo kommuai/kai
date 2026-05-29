@@ -9,7 +9,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      KAI_HOME: tests/fixtures/kommu_workspace
+      KAI_HOME: tests/fixtures/minimal_workspace
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

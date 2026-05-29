@@ -163,7 +163,7 @@ def make_deepseek_client() -> tuple[str, str, str]:
     s = get_settings()
     api_key = (s.deepseek_api_key or os.getenv("DEEPSEEK_API_KEY") or "").strip()
     base_url = (s.deepseek_base_url or "https://api.deepseek.com/v1").rstrip("/")
-    model = (s.deepseek_model or "deepseek-chat").strip()
+    model = (s.deepseek_model or "deepseek-v4-flash").strip()
     return api_key, base_url, model
 
 
@@ -359,7 +359,15 @@ def preview_patches(home: Path, patches: list[dict[str, Any]]) -> list[dict[str,
     return previews
 
 
-def chat_completion(system: str, user: str, *, max_tokens: int = 4000, temperature: float = 0.25) -> str:
+def chat_completion(
+    system: str,
+    user: str,
+    *,
+    max_tokens: int = 4000,
+    temperature: float = 0.25,
+    tenant_slug: str | None = None,
+    source: str = "studio_onboarding",
+) -> str:
     api_key, base_url, model = make_deepseek_client()
     if not api_key:
         raise HTTPException(status_code=503, detail="AI unavailable: DEEPSEEK_API_KEY not configured.")
@@ -380,4 +388,29 @@ def chat_completion(system: str, user: str, *, max_tokens: int = 4000, temperatu
     if not resp.ok:
         raise HTTPException(status_code=502, detail=f"LLM error {resp.status_code}")
     data = resp.json()
+    _record_usage_from_response(data, model=model, tenant_slug=tenant_slug, source=source)
     return (data.get("choices", [{}])[0].get("message", {}).get("content") or "").strip()
+
+
+def _record_usage_from_response(
+    data: dict[str, Any],
+    *,
+    model: str,
+    tenant_slug: str | None,
+    source: str,
+) -> None:
+    usage = data.get("usage")
+    if not usage:
+        return
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from kai.lib.llm_usage_record import record_openai_usage
+
+        record_openai_usage(
+            model=model,
+            usage=usage,
+            source=source,
+            tenant_slug=tenant_slug,
+        )
+    except Exception:
+        log.debug("Could not record LLM usage", exc_info=True)

@@ -28,7 +28,6 @@ channels:
     start_hour: 9
     end_hour: 17
   handover:
-    dropoff_keyword: DROPOFF
     live_agent_keywords: [LA]
     resume_keywords: [resume]
   frozen:
@@ -49,8 +48,11 @@ session:
   idle_hours: 24
   max_history_messages: 100
 agent:
-  max_steps: 8
+  max_steps: 15
   footer_history_threshold: 10
+  grounded_tools:
+  - search_faq
+  - stub_action
 compile:
   extra_artifacts: false
 faq_learn:
@@ -58,7 +60,6 @@ faq_learn:
   legacy_append: false
 copy:
   keywords:
-    dropoff: DROPOFF
     live_agent: [LA]
   footer:
     en: |
@@ -80,8 +81,6 @@ copy:
 
       PS: Di luar waktu pejabat.
   handover:
-    dropoff_en: Please share dropoff details. Type *resume* to continue with the bot.
-    dropoff_bm: Sila berikan butiran. Taip *resume* untuk teruskan.
     live_agent_en: A live agent will assist you soon. Type *resume* to continue with the bot.
     live_agent_bm: Ejen akan membantu anda. Taip *resume* untuk teruskan.
   resume:
@@ -90,12 +89,44 @@ copy:
   media_guard:
     en: Please describe your issue in text; media is not supported yet.
 tools_profile:
+  tool_aliases:
+    tenant_site: search_official_site
   active_profile: minimal
   profiles:
     minimal:
     - search_faq
     - search_session_memory
+    - search_web
     - escalate_to_human
-  profile_overrides: {}
+    - stub_action
+    standard:
+    - search_faq
+    - search_official_site
+    - search_web
+    - stub_action
+  profile_overrides:
+    escalate_to_human:
+      params:
+        schema:
+          type: object
+          properties:
+            reason:
+              type: string
+          required:
+          - reason
+    search_official_site:
+      params:
+        official_url: https://example.test/support/
+        vehicles_json_url: https://example.test/vehicles.json
+    stub_action:
+      plugin: stub_plugin
+      params:
+        schema:
+          type: object
+          properties:
+            message:
+              type: string
+          required:
+          - message
   tools: []
 contexts: []

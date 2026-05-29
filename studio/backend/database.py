@@ -98,6 +98,32 @@ def init_db() -> None:
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_contact_tags_tenant_id ON contact_tags(tenant_id)"))
         conn.execute(text("CREATE INDEX IF NOT EXISTS ix_contact_tags_user_id ON contact_tags(user_id)"))
 
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS llm_usage_events (
+                  id TEXT PRIMARY KEY,
+                  tenant_slug TEXT,
+                  source TEXT NOT NULL,
+                  model TEXT NOT NULL,
+                  prompt_tokens INTEGER NOT NULL DEFAULT 0,
+                  completion_tokens INTEGER NOT NULL DEFAULT 0,
+                  cached_prompt_tokens INTEGER NOT NULL DEFAULT 0,
+                  total_tokens INTEGER NOT NULL DEFAULT 0,
+                  cost_usd REAL NOT NULL,
+                  pricing_model_key TEXT NOT NULL,
+                  created_at TEXT NOT NULL
+                )
+                """
+            )
+        )
+        conn.execute(
+            text("CREATE INDEX IF NOT EXISTS ix_llm_usage_events_created_at ON llm_usage_events(created_at)")
+        )
+        conn.execute(
+            text("CREATE INDEX IF NOT EXISTS ix_llm_usage_events_tenant_slug ON llm_usage_events(tenant_slug)")
+        )
+
 
 def get_db():
     db: Session = SessionLocal()

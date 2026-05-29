@@ -12,15 +12,12 @@ from kai.workspace.manifest import load_workspace_data, load_workspace_manifest
 
 @dataclass(frozen=True)
 class ChatCopy:
-    dropoff: str
     live_agent: tuple[str, ...]
     footer_en: str
     footer_bm: str
     footer_history_threshold: int
     after_hours_en: str
     after_hours_bm: str
-    handover_dropoff_en: str
-    handover_dropoff_bm: str
     handover_live_agent_en: str
     handover_live_agent_bm: str
     resume_en: str
@@ -53,29 +50,18 @@ def get_chat_copy() -> ChatCopy:
     ho = raw.get("handover") or {}
     res = raw.get("resume") or {}
     media = raw.get("media_guard") or {}
-    live = kw.get("live_agent") or ["LA"]
-    if isinstance(live, str):
+    live = kw.get("live_agent")
+    if live is None:
+        live = []
+    elif isinstance(live, str):
         live = [live]
     return ChatCopy(
-        dropoff=str(kw.get("dropoff", "DROPOFF")),
         live_agent=tuple(str(x) for x in live),
-        footer_en=str(footer.get("en", "\n\nFor Live Agent, type LA")),
-        footer_bm=str(footer.get("bm", "\n\nJika anda mahu bercakap dengan ejen yang sedia ada, taip LA")),
+        footer_en=str(footer.get("en") or ""),
+        footer_bm=str(footer.get("bm") or ""),
         footer_history_threshold=int(footer.get("history_threshold", 10)),
         after_hours_en=str(ah.get("en", "\n\nPS: We’re currently outside office hours. A live agent will follow up later.")),
         after_hours_bm=str(ah.get("bm", "\n\nPS: Sekarang di luar waktu pejabat.")),
-        handover_dropoff_en=str(
-            ho.get(
-                "dropoff_en",
-                "Please provide the date and time for the dropoff. Our staff will assist you soon. Type *resume* to continue with the AI support agent.",
-            )
-        ),
-        handover_dropoff_bm=str(
-            ho.get(
-                "dropoff_bm",
-                "Sila berikan tarikh dan masa untuk penghantaran. Ejen kami akan membantu anda sebentar lagi. Taip *resume* untuk teruskan.",
-            )
-        ),
         handover_live_agent_en=str(
             ho.get(
                 "live_agent_en",

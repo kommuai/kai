@@ -97,6 +97,7 @@ export interface TenantCapabilitiesOut {
 export interface FileContentOut {
   path: string;
   content: string;
+  compile?: CompileResult | null;
 }
 
 export interface CompileResult {
@@ -261,6 +262,50 @@ export interface OAuthProviders {
   google: boolean;
   facebook: boolean;
 }
+
+export interface DeepSeekDailyUsage {
+  date: string;
+  total_tokens: number;
+  cost_usd: number;
+  request_count: number;
+}
+
+export interface DeepSeekUsageSummary {
+  period: string;
+  since: string;
+  totals: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    cached_prompt_tokens: number;
+    total_tokens: number;
+    cost_usd: number;
+    request_count: number;
+  };
+  tenants: Array<{
+    tenant_id: string;
+    slug: string;
+    display_name: string;
+    prompt_tokens: number;
+    completion_tokens: number;
+    cached_prompt_tokens: number;
+    total_tokens: number;
+    cost_usd: number;
+    request_count: number;
+  }>;
+  by_source: Array<{
+    source: string;
+    prompt_tokens: number;
+    completion_tokens: number;
+    cost_usd: number;
+    request_count: number;
+  }>;
+  daily: DeepSeekDailyUsage[];
+}
+
+export const usageApi = {
+  deepseek: (period: "day" | "month" = "day") =>
+    api.get<DeepSeekUsageSummary>("/usage/deepseek", { params: { period } }).then((r) => r.data),
+};
 
 export const authApi = {
   signup: (data: { email: string; password: string; name: string }) =>

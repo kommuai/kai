@@ -22,7 +22,8 @@ class PreRouterTests(unittest.TestCase):
         self.assertIsNone(early)
         support_runtime_service.startup()
         out = support_runtime_service.execute(text=data["content"], lang="EN", user_id=uid)
-        self.assertIn(out.decision, {"direct_answer", "clarifying_question", "escalate_human"})
+        self.assertEqual(out.capability_used, "react_agent_loop")
+        self.assertTrue(out.answer.strip())
 
 
 if __name__ == "__main__":

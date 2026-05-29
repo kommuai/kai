@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from ai_assist_core import (
     SYSTEM_PROMPT,
+    _record_usage_from_response,
     apply_patches,
     build_context,
     extract_patch,
@@ -23,6 +24,7 @@ from database import get_db
 from deps import get_current_user
 from models import User
 from routers.tenants_router import _assert_tenant_member
+from tenant_compile import patch_list_touches_faq, run_tenant_compile
 
 log = logging.getLogger("kai.ai_assist")
 
@@ -51,7 +53,14 @@ def ai_assist_chat(
             patch_block = extract_patch(last_assistant)
             if patch_block and patch_block.get("patches"):
                 applied = apply_patches(home, patch_block["patches"])
-                return {"ok": True, "applied": applied, "summary": patch_block.get("summary", "")}
+                payload: dict[str, Any] = {
+                    "ok": True,
+                    "applied": applied,
+                    "summary": patch_block.get("summary", ""),
+                }
+                if patch_list_touches_faq(applied):
+                    payload["compile"] = run_tenant_compile(home).model_dump()
+                return payload
         return {"ok": False, "error": "No patch found in last assistant message"}
 
     api_key, base_url, model = make_deepseek_client()
@@ -63,6 +72,7 @@ def ai_assist_chat(
 
     sys_msg = SYSTEM_PROMPT + f"\n\n---\n\n{build_context(home)}"
     full_messages = [{"role": "system", "content": sys_msg}, *messages]
+    tenant_slug = t.slug
 
     def _stream() -> Generator[str, None, None]:
         try:
@@ -75,6 +85,7 @@ def ai_assist_chat(
                     "temperature": 0.3,
                     "max_tokens": 3000,
                     "stream": True,
+                    "stream_options": {"include_usage": True},
                 },
                 stream=True,
                 timeout=90,
@@ -94,6 +105,13 @@ def ai_assist_chat(
                         break
                     try:
                         chunk = json.loads(payload)
+                        if chunk.get("usage"):
+                            _record_usage_from_response(
+                                chunk,
+                                model=model,
+                                tenant_slug=tenant_slug,
+                                source="studio_ai_assist",
+                            )
                         delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
                         if delta:
                             full_text += delta

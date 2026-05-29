@@ -12,7 +12,7 @@ from kai.engine.metrics import inc as metrics_inc
 from kai.engine.refresh import refresh_runtime_knowledge
 from kai.settings import get_settings
 
-from kai.lib.lang_detect import is_malay
+from kai.lib.lang import resolve_lang
 from kai.services.container import kai_service, support_runtime_service
 from kai.support_runtime.gateway import run_support_turn
 
@@ -68,7 +68,7 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
     msg_type = (data.get("type") or data.get("message_type") or "").strip().lower()
     if msg_type and ch.is_blocked_media_type(msg_type):
         start = time.time()
-        lang_media = "BM" if is_malay(data.get("content", "") or "") else "EN"
+        lang_media = resolve_lang(user_id=str(data.get("phone_number") or "unknown"))
         payload = {
             "type": "reply",
             "message": ch.media_guard_en if lang_media == "EN" else ch.media_guard_bm,
@@ -84,7 +84,7 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
         )
     if data.get("media_url") and ch.blocked_media_types:
         start = time.time()
-        lang_media = "BM" if is_malay(data.get("content", "") or "") else "EN"
+        lang_media = resolve_lang(user_id=str(data.get("phone_number") or "unknown"))
         payload = {
             "type": "reply",
             "message": ch.media_guard_en if lang_media == "EN" else ch.media_guard_bm,
@@ -104,7 +104,7 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
     start = time.time()
     mode = get_route_mode()
     trace_id = str(uuid4())
-    lang = "BM" if is_malay(text) else "EN"
+    lang = resolve_lang(user_id=user_id, explicit=data.get("lang"))
 
     if not text:
         return _merge_trace({"ok": True}, trace_id=trace_id, mode=mode, capability_used="empty", start=start)

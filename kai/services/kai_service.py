@@ -5,9 +5,9 @@ from __future__ import annotations
 import logging
 import re
 
-from kai.content.channels import get_channel_config
-from kai.content.copy import get_chat_copy
-from kai.lib.lang_detect import is_malay
+from kai.content.channels import get_channel_config, reload_channel_config
+from kai.content.copy import get_chat_copy, reload_chat_copy
+from kai.lib.lang import resolve_lang
 from kai.lib.media_handler import init_media_log
 from kai.lib.session_state import (
     add_message_to_history,
@@ -39,15 +39,19 @@ class KaiService:
     def __init__(self) -> None:
         init_db()
         init_media_log()
-        self._copy = get_chat_copy()
-        self._channels = get_channel_config()
         self._settings = get_settings()
 
     def is_office_hours(self, now=None):
-        return self._channels.is_office_hours(now)
+        return self._channels().is_office_hours(now)
+
+    def _copy(self):
+        return get_chat_copy()
+
+    def _channels(self):
+        return get_channel_config()
 
     def after_hours_suffix(self, lang="EN"):
-        return self._copy.after_hours_suffix(lang)
+        return self._copy().after_hours_suffix(lang)
 
     def add_footer(self, conversation_id, answer: str, lang: str, *, suppress: bool = False) -> str:
         footer = ""
@@ -55,7 +59,7 @@ class KaiService:
 
         threshold = get_runtime_settings().footer_history_threshold
         if not suppress and len(get_history(conversation_id)) >= threshold:
-            footer = self._copy.footer(lang)
+            footer = self._copy().footer(lang)
         body = strip_bold_markdown_wrapping_around_urls((answer or "").rstrip())
         return body + footer
 
@@ -296,12 +300,13 @@ class KaiService:
         ensure_active_session(conversation_id)
 
         sess = get_session(conversation_id)
-        lang = "BM" if is_malay(text) else "EN"
-        set_lang(conversation_id, lang)
+        lang = resolve_lang(user_id=conversation_id)
         aft = not self.is_office_hours()
         ingest_user_turn(conversation_id, text, record_history=False)
-        cp = self._copy
-        ch = self._channels
+        reload_chat_copy()
+        reload_channel_config()
+        cp = self._copy()
+        ch = self._channels()
 
         # Admin commands are intercepted first (before any handover / frozen logic).
         admin_resp = self._handle_admin_commands(conversation_id, text, lower, sess, lang)
@@ -312,18 +317,6 @@ class KaiService:
         admin_answer_resp = self._handle_admin_answer(conversation_id, text, sess, lang)
         if admin_answer_resp is not None:
             return admin_answer_resp
-
-        if text == ch.dropoff_keyword and not sess.get("frozen") and not sess.get("handover"):
-            add_message_to_history(conversation_id, "user", text)
-            freeze(conversation_id, True)
-            msg_out = cp.handover_dropoff_en if lang == "EN" else cp.handover_dropoff_bm
-            if aft:
-                msg_out += self.after_hours_suffix(lang)
-            return {
-                "type": "handover",
-                "message": self.finalize_reply(conversation_id, msg_out, lang, suppress=True),
-                "next_state": "human",
-            }
 
         if ch.is_live_agent_keyword(text) and not sess.get("frozen") and not sess.get("handover"):
             add_message_to_history(conversation_id, "user", text)

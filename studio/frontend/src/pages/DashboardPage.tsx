@@ -6,12 +6,20 @@ import {
   ChevronRight,
   Clock,
   Radio,
+  Coins,
+  Zap,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import clsx from "clsx";
 import Spinner from "../components/Spinner";
+import UsageDailyChart from "../components/UsageDailyChart";
 import WhatsAppWorkerBanner from "../components/WhatsAppWorkerBanner";
-import { tenantsApi, type Tenant, type WhatsAppWorkerTenantOut } from "../lib/api";
+import {
+  tenantsApi,
+  usageApi,
+  type Tenant,
+  type WhatsAppWorkerTenantOut,
+} from "../lib/api";
 import { useAuthStore } from "../lib/auth";
 
 function TenantCard({
@@ -107,7 +115,26 @@ export default function DashboardPage() {
     queryKey: ["whatsapp-worker"],
     queryFn: () => tenantsApi.whatsappWorker(),
     refetchInterval: 20_000,
+    retry: false,
   });
+
+  const {
+    data: usage,
+    isLoading: usageLoading,
+    isError: usageError,
+    error: usageErrorDetail,
+  } = useQuery({
+    queryKey: ["deepseek-usage", "day"],
+    queryFn: () => usageApi.deepseek("day"),
+    refetchInterval: 15_000,
+    retry: 1,
+  });
+
+  const formatUsd = (n: number) =>
+    n < 0.01 && n > 0 ? "< $0.01" : `$${n.toFixed(n >= 1 ? 2 : 4)}`;
+
+  const formatTokens = (n: number) =>
+    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(2)}M` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
@@ -128,7 +155,7 @@ export default function DashboardPage() {
       <WhatsAppWorkerBanner />
 
       {/* ── Stats row ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 sm:max-w-xl gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card p-4 flex items-center gap-4">
           <div className="rounded-xl p-2.5 text-brand-600 bg-brand-50">
             <Building2 size={20} />
@@ -156,7 +183,100 @@ export default function DashboardPage() {
             <div className="text-xs text-gray-500">WhatsApp live</div>
           </div>
         </div>
+        <div className="card p-4 flex items-center gap-4">
+          <div className="rounded-xl p-2.5 text-amber-600 bg-amber-50">
+            <Zap size={20} />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-gray-900">
+              {usageLoading ? "…" : usageError ? "!" : usage ? formatTokens(usage.totals.total_tokens) : "0"}
+            </div>
+            <div className="text-xs text-gray-500">DeepSeek tokens (24h)</div>
+          </div>
+        </div>
+        <div className="card p-4 flex items-center gap-4">
+          <div className="rounded-xl p-2.5 text-indigo-600 bg-indigo-50">
+            <Coins size={20} />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-gray-900">
+              {usageLoading ? "…" : usageError ? "!" : usage ? formatUsd(usage.totals.cost_usd) : "$0"}
+            </div>
+            <div className="text-xs text-gray-500">Est. spend (24h)</div>
+          </div>
+        </div>
       </div>
+
+      {usageError && (
+        <div className="card p-4 border-amber-200 bg-amber-50 text-sm text-amber-900">
+          Could not load DeepSeek usage.{" "}
+          {(usageErrorDetail as { message?: string })?.message ||
+            "Check that Studio backend is running and the dashboard proxy includes /usage."}
+        </div>
+      )}
+
+      {usage && !usageError && (
+        <div className="card p-5 space-y-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">DeepSeek usage</h2>
+              <p className="text-xs text-gray-500 mt-1">
+                Last 24h summary · 14-day daily trend (updates live)
+              </p>
+            </div>
+            <div className="text-xs text-gray-500 text-right">
+              <div>{usage.totals.request_count} API calls (24h)</div>
+              <div>
+                In: {formatTokens(usage.totals.prompt_tokens)}
+                {usage.totals.cached_prompt_tokens > 0 && (
+                  <span className="text-emerald-600">
+                    {" "}
+                    ({formatTokens(usage.totals.cached_prompt_tokens)} cached)
+                  </span>
+                )}
+                {" · "}
+                Out: {formatTokens(usage.totals.completion_tokens)}
+              </div>
+            </div>
+          </div>
+
+          {usage.daily?.length > 0 && <UsageDailyChart daily={usage.daily} />}
+
+          {usage.tenants.some((t) => t.total_tokens > 0) ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
+                    <th className="pb-2 font-medium">Tenant</th>
+                    <th className="pb-2 font-medium text-right">Tokens</th>
+                    <th className="pb-2 font-medium text-right">Est. USD</th>
+                    <th className="pb-2 font-medium text-right">Calls</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usage.tenants
+                    .filter((t) => t.total_tokens > 0)
+                    .sort((a, b) => b.cost_usd - a.cost_usd)
+                    .map((t) => (
+                      <tr key={t.tenant_id} className="border-b border-gray-50 last:border-0">
+                        <td className="py-2 font-medium text-gray-800">{t.display_name}</td>
+                        <td className="py-2 text-right text-gray-600">{formatTokens(t.total_tokens)}</td>
+                        <td className="py-2 text-right text-gray-800">{formatUsd(t.cost_usd)}</td>
+                        <td className="py-2 text-right text-gray-500">{t.request_count}</td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500">
+              No DeepSeek calls recorded yet. Usage appears after AI Assist, onboarding, or engine
+              chat (set <code className="text-xs bg-gray-100 px-1 rounded">KAI_ADMIN_DB_DIR</code> on
+              the Kai engine to include WhatsApp/runtime traffic).
+            </p>
+          )}
+        </div>
+      )}
 
       {/* ── Tenant grid ── */}
       <div>

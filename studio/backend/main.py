@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from auth import decode_token
-from database import get_db, init_db
+from database import DB_DIR, get_db, init_db
 from deps import get_current_user
 from models import User
 from routers.ai_assist_router import router as ai_assist_router
@@ -23,6 +23,7 @@ from routers.auth_router import router as auth_router
 from routers.inbox_router import router as inbox_router
 from routers.onboarding_router import router as onboarding_router
 from routers.tenants_router import router as tenants_router
+from routers.usage_router import router as usage_router
 from routers.whatsapp_router import router as whatsapp_router
 from schemas import UserOut
 
@@ -55,10 +56,13 @@ app.include_router(onboarding_router)
 app.include_router(whatsapp_router)
 app.include_router(ai_assist_router)
 app.include_router(inbox_router)
+app.include_router(usage_router)
 
 
 @app.on_event("startup")
 def on_startup():
+    if not os.getenv("KAI_ADMIN_DB_DIR"):
+        os.environ["KAI_ADMIN_DB_DIR"] = str(DB_DIR)
     init_db()
 
 

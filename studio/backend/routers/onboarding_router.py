@@ -95,7 +95,7 @@ def bootstrap_tenant_from_documents(
     questionnaire = body.get("questionnaire") or {}
 
     return StreamingResponse(
-        bootstrap_stream(home, sources, questionnaire),
+        bootstrap_stream(home, sources, questionnaire, tenant_slug=t.slug),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )

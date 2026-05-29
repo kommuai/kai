@@ -65,14 +65,14 @@ class FaqGroundingTests(unittest.TestCase):
         reload_grounded_tools()
         obs = [
             {
-                "tool": "search_kommu_support",
-                "result": {"ok": True, "on_official_list": False},
+                "tool": "stub_action",
+                "result": {"ok": True, "echo": "done"},
             }
         ]
         self.assertTrue(
             is_answer_faq_grounded(
-                answer="Your car is not on the official list.",
-                user_text="Proton X60",
+                answer="Action completed.",
+                user_text="run stub",
                 observations=obs,
             )
         )

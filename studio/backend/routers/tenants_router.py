@@ -33,6 +33,7 @@ from schemas import (
     SkillToggleIn,
 )
 from kai_paths import kai_repo_root, kai_tenants_root
+from tenant_compile import run_tenant_compile
 from kai_capabilities import get_capabilities
 from skill_toggle import set_document_skill_enabled, set_profile_skill_enabled
 from invite_service import _invite_expired, redeem_invite_token
@@ -209,6 +210,14 @@ def get_tenant_by_slug(slug: str, user: User = Depends(get_current_user), db: Se
     return _assert_tenant_member_by_slug(slug, user, db)
 
 
+@router.get("/whatsapp-worker")
+def whatsapp_worker_overview(user: User = Depends(get_current_user)):
+    """Must be registered before /{tenant_id} so 'whatsapp-worker' is not treated as a tenant id."""
+    from whatsapp_worker import global_worker_status
+
+    return global_worker_status()
+
+
 @router.get("/{tenant_id}", response_model=TenantOut)
 def get_tenant(tenant_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     return _assert_tenant_member(tenant_id, user, db)
@@ -303,7 +312,8 @@ def put_file(
             raise HTTPException(status_code=422, detail=f"Invalid YAML: {exc}")
 
     path.write_text(body.content, encoding="utf-8")
-    return FileContentOut(path=rel, content=body.content)
+    compile_result = run_tenant_compile(t.workspace_home) if file_key == "faq" else None
+    return FileContentOut(path=rel, content=body.content, compile=compile_result)
 
 
 # ── Compile ───────────────────────────────────────────────────────────────────
@@ -311,25 +321,7 @@ def put_file(
 @router.post("/{tenant_id}/compile", response_model=CompileResult)
 def compile_tenant(tenant_id: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     t = _assert_tenant_member(tenant_id, user, db)
-    try:
-        result = subprocess.run(
-            ["python", "-m", "kai.cli", "compile"],
-            capture_output=True,
-            text=True,
-            timeout=60,
-            cwd=str(KAI_REPO),
-            env={**os.environ, "KAI_HOME": t.workspace_home},
-        )
-        if result.returncode != 0:
-            return CompileResult(ok=False, message=result.stderr or result.stdout)
-        # Parse "Compiled intents=N chunks=M" from output
-        m = re.search(r"intents=(\d+)", result.stdout)
-        intents = int(m.group(1)) if m else None
-        return CompileResult(ok=True, message=result.stdout.strip(), intents=intents)
-    except subprocess.TimeoutExpired:
-        return CompileResult(ok=False, message="Compile timed out")
-    except Exception as exc:
-        return CompileResult(ok=False, message=str(exc))
+    return run_tenant_compile(t.workspace_home)
 
 
 # ── Invites ───────────────────────────────────────────────────────────────────
@@ -444,7 +436,6 @@ channels:
     start_hour: 10
     end_hour: 18
   handover:
-    dropoff_keyword: DROPOFF
     live_agent_keywords: [LA]
     resume_keywords: [resume, unfreeze, sambung]
   frozen:
@@ -480,13 +471,12 @@ session:
   idle_hours: 24
   max_history_messages: 100
 agent:
-  max_steps: 8
+  max_steps: 15
   footer_history_threshold: 10
 compile:
   extra_artifacts: false
 copy:
   keywords:
-    dropoff: DROPOFF
     live_agent: [LA]
   footer:
     en: |
@@ -500,7 +490,6 @@ copy:
 
       PS: We're outside office hours. A live agent will follow up later.
   handover:
-    dropoff_en: Please share the details. Type *resume* to continue with the AI support agent.
     live_agent_en: A live agent will assist you soon. Type *resume* to continue with the AI support agent.
   resume:
     en: AI support agent resumed. How can I help?

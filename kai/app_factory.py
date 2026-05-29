@@ -30,14 +30,22 @@ class _JsonLogFormatter(logging.Formatter):
 
 
 def _configure_logging() -> None:
-    os.makedirs("logs", exist_ok=True)
     if logging.getLogger().handlers:
         return
-    if os.getenv("KAI_LOG_JSON", "").strip().lower() in {"1", "true", "yes", "on"}:
-        handler = logging.StreamHandler()
-        handler.setFormatter(_JsonLogFormatter())
+    use_json = os.getenv("KAI_LOG_JSON", "").strip().lower() in {"1", "true", "yes", "on"}
+    log_file = os.getenv("KAI_LOG_FILE", "").strip()
+    if log_file:
+        path = Path(log_file)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        handler: logging.Handler = RotatingFileHandler(
+            path, maxBytes=2_000_000, backupCount=3, encoding="utf-8"
+        )
     else:
-        handler = RotatingFileHandler("logs/kai.log", maxBytes=2_000_000, backupCount=3, encoding="utf-8")
+        handler = logging.StreamHandler()
+    if use_json:
+        handler.setFormatter(_JsonLogFormatter())
+    elif not log_file:
+        handler.setFormatter(logging.Formatter("%(levelname)s %(name)s: %(message)s"))
     logging.basicConfig(level=logging.INFO, handlers=[handler])
 
 

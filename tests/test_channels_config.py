@@ -8,7 +8,6 @@ class ChannelConfigTests(unittest.TestCase):
         reload_channel_config()
         ch = get_channel_config()
         self.assertIn(0, ch.office_weekdays)
-        self.assertEqual(ch.dropoff_keyword, "DROPOFF")
         self.assertTrue(ch.is_live_agent_keyword("LA"))
         self.assertTrue(ch.is_resume_keyword("resume"))
         self.assertTrue(ch.is_blocked_media_type("image"))

@@ -26,7 +26,7 @@ def main() -> int:
 
     os.environ["KAI_HOME"] = kai_home
 
-    from kai.lib.lang_detect import is_malay
+    from kai.lib.lang import resolve_lang
     from kai.lib.session_state import init_db
     from kai.support_runtime.gateway import run_support_turn
 
@@ -40,7 +40,7 @@ def main() -> int:
         except json.JSONDecodeError:
             pass
 
-    lang = "BM" if is_malay(text) else "EN"
+    lang = resolve_lang(user_id=user_id)
 
     if not text:
         from kai.content.channels import get_channel_config

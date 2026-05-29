@@ -15,7 +15,7 @@ from models import User
 from onboarding_service import _assert_session_owner, _session_dir
 from routers.tenants_router import _assert_tenant_member
 from whatsapp_bridge_client import link_status, start_link, stop_link
-from whatsapp_worker import enrich_channel_status, global_worker_status
+from whatsapp_worker import enrich_channel_status
 
 router = APIRouter(prefix="/tenants", tags=["whatsapp"])
 
@@ -63,12 +63,6 @@ def _resume_or_start_link(meta: dict[str, Any], auth_dir: Path) -> dict[str, Any
                 raise
     result = start_link(str(auth_dir))
     return result
-
-
-@router.get("/whatsapp-worker")
-def whatsapp_worker_overview(user: User = Depends(get_current_user)):
-    """Global bridge + worker status for dashboard."""
-    return global_worker_status()
 
 
 @router.get("/{tenant_id}/channels")

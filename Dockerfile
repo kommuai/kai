@@ -19,7 +19,7 @@ ENV KAI_STARTUP_COMPILE=auto
 ENV KAI_HOME=/kai-home
 ENV SESSION_DB_PATH=/kai-home/data/sessions.db
 
-RUN mkdir -p /app/logs && chmod +x /app/scripts/docker-entrypoint.sh
+RUN chmod +x /app/scripts/docker-entrypoint.sh
 
 EXPOSE 8000
 

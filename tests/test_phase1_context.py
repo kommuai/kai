@@ -54,8 +54,8 @@ class Phase1ContextTests(unittest.TestCase):
 
     def test_master_faq_block_non_empty(self):
         block = master_faq_system_block()
-        self.assertIn("Authoritative FAQ", block)
-        self.assertIn("regional_installer", block.lower())
+        self.assertIn("search_faq", block.lower())
+        self.assertGreater(len(block.strip()), 20)
 
     def test_session_search_indexes_and_finds(self):
         index_message(self.uid, "user", "2021 Corolla Cross hybrid supported or not")

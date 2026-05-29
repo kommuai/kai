@@ -89,7 +89,7 @@ class Settings:
     # LLM
     deepseek_api_key: str = ""
     deepseek_base_url: str = "https://api.deepseek.com/v1"
-    deepseek_model: str = "deepseek-chat"
+    deepseek_model: str = "deepseek-v4-flash"
     kai_llm_provider: str = "deepseek"
     kai_llm_model: str = ""
     kai_llm_base_url: str = ""
@@ -151,7 +151,7 @@ class Settings:
 
     # Agent routing
     kai_route_mode: str = "hybrid"
-    kai_route_agent_max_steps: int = 8
+    kai_route_agent_max_steps: int = 15
     kai_route_agent_debug_enabled: bool = False
     kai_compile_extra_artifacts: bool = False
 
@@ -254,7 +254,7 @@ def _resolve_workspace_paths() -> tuple[Path, Path, Path, Path, Path, Path, str,
 def load_settings() -> Settings:
     base = BASE_DIR
     deepseek_base = _env("DEEPSEEK_BASE_URL") or _env("DEEPSEEK_API_BASE", "https://api.deepseek.com/v1")
-    deepseek_model = _env("DEEPSEEK_MODEL", "deepseek-chat")
+    deepseek_model = _env("DEEPSEEK_MODEL", "deepseek-v4-flash")
 
     (
         kai_home,
@@ -322,7 +322,7 @@ def load_settings() -> Settings:
         vehicle_support_http_timeout_seconds=_env_int("VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS", 8),
         vehicle_support_min_evidence_score=_env_float("VEHICLE_SUPPORT_MIN_EVIDENCE_SCORE", 0.65),
         kai_route_mode=_env("KAI_ROUTE_MODE", "hybrid"),
-        kai_route_agent_max_steps=_env_int("KAI_ROUTE_AGENT_MAX_STEPS", 8),
+        kai_route_agent_max_steps=_env_int("KAI_ROUTE_AGENT_MAX_STEPS", 15),
         kai_route_agent_debug_enabled=_env_bool("KAI_ROUTE_AGENT_DEBUG_ENABLED"),
         kai_compile_extra_artifacts=_env_bool("KAI_COMPILE_EXTRA_ARTIFACTS"),
         session_idle_hours=_env_int("SESSION_IDLE_HOURS", 24),

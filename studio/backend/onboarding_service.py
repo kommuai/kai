@@ -229,6 +229,8 @@ def bootstrap_stream(
     tenant_home: Path,
     sources_dir: Path,
     questionnaire: dict[str, Any],
+    *,
+    tenant_slug: str | None = None,
 ) -> Generator[str, None, None]:
     def emit(obj: dict[str, Any]) -> str:
         return f"data: {json.dumps(obj)}\n\n"
@@ -261,7 +263,14 @@ def bootstrap_stream(
     )
 
     try:
-        raw = chat_completion(BOOTSTRAP_SYSTEM_PROMPT, user_msg, max_tokens=8000, temperature=0.2)
+        raw = chat_completion(
+            BOOTSTRAP_SYSTEM_PROMPT,
+            user_msg,
+            max_tokens=8000,
+            temperature=0.2,
+            tenant_slug=tenant_slug,
+            source="studio_onboarding",
+        )
     except HTTPException as exc:
         yield emit({"type": "error", "message": str(exc.detail)})
         return
@@ -301,11 +310,14 @@ def bootstrap_stream(
             }
         )
 
-    yield emit(
-        {
-            "type": "done",
-            "percent": 100,
-            "summary": patch_block.get("summary", "Configuration updated from your documents."),
-            "applied": applied,
-        }
-    )
+    done_payload: dict = {
+        "type": "done",
+        "percent": 100,
+        "summary": patch_block.get("summary", "Configuration updated from your documents."),
+        "applied": applied,
+    }
+    from tenant_compile import patch_list_touches_faq, run_tenant_compile
+
+    if patch_list_touches_faq(applied):
+        done_payload["compile"] = run_tenant_compile(tenant_home).model_dump()
+    yield emit(done_payload)

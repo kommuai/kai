@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 
 _MINIMAL = Path(__file__).resolve().parent / "fixtures" / "minimal_workspace"
-_KOMMU = Path(__file__).resolve().parent / "fixtures" / "kommu_workspace"
 
 
 def _apply_kai_home(path: Path) -> None:
@@ -23,12 +22,12 @@ def _apply_kai_home(path: Path) -> None:
 
 
 def pytest_configure(config):
-    _apply_kai_home(_KOMMU)
+    _apply_kai_home(_MINIMAL)
 
 
 @pytest.fixture(autouse=True)
-def _default_kommu_home():
-    _apply_kai_home(_KOMMU)
+def _default_minimal_home():
+    _apply_kai_home(_MINIMAL)
     yield
 
 
@@ -36,10 +35,13 @@ def _default_kommu_home():
 def minimal_kai_home():
     _apply_kai_home(_MINIMAL)
     yield _MINIMAL
-    _apply_kai_home(_KOMMU)
 
 
 @pytest.fixture
-def kommu_kai_home():
-    _apply_kai_home(_KOMMU)
-    yield _KOMMU
+def kommu_tenant_home():
+    """Optional: point KAI_HOME at sibling kai-tenant-kommu for tenant integration runs."""
+    tenant = Path(__file__).resolve().parents[2] / "kai-tenant-kommu"
+    if not tenant.is_dir():
+        pytest.skip("kai-tenant-kommu not present")
+    _apply_kai_home(tenant)
+    yield tenant

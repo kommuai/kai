@@ -19,7 +19,6 @@ class ChannelConfig:
     office_weekdays: tuple[int, ...]
     office_start_hour: int
     office_end_hour: int
-    dropoff_keyword: str
     live_agent_keywords: tuple[str, ...]
     resume_keywords: tuple[str, ...]
     frozen_idle_hours: int | None
@@ -47,9 +46,13 @@ class ChannelConfig:
         return now.weekday() in self.office_weekdays and self.office_start_hour <= now.hour < self.office_end_hour
 
     def is_live_agent_keyword(self, text: str) -> bool:
+        if not self.live_agent_keywords:
+            return False
         return text.strip().upper() in {k.upper() for k in self.live_agent_keywords}
 
     def is_resume_keyword(self, text: str) -> bool:
+        if not self.resume_keywords:
+            return False
         lower = text.strip().lower()
         return lower in {k.lower() for k in self.resume_keywords}
 
@@ -100,7 +103,6 @@ def get_channel_config() -> ChannelConfig:
         office_weekdays=office_weekdays,
         office_start_hour=int(office.get("start_hour") if office.get("start_hour") is not None else rt.office_start_hour),
         office_end_hour=int(office.get("end_hour") if office.get("end_hour") is not None else rt.office_end_hour),
-        dropoff_keyword=str(handover.get("dropoff_keyword") or cp.dropoff),
         live_agent_keywords=tuple(str(x) for x in live),
         resume_keywords=tuple(str(x) for x in resume),
         frozen_idle_hours=int(frozen["idle_hours"]) if frozen.get("idle_hours") is not None else None,

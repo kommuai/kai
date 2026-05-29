@@ -9,6 +9,9 @@ export default defineConfig({
     proxy: {
       "/auth": { target: "http://127.0.0.1:8080", changeOrigin: true },
       "/tenants": { target: "http://127.0.0.1:8080", changeOrigin: true },
+      "/usage": { target: "http://127.0.0.1:8080", changeOrigin: true },
+      "/health": { target: "http://127.0.0.1:8080", changeOrigin: true },
+      "/whatsapp": { target: "http://127.0.0.1:8080", changeOrigin: true },
     },
   },
 });

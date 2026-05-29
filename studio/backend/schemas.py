@@ -222,6 +222,7 @@ class FileContent(BaseModel):
 class FileContentOut(BaseModel):
     path: str
     content: str
+    compile: Optional[CompileResult] = None
 
 
 class CompileResult(BaseModel):
@@ -366,3 +367,50 @@ class HandoverBotOut(BaseModel):
     already_in_handover: bool = False
     channel_delivered: bool | None = None
     channel_detail: str | None = None
+
+
+# ── LLM usage (DeepSeek) ─────────────────────────────────────────────────────
+
+class DeepSeekDailyUsageOut(BaseModel):
+    date: str
+    total_tokens: int
+    cost_usd: float
+    request_count: int
+
+
+class DeepSeekUsageTotalsOut(BaseModel):
+    prompt_tokens: int
+    completion_tokens: int
+    cached_prompt_tokens: int
+    total_tokens: int
+    cost_usd: float
+    request_count: int
+
+
+class DeepSeekTenantUsageOut(BaseModel):
+    tenant_id: str
+    slug: str
+    display_name: str
+    prompt_tokens: int
+    completion_tokens: int
+    cached_prompt_tokens: int
+    total_tokens: int
+    cost_usd: float
+    request_count: int
+
+
+class DeepSeekSourceUsageOut(BaseModel):
+    source: str
+    prompt_tokens: int
+    completion_tokens: int
+    cost_usd: float
+    request_count: int
+
+
+class DeepSeekUsageSummaryOut(BaseModel):
+    period: str
+    since: str
+    totals: DeepSeekUsageTotalsOut
+    tenants: list[DeepSeekTenantUsageOut]
+    by_source: list[DeepSeekSourceUsageOut]
+    daily: list[DeepSeekDailyUsageOut]

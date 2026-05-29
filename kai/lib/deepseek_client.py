@@ -29,4 +29,14 @@ def chat_completion(system_prompt: str, user_prompt: str, temperature: float = 0
         temperature=temperature,
         max_tokens=max_tokens,
     )
+    try:
+        from kai.lib.llm_usage_record import record_openai_usage
+
+        record_openai_usage(
+            model=s.deepseek_model,
+            usage=getattr(resp, "usage", None),
+            source="engine_tool",
+        )
+    except Exception:
+        pass
     return (resp.choices[0].message.content or "").strip()

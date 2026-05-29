@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from kai.content.channels import get_channel_config
-from kai.lib.lang_detect import is_malay
+from kai.lib.lang import resolve_lang
 from kai.services.container import kai_service, support_runtime_service
 from kai.support_runtime.faq_grounding import apply_grounding_footnote_if_needed
 from kai.support_runtime.agent_loop import _looks_like_chitchat
@@ -54,7 +54,7 @@ def run_support_turn(
     """Single entry for WhatsApp, HTTP, and query APIs."""
     text = (text or "").strip()
     user_id = (user_id or "").strip()
-    lang = lang or ("BM" if is_malay(text) else "EN")
+    lang = lang or resolve_lang(user_id=user_id)
     ch = get_channel_config()
 
     if not text:

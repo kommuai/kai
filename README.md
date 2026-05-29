@@ -74,7 +74,7 @@ Chat path: `POST /v2/agent/message` → pre-router → ReAct runtime → finaliz
 ## Development
 
 ```bash
-export KAI_HOME=tests/fixtures/kommu_workspace
+export KAI_HOME=tests/fixtures/minimal_workspace
 pip install -r requirements.txt
 pytest tests/ --ignore=tests/test_support_runtime.py -q
 python3 tools/kai doctor --skip-compile
@@ -82,6 +82,6 @@ python3 tools/kai doctor --skip-compile
 
 ## Reference tenant
 
-Kommu content lives in **`kai-tenant-kommu`** (sibling repo). Test fixture copy: `tests/fixtures/kommu_workspace/`.
+Kommu content lives in **`kai-tenant-kommu`** (sibling repo). Run tenant-specific tests there with `KAI_HOME` pointing at that pack.
 
 Generic scaffold: `templates/workspace/generic/`.

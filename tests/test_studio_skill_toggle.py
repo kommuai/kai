@@ -17,7 +17,7 @@ from skill_toggle import set_profile_skill_enabled  # noqa: E402
 class StudioSkillToggleTests(unittest.TestCase):
     def setUp(self) -> None:
         self._tmp = tempfile.mkdtemp()
-        fixture = ROOT / "tests" / "fixtures" / "kommu_workspace"
+        fixture = ROOT / "tests" / "fixtures" / "minimal_workspace"
         shutil.copytree(fixture, Path(self._tmp) / "ws", dirs_exist_ok=True)
         self.home = Path(self._tmp) / "ws"
 
@@ -48,7 +48,7 @@ class StudioSkillToggleTests(unittest.TestCase):
         reload_tools_config()
         ids = {e.id for e in reload_tools_config().enabled_entries()}
         self.assertNotIn("search_faq", ids)
-        self.assertIn("search_kommu_support", ids)
+        self.assertIn("search_session_memory", ids)
 
 
 if __name__ == "__main__":

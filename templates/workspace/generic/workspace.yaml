@@ -28,7 +28,6 @@ channels:
     start_hour: 9
     end_hour: 17
   handover:
-    dropoff_keyword: DROPOFF
     live_agent_keywords: [LA]
     resume_keywords: [resume]
   frozen:
@@ -58,7 +57,6 @@ faq_learn:
   legacy_append: false
 copy:
   keywords:
-    dropoff: DROPOFF
     live_agent: [LA]
   footer:
     en: |
@@ -80,8 +78,6 @@ copy:
 
       PS: Di luar waktu pejabat.
   handover:
-    dropoff_en: Please share dropoff details. Type *resume* to continue with the bot.
-    dropoff_bm: Sila berikan butiran. Taip *resume* untuk teruskan.
     live_agent_en: A live agent will assist you soon. Type *resume* to continue with the bot.
     live_agent_bm: Ejen akan membantu anda. Taip *resume* untuk teruskan.
   resume:
