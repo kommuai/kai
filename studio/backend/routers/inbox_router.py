@@ -19,13 +19,11 @@ from sqlalchemy.orm import Session
 from database import get_db
 from deps import get_current_user
 from models import ContactTag, Tenant, User
+from contact_profile import correspondent_profile, load_facts_by_user, load_whatsapp_contact_directory
+from channel_config import get_channel_status
 from routers.tenants_router import KAI_REPO, _assert_tenant_member
+from whatsapp_bridge_client import send_worker_message
 from schemas import (
-    ChatwootAccountLabelsOut,
-    ChatwootLabelsBody,
-    ChatwootMetaOut,
-    ChatwootPrivateNoteBody,
-    ChatwootStatusBody,
     ContactDetailOut,
     ContactListOut,
     ContactOut,
@@ -36,6 +34,9 @@ from schemas import (
     MessageOut,
     ReplyCreate,
     ReplyOut,
+    DeleteConversationOut,
+    ResumeBotOut,
+    HandoverBotOut,
     SearchResultsOut,
     SearchHitOut,
     TagCreate,
@@ -60,6 +61,25 @@ def _open_sessions_ro(tenant: Tenant) -> tuple[sqlite3.Connection | None, Path]:
     conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn, path
+
+
+def _open_sessions_rw(tenant: Tenant) -> tuple[sqlite3.Connection | None, Path]:
+    path = _sessions_db_path(tenant)
+    if not path.is_file():
+        return None, path
+    conn = sqlite3.connect(str(path), check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn, path
+
+
+def _delete_conversation_from_db(conn: sqlite3.Connection, user_id: str) -> None:
+    """Remove session row, indexed messages, and memory facts for one user."""
+    if _table_exists(conn, "session_messages"):
+        conn.execute("DELETE FROM session_messages WHERE user_id=?", (user_id,))
+    if _table_exists(conn, "memory_facts"):
+        conn.execute("DELETE FROM memory_facts WHERE user_id=?", (user_id,))
+    conn.execute("DELETE FROM sessions WHERE user_id=?", (user_id,))
+    conn.commit()
 
 
 def _sanitize_fts_query(query: str) -> str:
@@ -129,9 +149,11 @@ def list_conversations(
             status_code=503,
             detail=f"No sessions database yet at {path}. Run the AI support agent once to create sessions.",
         )
+    contact_directory = load_whatsapp_contact_directory(Path(tenant.workspace_home))
     try:
         cur = ro.execute("SELECT user_id, data FROM sessions")
         rows = cur.fetchall()
+        facts_by_user = load_facts_by_user(ro)
     finally:
         ro.close()
 
@@ -148,9 +170,14 @@ def list_conversations(
         if not isinstance(history, list):
             history = []
         last_at = data.get("last_activity_at")
+        profile = correspondent_profile(
+            uid, facts_by_user.get(uid, []), directory=contact_directory
+        )
         items.append(
             {
                 "user_id": uid,
+                "display_name": profile["display_name"] or uid,
+                "phone": profile["phone"],
                 "frozen": frozen,
                 "last_activity_at": last_at if isinstance(last_at, str) else None,
                 "last_message_preview": _history_preview(history),
@@ -168,6 +195,8 @@ def list_conversations(
         items=[
             ConversationOut(
                 user_id=x["user_id"],
+                display_name=x["display_name"],
+                phone=x["phone"],
                 frozen=x["frozen"],
                 last_activity_at=x["last_activity_at"],
                 last_message_preview=x["last_message_preview"],
@@ -200,6 +229,8 @@ def search_messages_global(
     try:
         if not _table_exists(ro, "session_messages_fts"):
             return SearchResultsOut(query=fts_q, items=[])
+        facts_by_user = load_facts_by_user(ro)
+        contact_directory = load_whatsapp_contact_directory(Path(tenant.workspace_home))
         cur = ro.execute(
             """
             SELECT m.id, m.user_id, m.role, m.text, m.created_at
@@ -215,9 +246,15 @@ def search_messages_global(
             body = (text or "").strip().replace("\n", " ")
             if len(body) > 280:
                 body = body[:279] + "…"
+            uid_s = str(uid)
+            profile = correspondent_profile(
+                uid_s, facts_by_user.get(uid_s, []), directory=contact_directory
+            )
             hits.append(
                 SearchHitOut(
-                    user_id=str(uid),
+                    user_id=uid_s,
+                    display_name=profile["display_name"] or uid_s,
+                    phone=profile["phone"],
                     message_id=int(mid),
                     role=str(role),
                     snippet=body,
@@ -248,7 +285,6 @@ def get_conversation(
     messages: list[MessageOut] = []
     frozen = False
     last_activity_at: str | None = None
-    chatwoot_conversation_id: str | None = None
     try:
         cur = ro.execute("SELECT data FROM sessions WHERE user_id=?", (user_id,))
         row = cur.fetchone()
@@ -256,9 +292,6 @@ def get_conversation(
             data = _parse_session_data(row["data"])
             frozen = bool(data.get("frozen"))
             last_activity_at = data.get("last_activity_at") if isinstance(data.get("last_activity_at"), str) else None
-            raw_cw = data.get("chatwoot_conversation_id")
-            if raw_cw is not None and str(raw_cw).strip():
-                chatwoot_conversation_id = str(raw_cw).strip()
             hist = data.get("history") or []
             if isinstance(hist, list):
                 for h in hist:
@@ -275,148 +308,27 @@ def get_conversation(
                 facts.append(MemoryFactOut(fact_type=str(ft), fact_key=str(fk), fact_value=str(fv), last_seen_at=str(ls) if ls else None))
     finally:
         ro.close()
+    contact_directory = load_whatsapp_contact_directory(Path(tenant.workspace_home))
+    profile = correspondent_profile(user_id, facts, directory=contact_directory)
     return ConversationDetailOut(
         user_id=user_id,
+        display_name=profile["display_name"] or user_id,
+        phone=profile["phone"],
         frozen=frozen,
         last_activity_at=last_activity_at,
         messages=messages,
         facts=facts,
         tags=tags,
-        chatwoot_conversation_id=chatwoot_conversation_id,
     )
 
 
 _KAI_REPLY_SCRIPT = Path(__file__).resolve().parents[1] / "kai_reply.py"
-_KAI_CHATWOOT_SCRIPT = Path(__file__).resolve().parents[1] / "kai_chatwoot_studio.py"
-
-
-def _run_chatwoot_tool(tenant: Tenant, payload: dict[str, Any]) -> dict[str, Any]:
-    env = {**os.environ, "KAI_HOME": tenant.workspace_home}
-    py_path = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = os.pathsep.join([str(KAI_REPO), py_path]) if py_path else str(KAI_REPO)
-    try:
-        result = subprocess.run(
-            [sys.executable, str(_KAI_CHATWOOT_SCRIPT), tenant.workspace_home],
-            input=json.dumps(payload),
-            text=True,
-            capture_output=True,
-            timeout=45,
-            cwd=str(KAI_REPO),
-            env=env,
-        )
-    except subprocess.TimeoutExpired as exc:
-        raise HTTPException(status_code=504, detail="Chatwoot request timed out") from exc
-
-    if result.returncode != 0:
-        detail = (result.stderr or result.stdout or "chatwoot_tool_failed").strip()[:500]
-        raise HTTPException(status_code=502, detail=detail)
-
-    try:
-        out = json.loads((result.stdout or "").strip() or "{}")
-    except json.JSONDecodeError as exc:
-        raise HTTPException(status_code=502, detail="Invalid Chatwoot worker output") from exc
-
-    if not out.get("ok"):
-        raise HTTPException(status_code=400, detail=str(out.get("error") or "chatwoot_failed"))
-    return out
-
-
-@router.get("/{tenant_id}/inbox/chatwoot/account-labels", response_model=ChatwootAccountLabelsOut)
-def list_chatwoot_account_labels(
-    tenant_id: str,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    tenant = _assert_tenant_member(tenant_id, user, db)
-    out = _run_chatwoot_tool(tenant, {"action": "account_labels"})
-    return ChatwootAccountLabelsOut(items=list(out.get("items") or []))
-
-
-@router.get("/{tenant_id}/inbox/conversations/{user_id:path}/chatwoot", response_model=ChatwootMetaOut)
-def get_chatwoot_meta(
-    tenant_id: str,
-    user_id: str,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    tenant = _assert_tenant_member(tenant_id, user, db)
-    out = _run_chatwoot_tool(tenant, {"action": "get_meta", "user_id": user_id})
-    return ChatwootMetaOut(
-        configured=bool(out.get("configured")),
-        conversation_id=out.get("conversation_id"),
-        status=out.get("status"),
-        labels=list(out.get("labels") or []),
-    )
-
-
-@router.post("/{tenant_id}/inbox/conversations/{user_id:path}/chatwoot/status")
-def set_chatwoot_status(
-    tenant_id: str,
-    user_id: str,
-    body: ChatwootStatusBody,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    tenant = _assert_tenant_member(tenant_id, user, db)
-    payload: dict[str, Any] = {"action": "set_status", "user_id": user_id, "status": body.status}
-    if body.snoozed_until is not None:
-        payload["snoozed_until"] = body.snoozed_until
-    _run_chatwoot_tool(tenant, payload)
-    return {"ok": True}
-
-
-@router.post("/{tenant_id}/inbox/conversations/{user_id:path}/chatwoot/private-note")
-def post_chatwoot_private_note(
-    tenant_id: str,
-    user_id: str,
-    body: ChatwootPrivateNoteBody,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    tenant = _assert_tenant_member(tenant_id, user, db)
-    _run_chatwoot_tool(tenant, {"action": "private_note", "user_id": user_id, "text": body.text})
-    return {"ok": True}
-
-
-@router.put("/{tenant_id}/inbox/conversations/{user_id:path}/chatwoot/labels")
-def put_chatwoot_labels(
-    tenant_id: str,
-    user_id: str,
-    body: ChatwootLabelsBody,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    tenant = _assert_tenant_member(tenant_id, user, db)
-    out = _run_chatwoot_tool(tenant, {"action": "set_labels", "user_id": user_id, "labels": body.labels})
-    return {"ok": True, "labels": out.get("labels", [])}
-
-
-@router.post("/{tenant_id}/inbox/conversations/{user_id:path}/chatwoot/handover")
-def post_chatwoot_handover(
-    tenant_id: str,
-    user_id: str,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    tenant = _assert_tenant_member(tenant_id, user, db)
-    _run_chatwoot_tool(tenant, {"action": "human_handover", "user_id": user_id})
-    return {"ok": True}
-
-
-@router.post("/{tenant_id}/inbox/conversations/{user_id:path}/chatwoot/resume-bot")
-def post_resume_bot(
-    tenant_id: str,
-    user_id: str,
-    user: User = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    tenant = _assert_tenant_member(tenant_id, user, db)
-    _run_chatwoot_tool(tenant, {"action": "resume_bot", "user_id": user_id})
-    return {"ok": True}
+_KAI_RESUME_SCRIPT = Path(__file__).resolve().parents[1] / "kai_resume_bot.py"
+_KAI_HANDOVER_SCRIPT = Path(__file__).resolve().parents[1] / "kai_handover_bot.py"
 
 
 def _send_studio_reply(tenant: Tenant, user_id: str, text: str) -> dict[str, Any]:
-    """Run kai_reply.py with tenant KAI_HOME so session + optional Chatwoot stay in sync."""
+    """Run kai_reply.py with tenant KAI_HOME to append an agent message to sessions.db."""
     _, path = _open_sessions_ro(tenant)
     if path and not path.is_file():
         raise HTTPException(
@@ -454,6 +366,216 @@ def _send_studio_reply(tenant: Tenant, user_id: str, text: str) -> dict[str, Any
     return payload
 
 
+def _deliver_studio_reply_whatsapp(tenant: Tenant, user_id: str, text: str) -> tuple[bool, str | None]:
+    """Send agent reply on WhatsApp when tenant uses Baileys. Returns (delivered, detail)."""
+    home = Path(tenant.workspace_home)
+    ch = get_channel_status(home)
+    wa = ch.get("whatsapp_baileys") if isinstance(ch.get("whatsapp_baileys"), dict) else {}
+    if not wa.get("configured"):
+        return False, "WhatsApp channel not configured for this tenant"
+
+    slug = (tenant.slug or "").strip()
+    if not slug:
+        return False, "Tenant slug missing"
+
+    try:
+        result = send_worker_message(slug, user_id, text)
+    except HTTPException as exc:
+        detail = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
+        return False, detail
+
+    if result.get("queued"):
+        return True, "Queued — WhatsApp socket was reconnecting; message should send shortly"
+    return True, None
+
+
+@router.delete(
+    "/{tenant_id}/inbox/conversations/{user_id:path}",
+    response_model=DeleteConversationOut,
+    status_code=status.HTTP_200_OK,
+)
+def delete_conversation(
+    tenant_id: str,
+    user_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    tenant = _assert_tenant_member(tenant_id, user, db)
+    uid = (user_id or "").strip()
+    if not uid:
+        raise HTTPException(status_code=400, detail="user_id required")
+
+    rw, path = _open_sessions_rw(tenant)
+    if rw is None:
+        raise HTTPException(status_code=404, detail=f"No sessions database at {path}")
+
+    try:
+        cur = rw.execute("SELECT 1 FROM sessions WHERE user_id=? LIMIT 1", (uid,))
+        has_session = cur.fetchone() is not None
+        has_messages = False
+        if _table_exists(rw, "session_messages"):
+            cur = rw.execute(
+                "SELECT 1 FROM session_messages WHERE user_id=? LIMIT 1",
+                (uid,),
+            )
+            has_messages = cur.fetchone() is not None
+        if not has_session and not has_messages:
+            if _table_exists(rw, "memory_facts"):
+                cur = rw.execute(
+                    "SELECT 1 FROM memory_facts WHERE user_id=? LIMIT 1",
+                    (uid,),
+                )
+                if cur.fetchone() is None:
+                    raise HTTPException(status_code=404, detail="Conversation not found")
+            else:
+                raise HTTPException(status_code=404, detail="Conversation not found")
+        _delete_conversation_from_db(rw, uid)
+    finally:
+        rw.close()
+
+    db.query(ContactTag).filter(
+        and_(ContactTag.tenant_id == tenant_id, ContactTag.user_id == uid)
+    ).delete(synchronize_session=False)
+    db.commit()
+
+    return DeleteConversationOut(ok=True, user_id=uid)
+
+
+def _resume_bot_for_studio(tenant: Tenant, user_id: str) -> dict[str, Any]:
+    """Unfreeze session and append standard resume message (same as WhatsApp *resume* keyword)."""
+    _, path = _open_sessions_ro(tenant)
+    if path and not path.is_file():
+        raise HTTPException(
+            status_code=503,
+            detail=f"No sessions database yet at {path}. Run the AI support agent once to create sessions.",
+        )
+
+    env = {**os.environ, "KAI_HOME": tenant.workspace_home}
+    py_path = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = os.pathsep.join([str(KAI_REPO), py_path]) if py_path else str(KAI_REPO)
+
+    try:
+        result = subprocess.run(
+            [sys.executable, str(_KAI_RESUME_SCRIPT), tenant.workspace_home, user_id],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(KAI_REPO),
+            env=env,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise HTTPException(status_code=504, detail="Resume timed out") from exc
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "resume_failed").strip()[:500]
+        raise HTTPException(status_code=502, detail=f"Failed to resume AI support: {detail}")
+
+    try:
+        payload = json.loads((result.stdout or "").strip() or "{}")
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=502, detail="Invalid resume worker output") from exc
+
+    if not payload.get("ok"):
+        raise HTTPException(status_code=502, detail=str(payload.get("error") or "resume_failed"))
+    return payload
+
+
+def _handover_bot_for_studio(tenant: Tenant, user_id: str) -> dict[str, Any]:
+    """Freeze session and append standard live-agent handover message."""
+    _, path = _open_sessions_ro(tenant)
+    if path and not path.is_file():
+        raise HTTPException(
+            status_code=503,
+            detail=f"No sessions database yet at {path}. Run the AI support agent once to create sessions.",
+        )
+
+    env = {**os.environ, "KAI_HOME": tenant.workspace_home}
+    py_path = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = os.pathsep.join([str(KAI_REPO), py_path]) if py_path else str(KAI_REPO)
+
+    try:
+        result = subprocess.run(
+            [sys.executable, str(_KAI_HANDOVER_SCRIPT), tenant.workspace_home, user_id],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            cwd=str(KAI_REPO),
+            env=env,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise HTTPException(status_code=504, detail="Handover timed out") from exc
+
+    if result.returncode != 0:
+        detail = (result.stderr or result.stdout or "handover_failed").strip()[:500]
+        raise HTTPException(status_code=502, detail=f"Failed to start handover: {detail}")
+
+    try:
+        payload = json.loads((result.stdout or "").strip() or "{}")
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=502, detail="Invalid handover worker output") from exc
+
+    if not payload.get("ok"):
+        raise HTTPException(status_code=502, detail=str(payload.get("error") or "handover_failed"))
+    return payload
+
+
+@router.post(
+    "/{tenant_id}/inbox/conversations/{user_id:path}/resume-bot",
+    response_model=ResumeBotOut,
+    status_code=status.HTTP_200_OK,
+)
+def resume_bot_conversation(
+    tenant_id: str,
+    user_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    tenant = _assert_tenant_member(tenant_id, user, db)
+    uid = (user_id or "").strip()
+    if not uid:
+        raise HTTPException(status_code=400, detail="user_id required")
+    payload = _resume_bot_for_studio(tenant, uid)
+    return ResumeBotOut(
+        ok=True,
+        user_id=uid,
+        frozen=False,
+        message=str(payload.get("message") or "") or None,
+        already_active=bool(payload.get("already_active")),
+    )
+
+
+@router.post(
+    "/{tenant_id}/inbox/conversations/{user_id:path}/handover-bot",
+    response_model=HandoverBotOut,
+    status_code=status.HTTP_200_OK,
+)
+def handover_bot_conversation(
+    tenant_id: str,
+    user_id: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    tenant = _assert_tenant_member(tenant_id, user, db)
+    uid = (user_id or "").strip()
+    if not uid:
+        raise HTTPException(status_code=400, detail="user_id required")
+    payload = _handover_bot_for_studio(tenant, uid)
+    delivered: bool | None = None
+    detail: str | None = None
+    msg = str(payload.get("message") or "").strip()
+    if msg and not payload.get("already_in_handover"):
+        delivered, detail = _deliver_studio_reply_whatsapp(tenant, uid, msg)
+    return HandoverBotOut(
+        ok=True,
+        user_id=uid,
+        frozen=True,
+        message=msg or None,
+        already_in_handover=bool(payload.get("already_in_handover")),
+        channel_delivered=delivered,
+        channel_detail=detail,
+    )
+
+
 @router.post("/{tenant_id}/inbox/conversations/{user_id:path}/reply", response_model=ReplyOut)
 def reply_to_conversation(
     tenant_id: str,
@@ -463,13 +585,13 @@ def reply_to_conversation(
     db: Session = Depends(get_db),
 ):
     tenant = _assert_tenant_member(tenant_id, user, db)
-    payload = _send_studio_reply(tenant, user_id, body.text)
+    _send_studio_reply(tenant, user_id, body.text)
+    delivered, detail = _deliver_studio_reply_whatsapp(tenant, user_id, body.text)
     return ReplyOut(
         ok=True,
         message=MessageOut(role="agent", text=body.text, created_at=None),
-        chatwoot_delivered=bool(payload.get("chatwoot_delivered")),
-        chatwoot_error=payload.get("chatwoot_error"),
-        chatwoot_conversation_id=payload.get("chatwoot_conversation_id"),
+        channel_delivered=delivered,
+        channel_detail=detail,
     )
 
 

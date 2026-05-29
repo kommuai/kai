@@ -1,4 +1,4 @@
-"""Phone / session key normalization (Malaysian mobile, n8n/Chatwoot variants)."""
+"""Phone / session key normalization (Malaysian mobile, webhook variants)."""
 from __future__ import annotations
 
 import re
@@ -21,7 +21,7 @@ def canonical_my_mobile(raw: str) -> str:
 
 
 def candidate_user_ids(raw: str) -> list[str]:
-    """Possible session keys stored by n8n / Chatwoot."""
+    """Possible session keys stored by external webhooks."""
     raw = (raw or "").strip()
     canon = canonical_my_mobile(raw)
     d = digits_only(raw)

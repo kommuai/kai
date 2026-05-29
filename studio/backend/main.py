@@ -21,7 +21,9 @@ from models import User
 from routers.ai_assist_router import router as ai_assist_router
 from routers.auth_router import router as auth_router
 from routers.inbox_router import router as inbox_router
+from routers.onboarding_router import router as onboarding_router
 from routers.tenants_router import router as tenants_router
+from routers.whatsapp_router import router as whatsapp_router
 from schemas import UserOut
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
@@ -49,6 +51,8 @@ app.add_middleware(
 
 app.include_router(auth_router)
 app.include_router(tenants_router)
+app.include_router(onboarding_router)
+app.include_router(whatsapp_router)
 app.include_router(ai_assist_router)
 app.include_router(inbox_router)
 

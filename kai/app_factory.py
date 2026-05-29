@@ -13,7 +13,6 @@ from fastapi.staticfiles import StaticFiles
 from kai.api.health import router as health_router
 from kai.api.v2.agent_message import router as v2_message_router
 from kai.api.v2.agent_query import router as v2_query_router
-from kai.integrations.chatwoot.webhook import router as chatwoot_webhook_router
 from kai.engine.scheduler import start_background_tasks, stop_background_tasks
 from kai.engine.startup import run_startup
 
@@ -74,5 +73,4 @@ def create_app() -> FastAPI:
     app.include_router(health_router)
     app.include_router(v2_message_router)
     app.include_router(v2_query_router)
-    app.include_router(chatwoot_webhook_router)
     return app

@@ -8,11 +8,22 @@ export const API_BASE = import.meta.env.VITE_API_URL
     ? ""
     : "http://localhost:8080";
 
+/** Absolute or proxied path for fetch() — must match axios baseURL (upload/bootstrap use fetch). */
+export function apiUrl(path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  const base = (API_BASE || "").replace(/\/$/, "");
+  return base ? `${base}${normalized}` : normalized;
+}
+
 const api = axios.create({ baseURL: API_BASE });
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("kai_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  // Let the browser set multipart boundary (axios must not force application/json).
+  if (typeof FormData !== "undefined" && config.data instanceof FormData) {
+    config.headers.delete("Content-Type");
+  }
   return config;
 });
 
@@ -130,6 +141,8 @@ export interface MemoryFactOut {
 
 export interface ConversationOut {
   user_id: string;
+  display_name: string;
+  phone: string | null;
   frozen: boolean;
   last_activity_at: string | null;
   last_message_preview: string;
@@ -143,27 +156,19 @@ export interface ConversationListOut {
 
 export interface ConversationDetailOut {
   user_id: string;
+  display_name: string;
+  phone: string | null;
   frozen: boolean;
   last_activity_at: string | null;
   messages: MessageOut[];
   facts: MemoryFactOut[];
   tags: string[];
-  chatwoot_conversation_id?: string | null;
-}
-
-export interface ChatwootMetaOut {
-  configured: boolean;
-  conversation_id: string | null;
-  status: string | null;
-  labels: string[];
-}
-
-export interface ChatwootAccountLabelsOut {
-  items: Record<string, unknown>[];
 }
 
 export interface SearchHitOut {
   user_id: string;
+  display_name: string;
+  phone: string | null;
   message_id: number;
   role: string;
   snippet: string;
@@ -198,12 +203,56 @@ export interface ContactDetailOut {
   tags: string[];
 }
 
+export type WhatsAppDelivery =
+  | "live"
+  | "configured_only"
+  | "bridge_offline"
+  | "worker_disabled"
+  | "not_configured"
+  | "needs_config";
+
+export interface WhatsAppBaileysChannelOut {
+  enabled: boolean;
+  phone: string | null;
+  auth_present: boolean;
+  configured: boolean;
+  worker_live?: boolean;
+  worker_state?: string | null;
+  worker_error?: string | null;
+  delivery?: WhatsAppDelivery;
+}
+
+export interface TenantChannelsOut {
+  inbound_provider: string;
+  bridge_reachable?: boolean;
+  bridge_url?: string;
+  worker_enabled?: boolean;
+  whatsapp_baileys: WhatsAppBaileysChannelOut;
+}
+
+export interface WhatsAppWorkerTenantOut {
+  slug: string;
+  state: string;
+  phone: string | null;
+  error: string | null;
+  home: string;
+}
+
+export interface WhatsAppWorkerOut {
+  bridge_reachable: boolean;
+  bridge_url?: string;
+  worker_enabled: boolean;
+  scan_interval_ms?: number;
+  tenants: WhatsAppWorkerTenantOut[];
+  live_tenant_count: number;
+  detail: string | null;
+}
+
 export interface ReplyOut {
   ok: boolean;
   message: MessageOut;
-  chatwoot_delivered: boolean;
-  chatwoot_error: string | null;
-  chatwoot_conversation_id: string | null;
+  channel_delivered?: boolean | null;
+  channel_detail?: string | null;
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -244,6 +293,8 @@ export const tenantsApi = {
     scope_cannot_answer?: string[];
     escalation_rules?: string[];
     fallback_behavior?: string;
+    onboarding_session_id?: string | null;
+    channel_type?: "none" | "telegram" | "whatsapp_cloud" | "whatsapp_baileys";
   }) =>
     api.post<Tenant>("/tenants", data).then((r) => r.data),
 
@@ -284,6 +335,37 @@ export const tenantsApi = {
 
   acceptInvite: (token: string) =>
     api.post<Tenant>("/tenants/invites/accept", { token }).then((r) => r.data),
+
+  channels: (tenantId: string) =>
+    api
+      .get<TenantChannelsOut>(`/tenants/${tenantId}/channels`)
+      .then((r) => r.data),
+
+  whatsappWorker: () =>
+    api
+      .get<WhatsAppWorkerOut>("/tenants/whatsapp-worker")
+      .then((r) => r.data),
+
+  whatsappStart: (tenantId: string) =>
+    api
+      .post<{
+        link_id: string;
+        status: string;
+        qr_data_url: string | null;
+        phone: string | null;
+        error: string | null;
+      }>(`/tenants/${tenantId}/whatsapp/start`)
+      .then((r) => r.data),
+
+  whatsappStatus: (tenantId: string) =>
+    api
+      .get<{
+        status: string;
+        qr_data_url: string | null;
+        phone: string | null;
+        error: string | null;
+      }>(`/tenants/${tenantId}/whatsapp/status`)
+      .then((r) => r.data),
 };
 
 export interface AiAssistPatch {
@@ -296,6 +378,123 @@ export interface AiAssistApplyResult {
   ok: boolean;
   applied: Array<{ file: string; path: string; diff: string; new_content: string }>;
   summary: string;
+}
+
+export interface OnboardingDocument {
+  name: string;
+  size: number;
+}
+
+export type BootstrapProgressEvent =
+  | { type: "progress"; stage: string; percent: number; message: string }
+  | { type: "done"; percent: number; summary: string; applied?: unknown[] }
+  | { type: "error"; message: string };
+
+export const onboardingApi = {
+  createSession: () =>
+    api.post<{ session_id: string }>("/tenants/onboarding/sessions").then((r) => r.data),
+
+  listDocuments: (sessionId: string) =>
+    api
+      .get<{ documents: OnboardingDocument[] }>(`/tenants/onboarding/sessions/${sessionId}/documents`)
+      .then((r) => r.data.documents),
+
+  uploadDocuments: async (sessionId: string, files: File[]): Promise<OnboardingDocument[]> => {
+    if (!files.length) {
+      throw new Error("No files selected.");
+    }
+    const path = `/tenants/onboarding/sessions/${sessionId}/documents`;
+    const token = localStorage.getItem("kai_token");
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+
+    let documents: OnboardingDocument[] = [];
+    for (const f of files) {
+      const name = (f.name || "").trim() || `upload-${Date.now()}.txt`;
+      const fd = new FormData();
+      fd.append("file", f, name);
+
+      const res = await fetch(apiUrl(path), { method: "POST", headers, body: fd });
+      const body = (await res.json().catch(() => null)) as { documents?: OnboardingDocument[]; detail?: string } | null;
+      if (!res.ok) {
+        const detail = typeof body?.detail === "string" ? body.detail : `Upload failed (${res.status})`;
+        throw new Error(detail);
+      }
+      if (!Array.isArray(body?.documents) || body.documents.length === 0) {
+        throw new Error(
+          `Upload for "${name}" did not save. Use a .txt, .md, or .pdf file and stay on this page until the filename appears below.`,
+        );
+      }
+      documents = body.documents;
+    }
+    return documents;
+  },
+
+  whatsappStart: (sessionId: string) =>
+    api
+      .post<{
+        link_id: string;
+        status: string;
+        qr_data_url: string | null;
+        phone: string | null;
+        error: string | null;
+      }>(`/tenants/onboarding/sessions/${sessionId}/whatsapp/start`)
+      .then((r) => r.data),
+
+  whatsappStatus: (sessionId: string) =>
+    api
+      .get<{
+        status: string;
+        qr_data_url: string | null;
+        phone: string | null;
+        error: string | null;
+      }>(`/tenants/onboarding/sessions/${sessionId}/whatsapp/status`)
+      .then((r) => r.data),
+
+  bootstrap: (tenantId: string, questionnaire: Record<string, unknown>): Promise<Response> =>
+    fetch(apiUrl(`/tenants/onboarding/${tenantId}/bootstrap`), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("kai_token") ?? ""}`,
+      },
+      body: JSON.stringify({ questionnaire }),
+    }),
+};
+
+export async function consumeBootstrapStream(
+  response: Response,
+  onEvent: (evt: BootstrapProgressEvent) => void,
+): Promise<void> {
+  if (!response.ok || !response.body) {
+    let detail = "";
+    try {
+      detail = await response.text();
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail || `Bootstrap failed (${response.status})`);
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const payload = line.slice(6).trim();
+      if (!payload) continue;
+      try {
+        onEvent(JSON.parse(payload) as BootstrapProgressEvent);
+      } catch {
+        /* ignore malformed */
+      }
+    }
+  }
 }
 
 export const aiAssistApi = {
@@ -350,39 +549,31 @@ export const inboxApi = {
       .post<ReplyOut>(`/tenants/${tenantId}/inbox/conversations/${encSeg(userId)}/reply`, { text })
       .then((r) => r.data),
 
-  chatwootMeta: (tenantId: string, userId: string) =>
-    api.get<ChatwootMetaOut>(`/tenants/${tenantId}/inbox/conversations/${encSeg(userId)}/chatwoot`).then((r) => r.data),
-
-  chatwootAccountLabels: (tenantId: string) =>
-    api.get<ChatwootAccountLabelsOut>(`/tenants/${tenantId}/inbox/chatwoot/account-labels`).then((r) => r.data),
-
-  chatwootSetStatus: (tenantId: string, userId: string, body: { status: string; snoozed_until?: number | null }) =>
+  deleteConversation: (tenantId: string, userId: string) =>
     api
-      .post<{ ok: boolean }>(`/tenants/${tenantId}/inbox/conversations/${encSeg(userId)}/chatwoot/status`, body)
+      .delete<{ ok: boolean; user_id: string }>(
+        `/tenants/${tenantId}/inbox/conversations/${encSeg(userId)}`,
+      )
       .then((r) => r.data),
 
-  chatwootPrivateNote: (tenantId: string, userId: string, text: string) =>
+  resumeBot: (tenantId: string, userId: string) =>
     api
-      .post<{ ok: boolean }>(`/tenants/${tenantId}/inbox/conversations/${encSeg(userId)}/chatwoot/private-note`, {
-        text,
-      })
+      .post<{ ok: boolean; user_id: string; frozen: boolean; message?: string; already_active?: boolean }>(
+        `/tenants/${tenantId}/inbox/conversations/${encSeg(userId)}/resume-bot`,
+      )
       .then((r) => r.data),
 
-  chatwootSetLabels: (tenantId: string, userId: string, labels: string[]) =>
+  handoverBot: (tenantId: string, userId: string) =>
     api
-      .put<{ ok: boolean; labels: string[] }>(`/tenants/${tenantId}/inbox/conversations/${encSeg(userId)}/chatwoot/labels`, {
-        labels,
-      })
-      .then((r) => r.data),
-
-  chatwootHandover: (tenantId: string, userId: string) =>
-    api
-      .post<{ ok: boolean }>(`/tenants/${tenantId}/inbox/conversations/${encSeg(userId)}/chatwoot/handover`)
-      .then((r) => r.data),
-
-  chatwootResumeBot: (tenantId: string, userId: string) =>
-    api
-      .post<{ ok: boolean }>(`/tenants/${tenantId}/inbox/conversations/${encSeg(userId)}/chatwoot/resume-bot`)
+      .post<{
+        ok: boolean;
+        user_id: string;
+        frozen: boolean;
+        message?: string | null;
+        already_in_handover?: boolean;
+        channel_delivered?: boolean | null;
+        channel_detail?: string | null;
+      }>(`/tenants/${tenantId}/inbox/conversations/${encSeg(userId)}/handover-bot`)
       .then((r) => r.data),
 };
 

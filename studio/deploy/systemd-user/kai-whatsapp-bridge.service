@@ -1,0 +1,20 @@
+[Unit]
+Description=Kai Studio WhatsApp bridge (QR linking + multi-tenant message worker)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/workspace/kai/studio/whatsapp-bridge
+EnvironmentFile=-%h/.config/kai/whatsapp-bridge.env
+# Fail fast if deps missing (run install.sh first).
+ExecStartPre=/usr/bin/test -f %h/workspace/kai/studio/whatsapp-bridge/node_modules/@whiskeysockets/baileys/package.json
+# NODE_BIN from EnvironmentFile (Node 20+ required; see install.sh)
+ExecStart=/bin/bash -c 'exec "${NODE_BIN:?Set NODE_BIN in whatsapp-bridge.env}" server.mjs'
+Restart=on-failure
+RestartSec=8
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

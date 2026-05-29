@@ -91,7 +91,7 @@ def _write_extra_artifacts(
         {
             "trigger": "low_confidence_or_unsafe",
             "action": "handover_human",
-            "notes": "Preserve chatwoot handover semantics.",
+            "notes": "Preserve human handover semantics.",
         }
     )
     for wf in parsed.get("workflows", []):

@@ -143,3 +143,101 @@ def match_vehicle_catalog(
             best_score = score
             best = row
     return best
+
+
+def is_catalog_list_query(text: str) -> bool:
+    from kai.support_runtime.vehicle_intent import is_catalog_list_query as _is_list
+
+    return _is_list(text)
+
+
+def format_catalog_list_text(vehicles: list[dict[str, Any]]) -> str:
+    names: list[str] = []
+    for row in vehicles:
+        name = str(row.get("name") or "").strip()
+        years = sorted(row.get("years") or [])
+        if not name:
+            continue
+        if years:
+            names.append(f"{name} ({years[0]}-{years[-1]})")
+        else:
+            names.append(name)
+    names = sorted(set(names))
+    if not names:
+        return "Official Kommu supported-vehicle catalog is empty."
+    preview = ", ".join(names[:35])
+    suffix = f" …and {len(names) - 35} more" if len(names) > 35 else ""
+    return (
+        f"Official Kommu supported vehicles ({len(names)} models): {preview}{suffix}. "
+        "Ask about a specific brand/model/year for a yes/no check."
+    )
+
+
+def catalog_list_result(
+    *,
+    vehicles_json_url: str = "",
+    timeout: int = 8,
+) -> dict[str, Any] | None:
+    """Structured tool result when the user asks for the full supported-vehicle list."""
+    vehicles = _load_vehicle_catalog(vehicles_json_url, timeout)
+    if not vehicles:
+        return None
+    return {
+        "ok": True,
+        "catalog_list": True,
+        "catalog_vehicle_count": len(vehicles),
+        "results": [{"text": format_catalog_list_text(vehicles), "score": 1.0, "official_match": True}],
+    }
+
+
+def catalog_miss_detail(
+    query: str,
+    *,
+    vehicles_json_url: str = "",
+    timeout: int = 8,
+) -> dict[str, Any] | None:
+    """When the official JSON catalog loaded but this query is not listed."""
+    vehicles = _load_vehicle_catalog(vehicles_json_url, timeout)
+    if not vehicles:
+        return None
+    if match_vehicle_catalog(query, vehicles_json_url=vehicles_json_url, timeout=timeout):
+        return None
+
+    q = _normalize_vehicle_query(query)
+    tokens = [
+        t
+        for t in re.split(r"[^a-z0-9]+", q)
+        if len(t) >= 2 and t not in _VEHICLE_QUERY_STOPWORDS
+    ]
+    listed_same_brand: list[str] = []
+    if tokens:
+        brand = tokens[0]
+        for row in vehicles:
+            name = str(row.get("name") or "")
+            words: set[str] = row.get("search_words") or set()
+            if brand in words or brand in name.lower():
+                listed_same_brand.append(name)
+        listed_same_brand = sorted(set(listed_same_brand))
+
+    return {
+        "query": (query or "").strip(),
+        "catalog_checked": True,
+        "on_official_list": False,
+        "listed_same_brand": listed_same_brand,
+        "catalog_vehicle_count": len(vehicles),
+    }
+
+
+def format_catalog_miss_text(detail: dict[str, Any]) -> str:
+    q = str(detail.get("query") or "This vehicle").strip()
+    same = detail.get("listed_same_brand") or []
+    if same:
+        return (
+            f"{q} is **not** on the official Kommu supported-vehicle list. "
+            f"Listed models for that brand: {', '.join(same)}."
+        )
+    count = int(detail.get("catalog_vehicle_count") or 0)
+    return (
+        f"{q} is **not** on the official Kommu supported-vehicle list "
+        f"({count} supported vehicles in catalog)."
+    )

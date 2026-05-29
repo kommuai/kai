@@ -75,8 +75,13 @@ def validate_workspace(*, compile_kb: bool = True, ping_llm: bool = False) -> li
         if entry.plugin:
             from kai.tools_plugins.runner import resolve_plugin_script
 
-            if resolve_plugin_script(entry.plugin, entry.params):
+            script = resolve_plugin_script(entry.plugin, entry.params)
+            if script:
                 issues.append(ValidationIssue("ok", "plugin_script", f"Plugin {entry.plugin} script found"))
+                from kai.tools_plugins.contract import validate_plugin_file
+
+                for err in validate_plugin_file(script, plugin_id=entry.plugin):
+                    issues.append(ValidationIssue("error", "plugin_contract", err))
             else:
                 issues.append(
                     ValidationIssue(

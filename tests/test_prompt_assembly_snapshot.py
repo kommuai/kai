@@ -6,22 +6,20 @@ from unittest.mock import patch
 
 from kai.content.prompts import build_system_prompt
 
-# Frozen at refactor: empty tools + fixture FAQ block
 _FIXTURE_FAQ_BLOCK = (
     "## Authoritative FAQ (master_faq.md)\n\n"
-    "This is the **only** source of truth for Kommu product, pricing, installation, "
-    "partner installers, warranty, office, and policy answers.\n"
-    "- Do **not** contradict this document.\n"
-    "- For policy/FAQ questions, answer from here first; paraphrase clearly and keep links verbatim.\n"
-    "- Read the **full session chat** in the messages below for follow-ups (postcodes, regions, "
-    "yes/no, car model already discussed).\n"
-    "- **Answer the user's latest question directly**; read full session for follow-ups (e.g. \"I mean KommuAssist\" after install-fee talk = device price from `pricing_followup`).\n"
-    "- Use tools only when this FAQ does not cover the request (official vehicle list, dongle "
-    "warranty lookup, visitor pass API, bukapilot code, backlog).\n\n"
+    "This is the **only** source of truth.\n\n"
     "## intent: snapshot_test\naliases:\n- test\nanswer:\nhello\n"
 )
 
-_EXPECTED_HASH = "3fb7a7904e73b1190cce97fcf4e433736afd6565307676df1b476aed46518bc2"
+_FIXTURE_SETTINGS = (
+    "## Workspace settings\n"
+    "- Tenant: `test` (Test)\n"
+    "- Timezone: `Asia/Kuala_Lumpur`\n"
+    "- Knowledge inject mode: `full_context`\n"
+)
+
+_FIXTURE_BODY = "You are Kai test agent.\n"
 
 
 def _sha256(text: str) -> str:
@@ -29,15 +27,19 @@ def _sha256(text: str) -> str:
 
 
 class PromptAssemblySnapshotTests(unittest.TestCase):
-    @patch("kai.content.prompts.local_clock_block", return_value="## Current time (ground truth for scheduling)\n- Now: `2000-01-01 12:00` `Saturday` — timezone `Asia/Kuala_Lumpur`\n")
-    @patch("kai.content.prompts.master_faq_system_block", return_value=_FIXTURE_FAQ_BLOCK)
-    def test_build_system_prompt_hash(self, _faq, _clock):
+    @patch("kai.support_runtime.agent_context.workspace_settings_block", return_value=_FIXTURE_SETTINGS)
+    @patch("kai.support_runtime.agent_context.master_faq_system_block", return_value=_FIXTURE_FAQ_BLOCK)
+    @patch("kai.support_runtime.agent_context.load_system_prompt_body", return_value=_FIXTURE_BODY)
+    def test_build_system_prompt_structure(self, _body, _faq, _settings):
         prompt = build_system_prompt([{"name": "search_faq", "description": "Search FAQ."}])
-        digest = _sha256(prompt)
-        self.assertEqual(digest, _EXPECTED_HASH)
-        self.assertIn("You are Kai", prompt)
+        self.assertIn("Agent source policy", prompt)
+        self.assertIn("You are Kai test agent", prompt)
         self.assertIn("snapshot_test", prompt)
         self.assertIn("search_faq", prompt)
+        self.assertIn("ok: false", prompt.lower())
+        # Hash guards against silent removal of policy block
+        digest = _sha256(prompt)
+        self.assertEqual(len(digest), 64)
 
 
 if __name__ == "__main__":

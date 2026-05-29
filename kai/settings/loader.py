@@ -104,15 +104,6 @@ class Settings:
     kai_reranker_backend: str = "provider"
     kai_guardrails_enabled: bool = False
 
-    # Chatwoot
-    kai_chatwoot_api_base: str = ""
-    kai_chatwoot_api_token: str = ""
-    kai_chatwoot_account_id: str = ""
-    kai_chatwoot_enforce_live_handover: bool = False
-    kai_chatwoot_bot_enabled: bool = False
-    kai_chatwoot_webhook_secret: str = ""
-    kai_chatwoot_inbox_ids: tuple[int, ...] = ()
-
     # SOP
     kai_sop_writeback_enabled: bool = False
     kai_sop_merge_sync_enabled: bool = False
@@ -295,13 +286,6 @@ def load_settings() -> Settings:
         kai_qdrant_collection=_env("KAI_QDRANT_COLLECTION", "kai_support"),
         kai_reranker_backend=_env("KAI_RERANKER_BACKEND", "provider"),
         kai_guardrails_enabled=_env_bool("KAI_GUARDRAILS_ENABLED"),
-        kai_chatwoot_api_base=_env("KAI_CHATWOOT_API_BASE"),
-        kai_chatwoot_api_token=_env("KAI_CHATWOOT_API_TOKEN"),
-        kai_chatwoot_account_id=_env("KAI_CHATWOOT_ACCOUNT_ID"),
-        kai_chatwoot_enforce_live_handover=_env_bool("KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER"),
-        kai_chatwoot_bot_enabled=_env_bool("KAI_CHATWOOT_BOT_ENABLED"),
-        kai_chatwoot_webhook_secret=_env("KAI_CHATWOOT_WEBHOOK_SECRET"),
-        kai_chatwoot_inbox_ids=_env_int_list("KAI_CHATWOOT_INBOX_IDS"),
         kai_sop_writeback_enabled=_env_bool("KAI_SOP_WRITEBACK_ENABLED"),
         kai_sop_merge_sync_enabled=_env_bool("KAI_SOP_MERGE_SYNC_ENABLED"),
         kai_sop_merge_sync_hour=_env_int("KAI_SOP_MERGE_SYNC_HOUR", 8),

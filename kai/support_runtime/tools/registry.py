@@ -8,6 +8,7 @@ from typing import Any, Callable
 from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
 from kai.support_runtime.tools.catalog import builtin_catalog, resolve_builtin_id
 from kai.support_runtime.tools.handlers import ToolHandlers
+from kai.tools_plugins.contract import normalize_tool_result
 from kai.tools_plugins.runner import run_plugin_tool
 
 
@@ -35,16 +36,20 @@ class AgentToolRegistry:
     def list_schemas(self) -> list[dict[str, Any]]:
         return [{"name": t.name, "description": t.description, "schema": t.schema} for t in self._tools.values()]
 
+    def has_tool(self, name: str) -> bool:
+        return name in self._tools
+
     def call(self, name: str, args: dict[str, Any]) -> dict[str, Any]:
         tool = self._tools.get(name)
         if not tool:
             return {"ok": False, "error": f"unknown_tool:{name}"}
         try:
-            return tool.handler(**(args or {}))
+            raw = tool.handler(**(args or {}))
+            return normalize_tool_result(raw if isinstance(raw, dict) else {"ok": False, "error": "invalid_tool_result"})
         except TypeError as exc:
-            return {"ok": False, "error": f"invalid_args:{exc}"}
+            return normalize_tool_result({"ok": False, "error": f"invalid_args:{exc}"})
         except Exception as exc:  # noqa: BLE001
-            return {"ok": False, "error": f"tool_failed:{exc}"}
+            return normalize_tool_result({"ok": False, "error": f"tool_failed:{exc}"})
 
     def _register(self, tool: ToolDef) -> None:
         self._tools[tool.name] = tool
@@ -94,11 +99,13 @@ class AgentToolRegistry:
             handler = getattr(self._handlers, spec.handler_name, None)
             if not callable(handler):
                 continue
+            yaml_schema = entry.params.get("schema") if isinstance(entry.params.get("schema"), dict) else None
+            schema = yaml_schema if yaml_schema else spec.schema
             self._register(
                 ToolDef(
                     name=entry.id,
                     description=entry.description or spec.description,
-                    schema=spec.schema,
+                    schema=schema,
                     handler=handler,
                 )
             )

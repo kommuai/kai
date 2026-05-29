@@ -34,6 +34,13 @@ from sqlalchemy import create_engine, text  # noqa: E402
 DB_DIR = Path(os.getenv("KAI_ADMIN_DB_DIR", _BACKEND / "data"))
 DB_PATH = DB_DIR / "admin.db"
 
+TENANT_DESCRIPTIONS: dict[str, str] = {
+    "kommu": (
+        "Kommu — a Malaysian company that makes KommuAssist, an advanced driving assistance system "
+        "(ADAS aftermarket device) based on openpilot / bukapilot."
+    ),
+}
+
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -131,16 +138,19 @@ def seed(
                 text("SELECT id FROM tenants WHERE slug = :s"),
                 {"s": slug},
             ).fetchone()
+            desc = TENANT_DESCRIPTIONS.get(slug, "")
             if existing:
                 tid = existing[0]
                 conn.execute(
                     text(
                         """
-                        UPDATE tenants SET owner_id = :uid, workspace_home = :home, updated_at = :now
+                        UPDATE tenants SET owner_id = :uid, workspace_home = :home,
+                        description = CASE WHEN :desc != '' THEN :desc ELSE description END,
+                        updated_at = :now
                         WHERE id = :tid
                         """
                     ),
-                    {"uid": user_id, "home": str(path), "tid": tid, "now": now},
+                    {"uid": user_id, "home": str(path), "tid": tid, "now": now, "desc": desc},
                 )
                 print(f"Updated tenant slug={slug}")
             else:
@@ -150,7 +160,7 @@ def seed(
                     text(
                         """
                         INSERT INTO tenants (id, owner_id, slug, display_name, description, workspace_home, created_at, updated_at)
-                        VALUES (:id, :uid, :slug, :dn, '', :home, :now, :now)
+                        VALUES (:id, :uid, :slug, :dn, :desc, :home, :now, :now)
                         """
                     ),
                     {
@@ -158,6 +168,7 @@ def seed(
                         "uid": user_id,
                         "slug": slug,
                         "dn": display,
+                        "desc": desc,
                         "home": str(path),
                         "now": now,
                     },

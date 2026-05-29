@@ -55,10 +55,6 @@ python3 tools/merge_learn_queue.py --list
 python3 tools/merge_learn_queue.py --apply <proposal_id> --compile
 ```
 
-## Chatwoot (direct Agent Bot)
-
-Production can use Chatwoot Agent Bot → Kai `/webhooks/chatwoot` instead of n8n. See [CHATWOOT.md](CHATWOOT.md) for env vars and cutover steps.
-
 ## Install / porting
 
 See [INSTALL.md](INSTALL.md) and [PORTING.md](PORTING.md).

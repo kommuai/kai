@@ -60,6 +60,23 @@ class TenantCreate(BaseModel):
     scope_cannot_answer: list[str] = []
     escalation_rules: list[str] = []
     fallback_behavior: Optional[str] = "escalate_if_unsure"
+    onboarding_session_id: Optional[str] = None
+    channel_type: Optional[str] = "none"
+
+    @field_validator("channel_type")
+    @classmethod
+    def channel_type_valid(cls, v: Optional[str]) -> str:
+        vv = (v or "none").strip().lower()
+        allowed = {"none", "telegram", "whatsapp_cloud", "whatsapp_baileys"}
+        if vv not in allowed:
+            raise ValueError(f"channel_type must be one of: {', '.join(sorted(allowed))}")
+        return vv
+
+    @field_validator("onboarding_session_id")
+    @classmethod
+    def trim_session_id(cls, v: Optional[str]) -> Optional[str]:
+        s = (v or "").strip()
+        return s or None
 
     @field_validator("personality")
     @classmethod
@@ -230,6 +247,8 @@ class MemoryFactOut(BaseModel):
 
 class ConversationOut(BaseModel):
     user_id: str
+    display_name: str = ""
+    phone: Optional[str] = None
     frozen: bool
     last_activity_at: Optional[str] = None
     last_message_preview: str
@@ -243,58 +262,19 @@ class ConversationListOut(BaseModel):
 
 class ConversationDetailOut(BaseModel):
     user_id: str
+    display_name: str = ""
+    phone: Optional[str] = None
     frozen: bool
     last_activity_at: Optional[str] = None
     messages: list[MessageOut]
     facts: list[MemoryFactOut]
     tags: list[str]
-    chatwoot_conversation_id: Optional[str] = None
-
-
-class ChatwootMetaOut(BaseModel):
-    configured: bool
-    conversation_id: Optional[str] = None
-    status: Optional[str] = None
-    labels: list[str] = []
-
-
-class ChatwootStatusBody(BaseModel):
-    status: str
-    snoozed_until: Optional[int] = None
-
-    @field_validator("status")
-    @classmethod
-    def status_ok(cls, v: str) -> str:
-        s = (v or "").strip().lower()
-        if s not in ("open", "resolved", "pending", "snoozed"):
-            raise ValueError("status must be open, resolved, pending, or snoozed")
-        return s
-
-
-class ChatwootPrivateNoteBody(BaseModel):
-    text: str
-
-    @field_validator("text")
-    @classmethod
-    def note_nonempty(cls, v: str) -> str:
-        t = (v or "").strip()
-        if len(t) < 1:
-            raise ValueError("Note cannot be empty")
-        if len(t) > 8000:
-            raise ValueError("Note too long")
-        return t
-
-
-class ChatwootLabelsBody(BaseModel):
-    labels: list[str]
-
-
-class ChatwootAccountLabelsOut(BaseModel):
-    items: list[dict[str, Any]]
 
 
 class SearchHitOut(BaseModel):
     user_id: str
+    display_name: str = ""
+    phone: Optional[str] = None
     message_id: int
     role: str
     snippet: str
@@ -361,6 +341,28 @@ class ReplyCreate(BaseModel):
 class ReplyOut(BaseModel):
     ok: bool
     message: MessageOut
-    chatwoot_delivered: bool = False
-    chatwoot_error: Optional[str] = None
-    chatwoot_conversation_id: Optional[str] = None
+    channel_delivered: bool | None = None
+    channel_detail: str | None = None
+
+
+class DeleteConversationOut(BaseModel):
+    ok: bool = True
+    user_id: str
+
+
+class ResumeBotOut(BaseModel):
+    ok: bool = True
+    user_id: str
+    frozen: bool = False
+    message: str | None = None
+    already_active: bool = False
+
+
+class HandoverBotOut(BaseModel):
+    ok: bool = True
+    user_id: str
+    frozen: bool = True
+    message: str | None = None
+    already_in_handover: bool = False
+    channel_delivered: bool | None = None
+    channel_detail: str | None = None

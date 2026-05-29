@@ -4,16 +4,23 @@ import {
   Plus,
   Building2,
   ChevronRight,
-  Globe,
   Clock,
-  MessageSquare,
+  Radio,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import clsx from "clsx";
 import Spinner from "../components/Spinner";
-import { tenantsApi, type Tenant } from "../lib/api";
+import WhatsAppWorkerBanner from "../components/WhatsAppWorkerBanner";
+import { tenantsApi, type Tenant, type WhatsAppWorkerTenantOut } from "../lib/api";
 import { useAuthStore } from "../lib/auth";
 
-function TenantCard({ tenant }: { tenant: Tenant }) {
+function TenantCard({
+  tenant,
+  workerRow,
+}: {
+  tenant: Tenant;
+  workerRow?: WhatsAppWorkerTenantOut;
+}) {
   const initials = tenant.display_name
     .split(" ")
     .slice(0, 2)
@@ -41,7 +48,14 @@ function TenantCard({ tenant }: { tenant: Tenant }) {
         >
           {initials}
         </div>
-        <span className="badge-purple">{tenant.slug}</span>
+        <div className="flex flex-col items-end gap-1">
+          <span className="badge-purple">{tenant.slug}</span>
+          {workerRow?.state === "connected" && (
+            <span className="text-[10px] font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+              WA live
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="flex-1">
@@ -89,6 +103,12 @@ export default function DashboardPage() {
     queryFn: tenantsApi.list,
   });
 
+  const { data: worker } = useQuery({
+    queryKey: ["whatsapp-worker"],
+    queryFn: () => tenantsApi.whatsappWorker(),
+    refetchInterval: 20_000,
+  });
+
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const firstName = user?.name?.split(" ")[0] || user?.email?.split("@")[0] || "there";
@@ -105,21 +125,37 @@ export default function DashboardPage() {
         </p>
       </div>
 
+      <WhatsAppWorkerBanner />
+
       {/* ── Stats row ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        {[
-          { label: "Tenants", value: tenants?.length ?? "—", icon: <Building2 size={20} />, color: "text-brand-600 bg-brand-50" },
-          { label: "Languages", value: "EN / BM", icon: <Globe size={20} />, color: "text-emerald-600 bg-emerald-50" },
-          { label: "Platform", value: "WhatsApp +", icon: <MessageSquare size={20} />, color: "text-orange-600 bg-orange-50" },
-        ].map(({ label, value, icon, color }) => (
-          <div key={label} className="card p-4 flex items-center gap-4">
-            <div className={`rounded-xl p-2.5 ${color}`}>{icon}</div>
-            <div>
-              <div className="text-2xl font-bold text-gray-900">{value}</div>
-              <div className="text-xs text-gray-500">{label}</div>
-            </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 sm:max-w-xl gap-4">
+        <div className="card p-4 flex items-center gap-4">
+          <div className="rounded-xl p-2.5 text-brand-600 bg-brand-50">
+            <Building2 size={20} />
           </div>
-        ))}
+          <div>
+            <div className="text-2xl font-bold text-gray-900">{tenants?.length ?? "—"}</div>
+            <div className="text-xs text-gray-500">Tenants</div>
+          </div>
+        </div>
+        <div className="card p-4 flex items-center gap-4">
+          <div
+            className={clsx(
+              "rounded-xl p-2.5",
+              worker?.bridge_reachable && (worker?.live_tenant_count ?? 0) > 0
+                ? "text-emerald-600 bg-emerald-50"
+                : "text-gray-500 bg-gray-100",
+            )}
+          >
+            <Radio size={20} />
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-gray-900">
+              {worker?.bridge_reachable ? (worker.live_tenant_count ?? 0) : "—"}
+            </div>
+            <div className="text-xs text-gray-500">WhatsApp live</div>
+          </div>
+        </div>
       </div>
 
       {/* ── Tenant grid ── */}
@@ -135,7 +171,11 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {tenants.map((t) => (
-              <TenantCard key={t.id} tenant={t} />
+              <TenantCard
+                key={t.id}
+                tenant={t}
+                workerRow={worker?.tenants?.find((w) => w.slug === t.slug)}
+              />
             ))}
             <Link
               to="/tenants/new"

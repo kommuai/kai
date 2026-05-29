@@ -92,8 +92,6 @@ def cmd_message(args: argparse.Namespace) -> int:
         "phone_number": args.phone,
         "content": args.text,
     }
-    if args.cw_id:
-        payload["conversation_id"] = args.cw_id
     if args.debug:
         payload["debug_route_agent"] = True
     path = "/v2/agent/message" if args.v2 else "/agent/message"
@@ -176,7 +174,6 @@ def cmd_chat(args: argparse.Namespace) -> int:
             base=args.base,
             phone=args.phone,
             text=line,
-            cw_id=args.cw_id,
             debug=args.debug,
             v2=True,
             json=show_json,
@@ -227,7 +224,6 @@ def build_parser() -> argparse.ArgumentParser:
     _add_common(p_msg)
     p_msg.add_argument("text", help="User message content")
     p_msg.add_argument("--phone", default=DEFAULT_PHONE, help="phone_number / session id")
-    p_msg.add_argument("--cw-id", default="", help="Chatwoot conversation_id in payload")
     p_msg.add_argument("--debug", action="store_true", help="Set debug_route_agent=true")
     p_msg.add_argument("--legacy-path", action="store_true", help="Use POST /agent/message instead of /v2")
     p_msg.set_defaults(func=cmd_message, v2=True)
@@ -241,7 +237,6 @@ def build_parser() -> argparse.ArgumentParser:
     p_chat = sub.add_parser("chat", help="Interactive multi-turn session")
     _add_common(p_chat)
     p_chat.add_argument("--phone", default=DEFAULT_PHONE)
-    p_chat.add_argument("--cw-id", default="")
     p_chat.add_argument("--debug", action="store_true")
     p_chat.set_defaults(func=cmd_chat)
 

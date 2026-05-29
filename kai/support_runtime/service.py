@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict
 from typing import TYPE_CHECKING
 
-from kai.content.prompts import build_system_prompt
+from kai.support_runtime.agent_context import assert_prompt_sources_only, build_agent_system_prompt
 from kai.lib.session_state import (
     add_message_to_history,
     ensure_active_session,
@@ -29,7 +29,8 @@ class SupportRuntimeService:
         self._retriever: HybridRetriever | None = None
         self._reranker: SimpleReranker | None = None
         self.agent_tools: AgentToolRegistry | None = None
-        self.graph: ReActAgentLoop | None = None
+        self.agent_loop: ReActAgentLoop | None = None
+        self.graph: ReActAgentLoop | None = None  # back-compat alias
 
     def _ensure_stack(self) -> None:
         if self._provider is not None:
@@ -62,9 +63,10 @@ class SupportRuntimeService:
         deps = AgentLoopDependencies(
             provider=self.provider,
             tools=self.agent_tools,
-            system_prompt=build_system_prompt(self.agent_tools.list_schemas()),
+            system_prompt=build_agent_system_prompt(self.agent_tools.list_schemas()),
         )
-        self.graph = ReActAgentLoop(deps)
+        self.agent_loop = ReActAgentLoop(deps)
+        self.graph = self.agent_loop
 
     def startup(self, *, compile_kb: bool = True, warm_warranty: bool = False) -> dict:
         counts = {"intents": 0, "chunks": 0}
@@ -80,6 +82,7 @@ class SupportRuntimeService:
                 pass
         self._ensure_stack()
         self.retriever.load()
+        assert_prompt_sources_only()
         self._rebuild_agent_loop()
         return counts
 
@@ -89,10 +92,10 @@ class SupportRuntimeService:
         return self.startup(compile_kb=True, warm_warranty=needs_warranty_cache())
 
     def execute(self, text: str, lang: str = "EN", user_id: str = "") -> RuntimeResult:
-        if not self.graph:
+        if not self.agent_loop:
             self.startup()
-        assert self.graph is not None and self.agent_tools is not None
-        self.graph.deps.system_prompt = build_system_prompt(self.agent_tools.list_schemas())
+        assert self.agent_loop is not None and self.agent_tools is not None
+        self.agent_loop.deps.system_prompt = build_agent_system_prompt(self.agent_tools.list_schemas())
 
         if user_id:
             ensure_active_session(user_id)
@@ -103,7 +106,7 @@ class SupportRuntimeService:
 
         self.agent_tools.set_context(user_id=user_id)
 
-        state = self.graph.run(
+        state = self.agent_loop.run(
             text=text,
             lang=lang,
             user_id=user_id,

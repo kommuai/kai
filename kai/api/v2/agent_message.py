@@ -13,13 +13,8 @@ from kai.engine.refresh import refresh_runtime_knowledge
 from kai.settings import get_settings
 
 from kai.lib.lang_detect import is_malay
-from kai.services.chatwoot_handover import (
-    enforce_live_agent_handover,
-)
 from kai.services.container import kai_service, support_runtime_service
-from kai.lib.session_state import freeze
-from kai.support_runtime.agent_loop import _looks_like_chitchat
-from kai.support_runtime.faq_grounding import apply_grounding_footnote_if_needed
+from kai.support_runtime.gateway import run_support_turn
 
 log = logging.getLogger("kai.v2")
 router = APIRouter()
@@ -116,25 +111,6 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
 
     metrics_inc("agent_message.requests")
     s = get_settings()
-    pre = kai_service.pre_router(data)
-    if pre is not None:
-        if pre.get("type") == "handover" and bool(s.kai_chatwoot_enforce_live_handover):
-            applied, handover_error = enforce_live_agent_handover(data)
-            pre = dict(pre)
-            if applied:
-                pre["handover_applied"] = True
-            else:
-                pre = {
-                    "type": "handover_failed",
-                    "message": (
-                        "Live-agent handover was requested but could not be completed. "
-                        "Please retry or contact support."
-                    ),
-                    "next_state": "human",
-                    "handover_applied": False,
-                    "handover_error": handover_error,
-                }
-        return _merge_trace(pre, trace_id=trace_id, mode=mode, capability_used="pre_router", start=start)
 
     try:
         from kai.workspace.admin_config import get_admin_config
@@ -145,10 +121,16 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
         _is_admin = False
 
     try:
-        result = support_runtime_service.execute(text=text, lang=lang, user_id=user_id)
+        outcome = run_support_turn(
+            user_id=user_id,
+            text=text,
+            lang=lang,
+            use_pre_router=True,
+            apply_grounding=True,
+        )
     except Exception:
         metrics_inc("agent_message.runtime_errors")
-        log.exception("support_runtime.execute failed trace_id=%s user_id=%s", trace_id, user_id)
+        log.exception("support_runtime gateway failed trace_id=%s user_id=%s", trace_id, user_id)
         payload = {
             "type": "reply",
             "message": _SAFE_ERROR_REPLY,
@@ -164,6 +146,20 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
             start=start,
             fallback_reason="runtime_exception",
         )
+
+    if outcome.pre_router is not None and outcome.runtime is None:
+        return _merge_trace(
+            outcome.pre_router,
+            trace_id=trace_id,
+            mode=mode,
+            capability_used="pre_router",
+            start=start,
+        )
+
+    result = outcome.runtime
+    if result is None:
+        payload = {"type": outcome.kind, "message": outcome.message, "next_state": outcome.next_state}
+        return _merge_trace(payload, trace_id=trace_id, mode=mode, capability_used="gateway", start=start)
 
     if (
         not _is_admin
@@ -189,53 +185,19 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
     debug_requested = bool(data.get("debug_route_agent"))
     include_debug = debug_env and (debug_requested and _admin_token_valid(x_admin_token))
 
-    if result.decision == "escalate_human":
+    if outcome.kind == "handover":
         metrics_inc("agent_message.escalations")
-        enforce = bool(s.kai_chatwoot_enforce_live_handover)
-        if enforce:
-            applied, handover_error = enforce_live_agent_handover(data)
-            if not applied:
-                payload = {
-                    "type": "handover_failed",
-                    "message": "Escalation requested but live-agent handover failed. Please retry immediately.",
-                    "next_state": "human",
-                    "handover_applied": False,
-                    "handover_error": handover_error,
-                }
-                return _merge_trace(
-                    payload,
-                    trace_id=trace_id,
-                    mode=mode,
-                    capability_used=result.capability_used or "support_runtime",
-                    start=start,
-                    fallback_reason=(result.fallback_reason or "escalation_handover_failed"),
-                )
-        freeze(user_id, True)
         payload = {
             "type": "handover",
-            "message": kai_service.finalize_reply(user_id, result.answer, lang, suppress=True),
+            "message": outcome.message,
             "next_state": "human",
             "handover_applied": True,
         }
     else:
-        observations = ((result.metadata or {}).get("evidence") or {}).get("observations") or []
-        answer_text = result.answer
-        if result.decision == "direct_answer":
-            answer_text = apply_grounding_footnote_if_needed(
-                answer_text,
-                user_text=text,
-                lang=lang,
-                source_ids=result.source_ids,
-                observations=observations,
-                retriever=support_runtime_service.retriever,
-                capability_used=result.capability_used or "",
-                skip_chitchat=_looks_like_chitchat(text),
-            )
-        suppress_footer = result.decision in ("direct_answer", "clarifying_question")
         payload = {
             "type": "reply",
-            "message": kai_service.finalize_reply(user_id, answer_text, lang, suppress=suppress_footer),
-            "next_state": "bot",
+            "message": outcome.message,
+            "next_state": outcome.next_state,
             "confidence": result.confidence,
             "source_ids": result.source_ids,
             "decision": result.decision,

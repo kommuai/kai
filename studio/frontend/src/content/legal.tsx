@@ -22,7 +22,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     id: "service",
     title: "2. Description of the Service",
     paragraphs: [
-      `${SERVICE_NAME} is a web-based administration console for configuring and operating AI-powered customer-support agents ("Agents") across one or more logical tenants ("Tenants"). Features may include workspace configuration, knowledge-base editing, compilation, conversation inbox views, contact management, integrations (such as Chatwoot), and related tooling.`,
+      `${SERVICE_NAME} is a web-based administration console for configuring and operating AI-powered customer-support agents ("Agents") across one or more logical tenants ("Tenants"). Features may include workspace configuration, knowledge-base editing, compilation, conversation inbox views, contact management, messaging channel setup, and related tooling.`,
       "The Service is an operator tool. It does not replace your own policies, contracts, or compliance obligations toward your end customers. Deployed Agents may interact with third-party channels (e.g. messaging platforms) under your configuration and credentials.",
     ],
   },
@@ -63,7 +63,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     id: "third-party",
     title: "7. Third-party services",
     paragraphs: [
-      "The Service may integrate with or depend on third parties (hosting, OAuth providers, Chatwoot, messaging APIs, model providers). We are not responsible for their availability, terms, or acts. Your use of those services is at your own risk and under their agreements.",
+      "The Service may integrate with or depend on third parties (hosting, OAuth providers, messaging APIs, model providers). We are not responsible for their availability, terms, or acts. Your use of those services is at your own risk and under their agreements.",
       "You are responsible for API keys, webhooks, and channel credentials you configure in Tenant workspaces.",
     ],
   },
@@ -159,7 +159,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
       "Account data: name, email address, authentication provider identifiers, password hash (for email sign-in), profile picture URL from OAuth, and account timestamps.",
       "Tenant metadata: tenant names, slugs, workspace paths, membership and invite records stored in the Studio admin database.",
       "Configuration content: files you edit in the Service (e.g. workspace.yaml, system prompts, FAQ/knowledge files) and compile outputs triggered through the Service.",
-      "Operational data: conversation and message content read from tenant session databases you configure; contact tags you create; Chatwoot metadata and actions you trigger; server logs (IP address, user agent, request paths, errors, timestamps).",
+      "Operational data: conversation and message content read from tenant session databases you configure; contact tags you create; server logs (IP address, user agent, request paths, errors, timestamps).",
       "Cookies and local storage: session tokens (e.g. JWT in browser storage) to keep you signed in.",
     ],
   },
@@ -185,7 +185,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     id: "sharing",
     title: "6. Sharing and subprocessors",
     paragraphs: [
-      "We may share data with: cloud hosting providers; OAuth providers (Google, Meta/Facebook) when you choose social login; integration partners you enable (e.g. Chatwoot); and professional advisers or authorities when required by law.",
+      "We may share data with: cloud hosting providers; OAuth providers (Google, Meta/Facebook) when you choose social login; messaging or model providers you enable; and professional advisers or authorities when required by law.",
       "Subprocessors are bound by confidentiality and data-protection obligations appropriate to their role. A list may be provided on request.",
     ],
   },

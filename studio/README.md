@@ -1,6 +1,6 @@
 # Kai Studio
 
-Web admin for multi-tenant Kai configuration: auth, tenant workspaces, Monaco editor, inbox, contacts, and Chatwoot tools.
+Web admin for multi-tenant Kai configuration: auth, tenant workspaces, Monaco editor, inbox, contacts, and channel setup (e.g. WhatsApp Baileys).
 
 Lives in the **Kai monorepo** at `studio/` (sibling to the Python engine package `kai/` and root `docker-compose.yml` for the runtime).
 
@@ -24,6 +24,25 @@ cd studio/frontend && npm install && npm run dev
 - API: http://localhost:8080  
 
 `KAI_REPO` defaults to the monorepo root (parent of `studio/`). Override in `backend/.env` if needed.
+
+## WhatsApp bridge + message worker (production)
+
+QR linking and **live inbound/outbound WhatsApp** use the Node service in `studio/whatsapp-bridge/` (includes the multi-tenant worker).
+
+**User systemd (recommended on a server):**
+
+```bash
+cd studio/deploy/systemd-user
+./install.sh
+systemctl --user start kai-whatsapp-bridge.service
+systemctl --user status kai-whatsapp-bridge.service
+```
+
+Config: `~/.config/kai/whatsapp-bridge.env` (created from `whatsapp-bridge.env.example`).
+
+Studio UI shows **WhatsApp live** vs **linked only** on Dashboard, Configuration, and Inbox. API: `GET /tenants/whatsapp-worker` and per-tenant `GET /tenants/{id}/channels`.
+
+Set `WHATSAPP_BRIDGE_URL=http://127.0.0.1:18791` in `studio/backend/.env` if the API runs in Docker but the bridge runs on the host.
 
 ## Docker (Studio only)
 

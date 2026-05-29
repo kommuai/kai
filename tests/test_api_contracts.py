@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from kai.api.v2.agent_query import agent_query, agent_search, AgentQueryRequest
 from app import app
 from fastapi import HTTPException
+from kai.support_runtime.gateway import SupportTurnOutcome
 from kai.support_runtime.models import RuntimeResult
 
 
@@ -17,13 +18,17 @@ class AgentQueryContractTests(unittest.TestCase):
         self.assertEqual(ctx.exception.status_code, 401)
 
     @patch("kai.api.v2.agent_query.authorize", return_value=True)
-    @patch("kai.api.v2.agent_query.support_runtime_service.execute")
-    def test_agent_query_escalation_returns_404(self, execute_mock, _auth):
-        execute_mock.return_value = RuntimeResult(
-            decision="escalate_human",
-            answer="Escalate",
-            confidence=0.9,
-            fallback_reason="needs_human",
+    @patch("kai.api.v2.agent_query.run_support_turn")
+    def test_agent_query_escalation_returns_404(self, gateway_mock, _auth):
+        gateway_mock.return_value = SupportTurnOutcome(
+            kind="reply",
+            message="",
+            runtime=RuntimeResult(
+                decision="escalate_human",
+                answer="Escalate",
+                confidence=0.9,
+                fallback_reason="needs_human",
+            ),
         )
         with self.assertRaises(HTTPException) as ctx:
             agent_query(AgentQueryRequest(query="hard case"), x_api_key="k")
@@ -31,14 +36,18 @@ class AgentQueryContractTests(unittest.TestCase):
         self.assertEqual(ctx.exception.detail, "needs_human")
 
     @patch("kai.api.v2.agent_query.authorize", return_value=True)
-    @patch("kai.api.v2.agent_query.support_runtime_service.execute")
-    def test_agent_search_contract(self, execute_mock, _auth):
-        execute_mock.return_value = RuntimeResult(
-            decision="direct_answer",
-            answer="ok",
-            confidence=0.88,
-            source_ids=["intent:install_booking"],
-            capability_used="canonical_answer",
+    @patch("kai.api.v2.agent_query.run_support_turn")
+    def test_agent_search_contract(self, gateway_mock, _auth):
+        gateway_mock.return_value = SupportTurnOutcome(
+            kind="reply",
+            message="ok",
+            runtime=RuntimeResult(
+                decision="direct_answer",
+                answer="ok",
+                confidence=0.88,
+                source_ids=["intent:install_booking"],
+                capability_used="canonical_answer",
+            ),
         )
         out = agent_search(AgentQueryRequest(query="can i install now"), x_api_key="k")
         self.assertIn("trace_id", out)
@@ -50,21 +59,24 @@ class AgentMessageShadowContractTests(unittest.TestCase):
     def setUp(self):
         self.client = TestClient(app)
 
-    @patch("kai.api.v2.agent_message.kai_service.pre_router", return_value=None)
-    @patch("kai.api.v2.agent_message.support_runtime_service.execute")
-    def test_v2_message_uses_support_runtime(self, execute_mock, _pre):
-        execute_mock.return_value = RuntimeResult(
-            decision="direct_answer",
-            answer="Installation is by appointment after checkout.",
-            confidence=0.9,
-            source_ids=["intent:install_booking"],
-            capability_used="canonical_answer",
+    @patch("kai.api.v2.agent_message.run_support_turn")
+    def test_v2_message_uses_support_runtime(self, gateway_mock):
+        gateway_mock.return_value = SupportTurnOutcome(
+            kind="reply",
+            message="Installation is by appointment after checkout.",
+            runtime=RuntimeResult(
+                decision="direct_answer",
+                answer="Installation is by appointment after checkout.",
+                confidence=0.9,
+                source_ids=["intent:install_booking"],
+                capability_used="canonical_answer",
+            ),
         )
         resp = self.client.post("/v2/agent/message", json={"phone_number": "u_shadow_off", "content": "install now?"})
         self.assertEqual(resp.status_code, 200)
         body = resp.json()
         self.assertEqual(body.get("type"), "reply")
-        execute_mock.assert_called_once()
+        gateway_mock.assert_called_once()
 
     @patch("kai.api.v2.agent_message._refresh_all_knowledge", return_value={"ok": True, "runtime_refresh": {"intents": 1}})
     def test_admin_refresh_sop_contract(self, refresh_mock):

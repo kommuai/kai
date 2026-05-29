@@ -33,7 +33,21 @@ export function formatApiError(err: unknown, fallback = "Something went wrong. P
   if (status === 400) return "Please check your details and try again.";
   if (status === 403) return "You do not have permission to perform this action.";
   if (status === 404) return "The requested resource was not found.";
-  if (status === 422) return "Please check the form and try again.";
+  if (status === 422) {
+    if (typeof detail === "string" && detail.trim()) return detail;
+    if (Array.isArray(detail)) {
+      const msgs = detail
+        .map((item) => {
+          if (typeof item !== "object" || !item) return "";
+          const loc = Array.isArray(item.loc) ? item.loc.join(".") : "";
+          const msg = item.msg ? String(item.msg) : "";
+          return loc && msg ? `${loc}: ${msg}` : msg;
+        })
+        .filter(Boolean);
+      if (msgs.length) return msgs.join("; ");
+    }
+    return "Please check the form and try again.";
+  }
   if (status === 503) return "Sign-in service is temporarily unavailable. Try email and password.";
   if (status >= 500) return "Server error. Please try again in a few minutes.";
 

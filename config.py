@@ -19,8 +19,6 @@ _EXPORT_NAMES: frozenset[str] = frozenset({
     "KAI_LLM_PROVIDER", "KAI_LLM_MODEL", "KAI_LLM_BASE_URL", "KAI_LLM_API_KEY",
     "KAI_QDRANT_ENABLED", "KAI_QDRANT_URL", "KAI_QDRANT_COLLECTION", "KAI_RERANKER_BACKEND",
     "KAI_GUARDRAILS_ENABLED",
-    "KAI_CHATWOOT_API_BASE", "KAI_CHATWOOT_API_TOKEN", "KAI_CHATWOOT_ACCOUNT_ID",
-    "KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER",
     "KAI_SOP_WRITEBACK_ENABLED", "KAI_SOP_MERGE_SYNC_ENABLED",
     "KAI_SOP_MERGE_SYNC_HOUR", "KAI_SOP_MERGE_SYNC_MINUTE",
     "GOOGLE_DOCS_SOP_DOC_ID",
@@ -40,7 +38,7 @@ _EXPORT_NAMES: frozenset[str] = frozenset({
 })
 
 _BOOL_EXPORTS = frozenset({
-    "KAI_QDRANT_ENABLED", "KAI_GUARDRAILS_ENABLED", "KAI_CHATWOOT_ENFORCE_LIVE_HANDOVER",
+    "KAI_QDRANT_ENABLED", "KAI_GUARDRAILS_ENABLED",
     "KAI_SOP_WRITEBACK_ENABLED", "KAI_SOP_MERGE_SYNC_ENABLED",
     "KAI_ROUTE_AGENT_DEBUG_ENABLED", "KAI_COMPILE_EXTRA_ARTIFACTS",
 })
@@ -72,9 +70,6 @@ def _export_value(name: str, s: Settings) -> Any:
     if name == "WORKSPACE_MANIFEST_PATH":
         return str(s.workspace_manifest_path)
     if name == "CONTEXT_REGISTRY_YAML":
-        legacy = s.agent_workspace / "04_context" / "context_registry.yaml"
-        if legacy.is_file():
-            return str(legacy)
         return str(s.workspace_manifest_path)
     return getattr(s, name.lower())
 

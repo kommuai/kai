@@ -4,6 +4,10 @@
 
 ## Session log
 
+### 2026-05-29 — Chatwoot removed entirely
+- Deleted `kai_chatwoot_studio.py`, inbox Chatwoot routes, ConversationPage Chatwoot panel, engine `kai/integrations/chatwoot/`.
+- Inbox/replies use `sessions.db` + WhatsApp worker only.
+
 ### 2026-05-28 — Conversation UI: remove Memory / idle Chatwoot, tags icon, mobile sheet
 
 - **Change:** `ConversationPage.tsx` — removed Memory card and Chatwoot card when not configured or no linked conversation (no empty “not configured” panel). Tags: chips + add form only after Tags icon (mobile sheet or desktop expand). Chatwoot on mobile: bottom sheet via message icon when `KAI_CHATWOOT_*` configured; desktop Chatwoot column only when a linked `conversation_id` exists. Tighter header, safe-area on composer, `min-h-0` scroll chain. `InboxPage` detail column `min-h-0`.

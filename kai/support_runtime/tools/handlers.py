@@ -86,6 +86,19 @@ class ToolHandlers:
         official_url = str(p.get("official_url") or "").strip()
         vehicles_url = str(p.get("vehicles_json_url") or p.get("vehicles_url") or "").strip()
 
+        from kai.support_runtime.tools.site_search import (
+            catalog_list_result,
+            catalog_miss_detail,
+            format_catalog_miss_text,
+            is_catalog_list_query,
+        )
+
+        if is_catalog_list_query(query):
+            listed = catalog_list_result(vehicles_json_url=vehicles_url, timeout=self._http_timeout())
+            if listed:
+                listed["source_url"] = official_url
+                return listed
+
         matched = match_vehicle_catalog(query, vehicles_json_url=vehicles_url, timeout=self._http_timeout())
         if matched:
             years = sorted(matched.get("years") or [])
@@ -98,6 +111,17 @@ class ToolHandlers:
                 "ok": True,
                 "source_url": official_url,
                 "results": [{"text": text, "score": 1.0, "official_match": True}],
+            }
+
+        miss = catalog_miss_detail(query, vehicles_json_url=vehicles_url, timeout=self._http_timeout())
+        if miss:
+            return {
+                "ok": True,
+                "source_url": official_url,
+                "official_match": False,
+                "on_official_list": False,
+                "catalog_checked": True,
+                "results": [{"text": format_catalog_miss_text(miss), "score": 1.0, "official_match": False}],
             }
 
         corpus = support_site_corpus(official_url, timeout=self._http_timeout())

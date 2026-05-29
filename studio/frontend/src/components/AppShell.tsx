@@ -16,6 +16,7 @@ import clsx from "clsx";
 import Logo from "./Logo";
 import { useAuthStore } from "../lib/auth";
 import { tenantsApi } from "../lib/api";
+import WhatsAppDeliveryBadge from "./WhatsAppDeliveryBadge";
 
 const TENANT_COLORS = [
   "from-violet-500 to-purple-600",
@@ -77,6 +78,13 @@ export default function AppShell() {
     staleTime: 60_000,
   });
 
+  const { data: channelStatus } = useQuery({
+    queryKey: ["tenant-channels", currentTenant?.id],
+    queryFn: () => tenantsApi.channels(currentTenant!.id),
+    enabled: !!currentTenant?.id,
+    refetchInterval: 20_000,
+  });
+
   function handleLogout() {
     logout();
     navigate("/login");
@@ -106,6 +114,11 @@ export default function AppShell() {
               {currentTenant?.display_name ?? tenantSlug}
             </div>
             <div className="text-[10px] font-mono text-gray-400 truncate mt-0.5">{tenantSlug}</div>
+            {channelStatus?.whatsapp_baileys && (
+              <div className="mt-1.5">
+                <WhatsAppDeliveryBadge wa={channelStatus.whatsapp_baileys} size="xs" />
+              </div>
+            )}
           </div>
         </div>
       </div>

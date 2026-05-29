@@ -9,7 +9,7 @@ Kai Studio is the operator UI for tenant workspaces. It ships inside the Kai rep
 | **Engine** | `docker compose up -d --build` (repo root) | WhatsApp/agent runtime, `KAI_HOME` volume |
 | **Studio** | `cd studio && docker compose up -d --build` | Admin UI API + static frontend |
 
-They share no container. Studio calls the engine via subprocess (`kai compile`, Chatwoot helpers) using `KAI_REPO` pointing at the monorepo root.
+They share no container. Studio calls the engine via subprocess (`kai compile`, `kai_reply`, `kai_inbound`) using `KAI_REPO` pointing at the monorepo root.
 
 ## Paths
 
@@ -54,6 +54,6 @@ studio/backend/
   main.py
   kai_paths.py          # monorepo-aware KAI_REPO default
   kai_reply.py
-  kai_chatwoot_studio.py
+  kai_inbound.py
   routers/
 ```

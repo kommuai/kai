@@ -8,6 +8,29 @@ from pathlib import Path
 from typing import Any
 
 from kai.settings import get_settings
+from kai.tools_plugins.contract import normalize_tool_result, validate_plugin_file
+
+
+def _kai_repo_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def _plugin_subprocess_env() -> dict[str, str]:
+    """Ensure tenant plugins can import the `kai` package."""
+    env = os.environ.copy()
+    repo = str(_kai_repo_root())
+    existing = env.get("PYTHONPATH", "")
+    env["PYTHONPATH"] = os.pathsep.join([repo, existing]) if existing else repo
+    return env
+
+
+def _cli_flag(key: str, params: dict[str, Any]) -> str:
+    aliases = params.get("arg_aliases")
+    if isinstance(aliases, dict):
+        mapped = aliases.get(key)
+        if mapped:
+            return str(mapped).strip().replace("_", "-")
+    return key.replace("_", "-")
 
 
 def resolve_plugin_script(plugin_id: str, params: dict[str, Any]) -> Path | None:
@@ -42,10 +65,17 @@ def run_plugin_tool(
     for key, value in (args or {}).items():
         if value is None or value == "":
             continue
-        cmd.extend([f"--{key.replace('_', '-')}", str(value)])
+        cmd.extend([f"--{_cli_flag(key, params)}", str(value)])
 
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, check=False)
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+            env=_plugin_subprocess_env(),
+        )
     except subprocess.TimeoutExpired:
         return {"ok": False, "error": f"plugin_timeout:{plugin_id}"}
     except Exception as exc:  # noqa: BLE001
@@ -63,11 +93,25 @@ def run_plugin_tool(
             payload = {}
 
     if proc.returncode != 0:
-        return {
+        return normalize_tool_result(
+            {
+                "ok": False,
+                "error": payload.get("error") if payload else f"plugin_failed:{plugin_id}",
+                "stdout": (proc.stdout or "")[:500],
+                "stderr": (proc.stderr or "")[:500],
+                "exit_code": proc.returncode,
+            }
+        )
+    if payload:
+        return normalize_tool_result(payload)
+    return normalize_tool_result(
+        {
             "ok": False,
-            "error": payload.get("error") if payload else f"plugin_failed:{plugin_id}",
+            "error": f"plugin_invalid_output:{plugin_id}",
             "stdout": (proc.stdout or "")[:500],
         }
-    if payload:
-        return payload
-    return {"ok": False, "error": f"plugin_invalid_output:{plugin_id}"}
+    )
+
+
+def validate_plugin_at_path(script: Path, *, plugin_id: str = "") -> list[str]:
+    return validate_plugin_file(script, plugin_id=plugin_id)

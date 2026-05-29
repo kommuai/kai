@@ -189,7 +189,7 @@ export default function AiAssistPanel({ tenantId }: { tenantId: string }) {
           qc.invalidateQueries({ queryKey: ["file", tenantId, a.file] });
         }
         // Invalidate capabilities so the Skills panel refreshes after plugin/workspace changes.
-        qc.invalidateQueries({ queryKey: ["capabilities", tenantId] });
+        qc.invalidateQueries({ queryKey: ["tenant-capabilities", tenantId] });
       }
       toast.success(`Changes applied: ${result.summary || "done"}`);
     } catch (err: any) {

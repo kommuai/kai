@@ -36,6 +36,9 @@ from kai_paths import kai_repo_root, kai_tenants_root
 from kai_capabilities import get_capabilities
 from skill_toggle import set_document_skill_enabled, set_profile_skill_enabled
 from invite_service import _invite_expired, redeem_invite_token
+from channel_config import apply_channel_to_workspace
+from onboarding_service import attach_session_to_tenant
+from onboarding_service import move_onboarding_whatsapp_to_tenant
 
 router = APIRouter(prefix="/tenants", tags=["tenants"])
 
@@ -171,6 +174,31 @@ def create_tenant(body: TenantCreate, user: User = Depends(get_current_user), db
     )
     db.commit()
     db.refresh(tenant)
+
+    channel_type = (body.channel_type or "none").strip().lower()
+    wa_phone: str | None = None
+
+    if body.onboarding_session_id:
+        if channel_type == "whatsapp_baileys":
+            try:
+                wa_phone = move_onboarding_whatsapp_to_tenant(user.id, body.onboarding_session_id, home)
+            except HTTPException:
+                raise
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Could not attach WhatsApp credentials: {exc}",
+                ) from exc
+        try:
+            attach_session_to_tenant(user.id, body.onboarding_session_id, home)
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"Could not attach onboarding documents: {exc}") from exc
+
+    if channel_type != "none":
+        apply_channel_to_workspace(home, channel_type, whatsapp_phone=wa_phone)
+
     return tenant
 
 
@@ -428,6 +456,15 @@ channels:
     post_tool_en: Can you share more detail?
   whatsapp:
     max_reply_chars: 4096
+  inbound:
+    provider: none
+  telegram:
+    enabled: false
+  whatsapp_cloud:
+    enabled: false
+  whatsapp_baileys:
+    enabled: false
+    auth_dir: data/whatsapp/baileys-auth
 admin:
   whitelist_numbers: []
   learning:

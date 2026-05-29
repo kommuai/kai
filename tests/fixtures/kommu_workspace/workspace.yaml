@@ -148,41 +148,132 @@ tools_profile:
     - escalate_to_human
     - create_visitor_pass
   profile_overrides:
+    search_faq:
+      params:
+        schema:
+          type: object
+          properties:
+            query:
+              type: string
+          required:
+          - query
+    search_session_memory:
+      params:
+        schema:
+          type: object
+          properties:
+            query:
+              type: string
+            limit:
+              type: integer
+          required:
+          - query
+    search_web:
+      params:
+        schema:
+          type: object
+          properties:
+            query:
+              type: string
+          required:
+          - query
+    escalate_to_human:
+      params:
+        schema:
+          type: object
+          properties:
+            reason:
+              type: string
+          required:
+          - reason
     search_kommu_support:
       builtin: search_official_site
       params:
         official_url: https://kommu.ai/support/
         vehicles_json_url: https://raw.githubusercontent.com/kommuai/bukapilot/snapshot/selfdrive/car/supported_vehicle.json
+        schema:
+          type: object
+          properties:
+            query:
+              type: string
+          required:
+          - query
     search_bukapilot:
       builtin: search_github_repo
       params:
         repo: kommuai/bukapilot
         branch: release_ka2
+        schema:
+          type: object
+          properties:
+            query:
+              type: string
+            branch:
+              type: string
+          required:
+          - query
     read_bukapilot_file:
       builtin: read_github_file
       params:
         repo: kommuai/bukapilot
         branch: release_ka2
+        schema:
+          type: object
+          properties:
+            path:
+              type: string
+            branch:
+              type: string
+          required:
+          - path
     lookup_warranty:
       builtin: lookup_sheet_record
+      params:
+        schema:
+          type: object
+          properties:
+            record_id:
+              type: string
+            dongle_id:
+              type: string
     lookup_backlog:
       builtin: lookup_sheet_backlog
+      params:
+        schema:
+          type: object
+          properties:
+            issue_summary:
+              type: string
+          required:
+          - issue_summary
     log_backlog:
       builtin: log_sheet_backlog
       params:
         summarize_system_prompt: You are a technical documentation writer for KommuAssist
           (KA2). Return ONLY JSON with keys problem_description and reproduction_steps.
+        schema:
+          type: object
+          properties:
+            issue:
+              type: string
+            device:
+              type: string
+            car:
+              type: string
+          required:
+          - issue
     create_visitor_pass:
       plugin: smartserva_visitor_pass
       description: Create building visitor pass and return link (plain URL only).
+      params:
+        arg_aliases:
+          visit_date: date
+          visit_time: time
+        schema:
+          type: object
+          properties:
+            visit_date:
+              type: string
+            visit_time:
+              type: string
   tools: []
-contexts:
-- id: default_contexts
-  enabled: true
-  kind: composite
-  config:
-    providers:
-    - sop
-    - warranty
-    - repo_public
-    - media_artifacts

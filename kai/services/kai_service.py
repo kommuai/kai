@@ -294,14 +294,6 @@ class KaiService:
 
         lower = re.sub(r"\s+", " ", (text or "").lower()).strip()
         ensure_active_session(conversation_id)
-        from kai.services.chatwoot_handover import extract_chatwoot_conversation_id
-
-        cw_conv = extract_chatwoot_conversation_id(data)
-        if cw_conv:
-            sess_cw = get_session(conversation_id)
-            if sess_cw.get("chatwoot_conversation_id") != cw_conv:
-                sess_cw["chatwoot_conversation_id"] = cw_conv
-                save_session(conversation_id, sess_cw)
 
         sess = get_session(conversation_id)
         lang = "BM" if is_malay(text) else "EN"

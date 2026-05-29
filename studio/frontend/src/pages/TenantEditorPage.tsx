@@ -11,6 +11,7 @@ import {
   FileCode2,
   FileText,
   BookOpen,
+  Puzzle,
   TerminalSquare,
   Clock,
   Loader2,
@@ -27,16 +28,22 @@ import { tenantsApi, type CompileResult, type InviteOut, type Tenant } from "../
 import Spinner from "../components/Spinner";
 import DeleteTenantPanel from "../components/DeleteTenantPanel";
 import TenantCapabilitiesPanel from "../components/TenantCapabilitiesPanel";
+import TenantChannelPanel from "../components/TenantChannelPanel";
 import AiAssistPanel from "../components/AiAssistPanel";
 import { useAuthStore } from "../lib/auth";
 
 type FileKey = "workspace" | "system_prompt" | "faq";
+type ConfigTabKey = FileKey | "skills";
+
+function isFileTab(tab: ConfigTabKey): tab is FileKey {
+  return tab !== "skills";
+}
 
 interface Tab {
-  key: FileKey;
+  key: ConfigTabKey;
   label: string;
   icon: React.ReactNode;
-  language: string;
+  language?: string;
   description: string;
 }
 
@@ -46,7 +53,13 @@ const TABS: Tab[] = [
     label: "Workspace",
     icon: <FileCode2 size={16} />,
     language: "yaml",
-    description: "Core configuration: tenant ID, channels, skills, and admin settings.",
+    description: "Core configuration: tenant ID, channels, tools profile, and admin settings.",
+  },
+  {
+    key: "skills",
+    label: "Skills",
+    icon: <Puzzle size={16} />,
+    description: "Turn agent actions and plugins on or off. Changes apply to workspace.yaml immediately.",
   },
   {
     key: "system_prompt",
@@ -121,7 +134,7 @@ export default function TenantEditorPage() {
   const qc = useQueryClient();
 
   const [editorMode, setEditorMode] = useState<"edit" | "ai">("edit");
-  const [activeTab, setActiveTab] = useState<FileKey>("workspace");
+  const [activeTab, setActiveTab] = useState<ConfigTabKey>("workspace");
   const [content, setContent] = useState<Record<FileKey, string>>({
     workspace: "",
     system_prompt: "",
@@ -202,6 +215,7 @@ export default function TenantEditorPage() {
   });
 
   function handleSave() {
+    if (!isFileTab(activeTab)) return;
     saveMutation.mutate({ key: activeTab, text: content[activeTab] });
   }
 
@@ -243,7 +257,7 @@ export default function TenantEditorPage() {
             Updated {formatDistanceToNow(new Date(tenant.updated_at), { addSuffix: true })}
           </p>
         </div>
-        {editorMode === "edit" && (
+        {editorMode === "edit" && isFileTab(activeTab) && (
           <button
             onClick={handleSave}
             disabled={!dirty[activeTab] || saveMutation.isPending}
@@ -262,7 +276,7 @@ export default function TenantEditorPage() {
         )}
       </div>
 
-      {tenantId && <TenantCapabilitiesPanel tenantId={tenantId} />}
+      {tenantId && <TenantChannelPanel tenantId={tenantId} />}
 
       {/* ── Editor card ── */}
       <div className="card overflow-hidden flex flex-col" style={{ height: "calc(100dvh - 180px)", minHeight: 480 }}>
@@ -283,7 +297,7 @@ export default function TenantEditorPage() {
               >
                 {tab.icon}
                 {tab.label}
-                {dirty[tab.key] && (
+                {isFileTab(tab.key) && dirty[tab.key] && (
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
                 )}
               </button>
@@ -333,37 +347,41 @@ export default function TenantEditorPage() {
               {activeTabDef.description}
             </div>
 
-            {/* Monaco editor */}
+            {/* Editor or skills list */}
             <div className="flex-1 overflow-hidden">
-              <Editor
-                language={activeTabDef.language}
-                value={content[activeTab]}
-                onChange={(v) => {
-                  setContent((p) => ({ ...p, [activeTab]: v || "" }));
-                  setDirty((p) => ({ ...p, [activeTab]: true }));
-                }}
-                theme="vs"
-                options={{
-                  fontSize: 13,
-                  lineHeight: 22,
-                  fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                  fontLigatures: true,
-                  minimap: { enabled: false },
-                  scrollBeyondLastLine: false,
-                  wordWrap: "on",
-                  renderLineHighlight: "gutter",
-                  smoothScrolling: true,
-                  padding: { top: 16, bottom: 16 },
-                  overviewRulerLanes: 0,
-                  folding: true,
-                  lineNumbers: "on",
-                  tabSize: 2,
-                }}
-              />
+              {activeTab === "skills" && tenantId ? (
+                <TenantCapabilitiesPanel tenantId={tenantId} embedded />
+              ) : isFileTab(activeTab) ? (
+                <Editor
+                  language={activeTabDef.language ?? "plaintext"}
+                  value={content[activeTab]}
+                  onChange={(v) => {
+                    setContent((p) => ({ ...p, [activeTab]: v || "" }));
+                    setDirty((p) => ({ ...p, [activeTab]: true }));
+                  }}
+                  theme="vs"
+                  options={{
+                    fontSize: 13,
+                    lineHeight: 22,
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+                    fontLigatures: true,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    wordWrap: "on",
+                    renderLineHighlight: "gutter",
+                    smoothScrolling: true,
+                    padding: { top: 16, bottom: 16 },
+                    overviewRulerLanes: 0,
+                    folding: true,
+                    lineNumbers: "on",
+                    tabSize: 2,
+                  }}
+                />
+              ) : null}
             </div>
 
-            {/* Compile panel */}
-            {tenantId && <CompilePanel tenantId={tenantId} />}
+            {/* Compile panel — FAQ only */}
+            {tenantId && activeTab === "faq" && <CompilePanel tenantId={tenantId} />}
           </>
         ) : (
           <div className="flex-1 overflow-hidden bg-gray-50/30">

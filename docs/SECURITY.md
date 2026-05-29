@@ -12,10 +12,6 @@
 
 Do **not** expose the service directly on `0.0.0.0` without network controls.
 
-## Chatwoot Agent Bot webhook
-
-`POST /webhooks/chatwoot` is enabled only when `KAI_CHATWOOT_BOT_ENABLED=1`. Set `KAI_CHATWOOT_WEBHOOK_SECRET` and send it as `X-Chatwoot-Bot-Token` (or `?token=`) so only Chatwoot can call the endpoint.
-
 ## Admin API
 
 Routes under `/admin/*` require header `x-admin-token` matching `ADMIN_TOKEN` in `.env` (constant-time compare).

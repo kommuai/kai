@@ -34,7 +34,6 @@ class AgentMessageErrorTests(unittest.TestCase):
         s = Mock()
         s.kai_route_agent_debug_enabled = True
         s.admin_token = "changeme-strong"
-        s.kai_chatwoot_enforce_live_handover = False
         gs_mock.return_value = s
         execute_mock.return_value = RuntimeResult(
             decision="direct_answer",

@@ -1,24 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useOutletContext, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  Snowflake,
-  Plus,
-  X,
-  Send,
-  Loader2,
-  ChevronDown,
-  Tags,
-  MessageSquare,
-} from "lucide-react";
+import { ArrowLeft, Snowflake, Plus, X, Send, Loader2, Tags, Bot, UserRound } from "lucide-react";
 import toast from "react-hot-toast";
 import clsx from "clsx";
 import { formatDistanceToNow } from "date-fns";
 import { contactsApi, inboxApi, tenantsApi, type Tenant } from "../lib/api";
+import { CorrespondentHeading } from "../lib/contactDisplay";
+import { INBOX_LIST_POLL_MS, INBOX_THREAD_POLL_MS } from "../lib/inboxPolling";
 import Spinner from "../components/Spinner";
-
-type MobileDrawer = null | "tags" | "chatwoot";
 
 export default function ConversationPage() {
   const { slug, userId: userIdParam } = useParams<{ slug: string; userId: string }>();
@@ -27,9 +17,10 @@ export default function ConversationPage() {
   const qc = useQueryClient();
   const [tagInput, setTagInput] = useState("");
   const [replyText, setReplyText] = useState("");
-  const [cwOpen, setCwOpen] = useState(false);
   const [tagsExpanded, setTagsExpanded] = useState(false);
-  const [mobileDrawer, setMobileDrawer] = useState<MobileDrawer>(null);
+  const [mobileTagsOpen, setMobileTagsOpen] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevMessageCountRef = useRef(0);
 
   const { data: tenantQ } = useQuery({
     queryKey: ["tenantBySlug", slug],
@@ -40,115 +31,36 @@ export default function ConversationPage() {
   const tenantId = tenant?.id;
   const base = `/t/${slug}`;
 
-  const { data: detail, isLoading, error } = useQuery({
+  const { data: detail, isLoading, error, isFetching: detailFetching } = useQuery({
     queryKey: ["conversation", tenantId, userId],
     queryFn: () => inboxApi.conversation(tenantId!, userId),
     enabled: !!tenantId && !!userId,
+    staleTime: 1_000,
+    refetchInterval: INBOX_THREAD_POLL_MS,
+    refetchOnWindowFocus: true,
   });
 
-  const invalidateTags = () => {
+  useQuery({
+    queryKey: ["inbox-conversations", tenantId, "all"],
+    queryFn: () => inboxApi.conversations(tenantId!, { status: "all", limit: 80 }),
+    enabled: !!tenantId,
+    staleTime: 2_000,
+    refetchInterval: INBOX_LIST_POLL_MS,
+    refetchOnWindowFocus: true,
+  });
+
+  const invalidateConversation = () => {
     qc.invalidateQueries({ queryKey: ["conversation", tenantId, userId] });
     qc.invalidateQueries({ queryKey: ["contacts", tenantId] });
     qc.invalidateQueries({ queryKey: ["inbox-conversations", tenantId] });
-    qc.invalidateQueries({ queryKey: ["cwMeta", tenantId, userId] });
   };
-
-  const { data: cwMeta } = useQuery({
-    queryKey: ["cwMeta", tenantId, userId],
-    queryFn: () => inboxApi.chatwootMeta(tenantId!, userId),
-    enabled: !!tenantId && !!userId,
-  });
-
-  const { data: cwAccountLabels } = useQuery({
-    queryKey: ["cwAccountLabels", tenantId],
-    queryFn: () => inboxApi.chatwootAccountLabels(tenantId!),
-    enabled: !!tenantId && !!cwMeta?.configured,
-  });
-
-  const [privateNoteText, setPrivateNoteText] = useState("");
-  const [snoozeUntilLocal, setSnoozeUntilLocal] = useState("");
-  const [labelSelection, setLabelSelection] = useState<string[]>([]);
-
-  const showChatwootPanel = Boolean(cwMeta?.configured && cwMeta?.conversation_id);
-
-  useEffect(() => {
-    if (cwMeta?.labels) setLabelSelection([...cwMeta.labels]);
-  }, [cwMeta?.labels?.join("|")]);
-
-  useEffect(() => {
-    if (showChatwootPanel) setCwOpen(true);
-  }, [showChatwootPanel]);
-
-  const statusMut = useMutation({
-    mutationFn: (body: { status: string; snoozed_until?: number | null }) =>
-      inboxApi.chatwootSetStatus(tenantId!, userId, body),
-    onSuccess: (_, vars) => {
-      toast.success(`Status → ${vars.status}`);
-      invalidateTags();
-    },
-    onError: (err: any) => toast.error(err?.response?.data?.detail || "Status update failed"),
-  });
-
-  const privateNoteMut = useMutation({
-    mutationFn: () => inboxApi.chatwootPrivateNote(tenantId!, userId, privateNoteText.trim()),
-    onSuccess: () => {
-      toast.success("Private note added");
-      setPrivateNoteText("");
-      invalidateTags();
-    },
-    onError: (err: any) => toast.error(err?.response?.data?.detail || "Failed to add note"),
-  });
-
-  const labelsMut = useMutation({
-    mutationFn: () => inboxApi.chatwootSetLabels(tenantId!, userId, labelSelection),
-    onSuccess: () => {
-      toast.success("Labels updated");
-      invalidateTags();
-    },
-    onError: (err: any) => toast.error(err?.response?.data?.detail || "Labels update failed"),
-  });
-
-  const handoverMut = useMutation({
-    mutationFn: () => inboxApi.chatwootHandover(tenantId!, userId),
-    onSuccess: () => {
-      toast.success("Handed over to human (Kai frozen)");
-      invalidateTags();
-    },
-    onError: (err: any) => toast.error(err?.response?.data?.detail || "Handover failed"),
-  });
-
-  const resumeBotMut = useMutation({
-    mutationFn: () => inboxApi.chatwootResumeBot(tenantId!, userId),
-    onSuccess: () => {
-      toast.success("AI support agent resumed");
-      invalidateTags();
-    },
-    onError: (err: any) => toast.error(err?.response?.data?.detail || "Resume failed"),
-  });
-
-  function cwLabelTitle(o: Record<string, unknown>) {
-    return String(o.title ?? o.name ?? o.id ?? "").trim();
-  }
-
-  function toggleCwLabel(title: string) {
-    setLabelSelection((prev) =>
-      prev.includes(title) ? prev.filter((x) => x !== title) : [...prev, title],
-    );
-  }
-
-  function snoozeUnix(): number | null {
-    if (!snoozeUntilLocal) return null;
-    const ms = new Date(snoozeUntilLocal).getTime();
-    if (Number.isNaN(ms)) return null;
-    return Math.floor(ms / 1000);
-  }
 
   const addTagMut = useMutation({
     mutationFn: () => contactsApi.addTag(tenantId!, userId, tagInput.trim()),
     onSuccess: () => {
       toast.success("Tag added");
       setTagInput("");
-      invalidateTags();
+      invalidateConversation();
     },
     onError: (err: any) => toast.error(err?.response?.data?.detail || "Failed to add tag"),
   });
@@ -157,39 +69,81 @@ export default function ConversationPage() {
     mutationFn: (tag: string) => contactsApi.removeTag(tenantId!, userId, tag),
     onSuccess: () => {
       toast.success("Tag removed");
-      invalidateTags();
+      invalidateConversation();
     },
     onError: (err: any) => toast.error(err?.response?.data?.detail || "Failed to remove tag"),
   });
 
   const replyMut = useMutation({
     mutationFn: () => inboxApi.reply(tenantId!, userId, replyText.trim()),
-    onSuccess: (res) => {
+    onSuccess: (data) => {
       setReplyText("");
-      invalidateTags();
-      if (res.chatwoot_delivered) {
-        toast.success("Sent via Chatwoot");
-      } else if (res.chatwoot_conversation_id && res.chatwoot_error) {
-        toast.success("Reply saved (Chatwoot delivery failed)");
+      invalidateConversation();
+      if (data.channel_delivered === false) {
+        toast(
+          data.channel_detail || "Saved in Studio but not delivered on WhatsApp",
+          { icon: "⚠️" },
+        );
+      } else if (data.channel_detail) {
+        toast.success(data.channel_detail);
       } else {
-        toast.success("Reply saved");
+        toast.success("Reply sent");
       }
     },
     onError: (err: any) => toast.error(err?.response?.data?.detail || "Failed to send reply"),
   });
 
+  const resumeBotMut = useMutation({
+    mutationFn: () => inboxApi.resumeBot(tenantId!, userId),
+    onSuccess: (data) => {
+      invalidateConversation();
+      if (data.already_active) {
+        toast.success("AI support agent is already active");
+      } else {
+        toast.success("AI support agent resumed");
+      }
+    },
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { detail?: string } } };
+      toast.error(e.response?.data?.detail || "Failed to resume AI support");
+    },
+  });
+
+  const handoverBotMut = useMutation({
+    mutationFn: () => inboxApi.handoverBot(tenantId!, userId),
+    onSuccess: (data) => {
+      invalidateConversation();
+      if (data.already_in_handover) {
+        toast.success("Already in human handover");
+        return;
+      }
+      if (data.channel_delivered === false) {
+        toast(
+          data.channel_detail || "Handover started in Studio but customer was not notified on WhatsApp",
+          { icon: "⚠️" },
+        );
+      } else {
+        toast.success("Handed over to human support");
+      }
+    },
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { detail?: string } } };
+      toast.error(e.response?.data?.detail || "Failed to start handover");
+    },
+  });
+
+  useEffect(() => {
+    const count = detail?.messages.length ?? 0;
+    if (count > prevMessageCountRef.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+    prevMessageCountRef.current = count;
+  }, [detail?.messages.length, detail?.messages]);
+
   function handleSendReply() {
     const text = replyText.trim();
     if (!text || replyMut.isPending) return;
     replyMut.mutate();
-  }
-
-  function closeMobileDrawer() {
-    setMobileDrawer(null);
-  }
-
-  function toggleTagsDesktop() {
-    setTagsExpanded((v) => !v);
   }
 
   if (!tenant) {
@@ -225,6 +179,9 @@ export default function ConversationPage() {
   }
 
   const tagCount = detail.tags.length;
+
+  const aiControlBtn =
+    "shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white text-amber-900 px-3 py-1.5 text-[11px] font-medium hover:bg-amber-50 disabled:opacity-50";
 
   const tagsBody = (
     <>
@@ -272,137 +229,8 @@ export default function ConversationPage() {
     </>
   );
 
-  const chatwootBody =
-    !cwMeta ? (
-      <div className="flex justify-center py-6">
-        <Loader2 size={18} className="animate-spin text-violet-500" />
-      </div>
-    ) : !cwMeta.conversation_id ? (
-      <p className="text-xs text-gray-600">
-        No linked Chatwoot conversation yet. It is set automatically when messages arrive via the Agent AI support agent webhook.
-      </p>
-    ) : (
-      <>
-        <div>
-          <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Status</div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="badge-purple capitalize">{cwMeta.status || "—"}</span>
-            <span className="text-[10px] text-gray-400 font-mono">#{cwMeta.conversation_id}</span>
-          </div>
-          <div className="flex flex-wrap gap-1">
-            {(["open", "pending", "resolved", "snoozed"] as const).map((st) => (
-              <button
-                key={st}
-                type="button"
-                className={clsx(
-                  "btn-secondary btn-sm py-1 px-2 capitalize text-[11px]",
-                  cwMeta.status === st && "ring-1 ring-brand-400",
-                )}
-                disabled={statusMut.isPending}
-                onClick={() => {
-                  if (st === "snoozed") {
-                    const u = snoozeUnix();
-                    if (!u) {
-                      toast.error("Pick a snooze date/time first");
-                      return;
-                    }
-                    statusMut.mutate({ status: "snoozed", snoozed_until: u });
-                    return;
-                  }
-                  statusMut.mutate({ status: st });
-                }}
-              >
-                {st}
-              </button>
-            ))}
-          </div>
-          <div className="mt-2">
-            <label className="text-[10px] text-gray-500 mb-1 block">Snooze until</label>
-            <input
-              type="datetime-local"
-              className="input text-xs py-1.5"
-              value={snoozeUntilLocal}
-              onChange={(e) => setSnoozeUntilLocal(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="border-t border-violet-100 pt-3">
-          <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Agent</div>
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              className="btn-secondary btn-sm py-1 px-2 text-[11px]"
-              disabled={handoverMut.isPending}
-              onClick={() => handoverMut.mutate()}
-            >
-              Human handover
-            </button>
-            <button
-              type="button"
-              className="btn-secondary btn-sm py-1 px-2 text-[11px]"
-              disabled={resumeBotMut.isPending}
-              onClick={() => resumeBotMut.mutate()}
-            >
-              Resume AI support agent
-            </button>
-          </div>
-        </div>
-
-        <div className="border-t border-violet-100 pt-3">
-          <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Private note</div>
-          <textarea
-            className="input w-full text-xs py-1.5 min-h-[52px]"
-            placeholder="Internal note…"
-            value={privateNoteText}
-            onChange={(e) => setPrivateNoteText(e.target.value)}
-          />
-          <button
-            type="button"
-            className="btn-primary btn-sm mt-1.5"
-            disabled={!privateNoteText.trim() || privateNoteMut.isPending}
-            onClick={() => privateNoteMut.mutate()}
-          >
-            Add note
-          </button>
-        </div>
-
-        <div className="border-t border-violet-100 pt-3">
-          <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Labels</div>
-          <p className="text-[10px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1 mb-2">
-            Saving replaces all labels on this conversation.
-          </p>
-          <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto">
-            {(cwAccountLabels?.items ?? [])
-              .map((raw) => cwLabelTitle(raw as Record<string, unknown>))
-              .filter(Boolean)
-              .map((title) => (
-                <label key={title} className="inline-flex items-center gap-1.5 cursor-pointer text-xs">
-                  <input
-                    type="checkbox"
-                    className="rounded border-gray-300"
-                    checked={labelSelection.includes(title)}
-                    onChange={() => toggleCwLabel(title)}
-                  />
-                  {title}
-                </label>
-              ))}
-          </div>
-          <button
-            type="button"
-            className="btn-primary btn-sm mt-2"
-            disabled={labelsMut.isPending}
-            onClick={() => labelsMut.mutate()}
-          >
-            Save labels
-          </button>
-        </div>
-      </>
-    );
-
   return (
     <div className="flex flex-col h-full min-h-0 overflow-hidden bg-white lg:bg-transparent">
-      {/* Top bar — mobile: compact toolbar */}
       <div className="shrink-0 border-b border-gray-100 bg-white">
         <div className="flex items-center gap-2 px-3 py-2 sm:px-4">
           <Link
@@ -414,77 +242,101 @@ export default function ConversationPage() {
           </Link>
 
           <div className="flex-1 min-w-0">
-            <div className="font-mono text-xs sm:text-sm font-semibold text-gray-900 truncate">{detail.user_id}</div>
+            <CorrespondentHeading
+              displayName={detail.display_name}
+              phone={detail.phone}
+              userId={detail.user_id}
+              className="text-sm sm:text-base min-w-0"
+            />
             <p className="text-[10px] sm:text-xs text-gray-400 truncate">
               {detail.last_activity_at
                 ? `${formatDistanceToNow(new Date(detail.last_activity_at), { addSuffix: true })} · ${detail.messages.length} msgs`
                 : `No activity · ${detail.messages.length} msgs`}
+              {detailFetching && <span className="ml-1 text-gray-400">· updating…</span>}
             </p>
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              type="button"
-              onClick={() => {
-                if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
-                  toggleTagsDesktop();
-                } else {
-                  setMobileDrawer((d) => (d === "tags" ? null : "tags"));
-                }
-              }}
-              className={clsx(
-                "relative inline-flex items-center justify-center rounded-xl p-2.5 border transition-colors",
-                mobileDrawer === "tags" || tagsExpanded
-                  ? "border-brand-200 bg-brand-50 text-brand-700"
-                  : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
-              )}
-              aria-expanded={mobileDrawer === "tags" || tagsExpanded}
-              aria-label="Tags"
-              title="Tags"
-            >
-              <Tags size={18} />
-              {tagCount > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-brand-600 text-[9px] font-bold text-white flex items-center justify-center">
-                  {tagCount > 9 ? "9+" : tagCount}
-                </span>
-              )}
-            </button>
-
-            {cwMeta?.configured && (
-              <button
-                type="button"
-                onClick={() => {
-                  if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
-                    setCwOpen((v) => !v);
-                  } else {
-                    setMobileDrawer((d) => (d === "chatwoot" ? null : "chatwoot"));
-                  }
-                }}
-                className={clsx(
-                  "lg:hidden inline-flex items-center justify-center rounded-xl p-2.5 border transition-colors",
-                  mobileDrawer === "chatwoot"
-                    ? "border-violet-200 bg-violet-50 text-violet-800"
-                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
-                )}
-                aria-label="Chatwoot"
-                title="Chatwoot"
-              >
-                <MessageSquare size={18} className="text-violet-600" />
-              </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches) {
+                setTagsExpanded((v) => !v);
+              } else {
+                setMobileTagsOpen((v) => !v);
+              }
+            }}
+            className={clsx(
+              "relative inline-flex items-center justify-center rounded-xl p-2.5 border transition-colors shrink-0",
+              mobileTagsOpen || tagsExpanded
+                ? "border-brand-200 bg-brand-50 text-brand-700"
+                : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50",
             )}
-          </div>
+            aria-expanded={mobileTagsOpen || tagsExpanded}
+            aria-label="Tags"
+            title="Tags"
+          >
+            <Tags size={18} />
+            {tagCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-brand-600 text-[9px] font-bold text-white flex items-center justify-center">
+                {tagCount > 9 ? "9+" : tagCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 
-      {detail.frozen && (
-        <div className="flex items-center gap-2 px-3 py-1.5 text-[11px] text-amber-900 bg-amber-50 border-b border-amber-100 shrink-0">
-          <Snowflake size={13} />
-          <span>Human handover — AI support agent paused</span>
-        </div>
-      )}
+      <div
+        className={clsx(
+          "flex items-center gap-2 px-3 py-2 sm:px-4 text-[11px] border-b shrink-0",
+          detail.frozen
+            ? "bg-amber-50 border-amber-100 text-amber-900"
+            : "bg-slate-50 border-gray-100 text-gray-700",
+        )}
+      >
+        {detail.frozen ? (
+          <Snowflake size={13} className="shrink-0" aria-hidden />
+        ) : (
+          <Bot size={13} className="shrink-0 text-brand-600" aria-hidden />
+        )}
+        <span className="flex-1 min-w-0">
+          {detail.frozen
+            ? "Human handover — AI support agent paused"
+            : "AI support agent active"}
+        </span>
+        {detail.frozen ? (
+          <button
+            type="button"
+            className={aiControlBtn}
+            disabled={resumeBotMut.isPending}
+            onClick={() => resumeBotMut.mutate()}
+            title="Unfreeze session and let the AI reply again"
+          >
+            {resumeBotMut.isPending ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <Bot size={12} />
+            )}
+            Resume AI support
+          </button>
+        ) : (
+          <button
+            type="button"
+            className={aiControlBtn}
+            disabled={handoverBotMut.isPending}
+            onClick={() => handoverBotMut.mutate()}
+            title="Pause AI and hand chat to a human agent"
+          >
+            {handoverBotMut.isPending ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <UserRound size={12} />
+            )}
+            Hand over to human
+          </button>
+        )}
+      </div>
 
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-        {/* Chat */}
         <div className="flex-1 min-h-0 min-w-0 flex flex-col overflow-hidden lg:border-r lg:border-gray-100">
           <div className="flex-1 min-h-0 overflow-y-auto p-3 sm:p-4 space-y-2 bg-surface-muted/50">
             {detail.messages.length === 0 ? (
@@ -506,6 +358,7 @@ export default function ConversationPage() {
                 </div>
               ))
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           <div className="shrink-0 border-t border-gray-100 p-3 bg-white pb-[max(0.75rem,env(safe-area-inset-bottom))]">
@@ -536,13 +389,12 @@ export default function ConversationPage() {
           </div>
         </div>
 
-        {/* Desktop: tags + Chatwoot column */}
         <aside className="hidden lg:flex lg:w-72 xl:w-80 shrink-0 flex-col border-l border-gray-100 bg-surface-muted/40 min-h-0">
           <div className="shrink-0 border-b border-gray-100 p-3 flex items-center justify-between gap-2 bg-white/80">
             <span className="text-xs font-semibold text-gray-600">Tags</span>
             <button
               type="button"
-              onClick={toggleTagsDesktop}
+              onClick={() => setTagsExpanded((v) => !v)}
               className={clsx(
                 "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium border",
                 tagsExpanded ? "border-brand-200 bg-brand-50 text-brand-800" : "border-gray-200 text-gray-600 hover:bg-gray-50",
@@ -552,65 +404,29 @@ export default function ConversationPage() {
               {tagCount > 0 ? `${tagCount}` : "Edit"}
             </button>
           </div>
-          {tagsExpanded && <div className="p-3 overflow-y-auto border-b border-gray-100 bg-white">{tagsBody}</div>}
-
-          {showChatwootPanel && (
-            <div className="flex-1 min-h-0 flex flex-col overflow-hidden m-2 rounded-xl border border-violet-100 bg-white shadow-sm">
-              <button
-                type="button"
-                className="shrink-0 flex items-center justify-between px-3 py-2.5 text-left hover:bg-violet-50/50"
-                onClick={() => setCwOpen((v) => !v)}
-              >
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-violet-700 bg-violet-100 px-1 rounded">CW</span>
-                  <span className="text-xs font-semibold text-gray-800">Chatwoot</span>
-                </div>
-                <ChevronDown size={14} className={clsx("text-gray-400 transition-transform", cwOpen && "rotate-180")} />
-              </button>
-              {cwOpen && (
-                <div className="flex-1 overflow-y-auto px-3 pb-3 pt-0 space-y-3 text-xs border-t border-violet-50">
-                  {chatwootBody}
-                </div>
-              )}
-            </div>
-          )}
+          {tagsExpanded && <div className="p-3 overflow-y-auto flex-1 min-h-0 bg-white">{tagsBody}</div>}
         </aside>
       </div>
 
-      {/* Mobile bottom sheet: tags or Chatwoot */}
-      {mobileDrawer && (
+      {mobileTagsOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex flex-col justify-end" role="dialog" aria-modal="true">
           <button
             type="button"
             className="absolute inset-0 bg-black/40"
             aria-label="Close"
-            onClick={closeMobileDrawer}
+            onClick={() => setMobileTagsOpen(false)}
           />
           <div className="relative bg-white rounded-t-2xl shadow-2xl border-t border-gray-100 max-h-[min(78vh,560px)] flex flex-col animate-slide-up">
             <div className="flex justify-center pt-2 pb-1">
               <div className="h-1 w-10 rounded-full bg-gray-200" />
             </div>
             <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100">
-              <span className="text-sm font-semibold text-gray-900">
-                {mobileDrawer === "tags" ? "Contact tags" : "Chatwoot"}
-              </span>
-              <button
-                type="button"
-                className="btn-ghost btn-sm text-gray-500"
-                onClick={closeMobileDrawer}
-              >
+              <span className="text-sm font-semibold text-gray-900">Contact tags</span>
+              <button type="button" className="btn-ghost btn-sm text-gray-500" onClick={() => setMobileTagsOpen(false)}>
                 Done
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-              {mobileDrawer === "tags" ? (
-                tagsBody
-              ) : cwMeta?.configured ? (
-                chatwootBody
-              ) : (
-                <p className="text-sm text-gray-500">Chatwoot is not enabled for this tenant.</p>
-              )}
-            </div>
+            <div className="flex-1 overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">{tagsBody}</div>
           </div>
         </div>
       )}
