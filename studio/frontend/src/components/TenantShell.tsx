@@ -23,7 +23,7 @@ export default function TenantShell() {
 
   if (!tenant) {
     return (
-      <div className="text-center py-20 text-gray-500 text-sm">Tenant not found.</div>
+      <div className="text-center py-20 text-gray-500 text-sm">Agent not found.</div>
     );
   }
 

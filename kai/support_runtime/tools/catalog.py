@@ -9,7 +9,6 @@ from kai.workspace.manifest import load_workspace_data
 CORE_TOOL_IDS: tuple[str, ...] = (
     "search_faq",
     "search_session_memory",
-    "search_web",
     "escalate_to_human",
 )
 
@@ -75,12 +74,6 @@ def builtin_catalog() -> dict[str, BuiltinToolSpec]:
                 },
                 required=["query"],
             ),
-        ),
-        "search_web": BuiltinToolSpec(
-            builtin_id="search_web",
-            handler_name="search_web",
-            description="Web search (Bing API; requires BING_API_KEY)",
-            schema=_schema_object(props={"query": {"type": "string"}}, required=["query"]),
         ),
         "search_official_site": BuiltinToolSpec(
             builtin_id="search_official_site",

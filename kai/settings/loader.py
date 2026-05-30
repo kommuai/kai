@@ -143,8 +143,7 @@ class Settings:
     session_db_path: str = "data/sessions.db"
     env_file: Path = field(default_factory=lambda: BASE_DIR / ".env")
 
-    # Vehicle / search
-    bing_api_key: str = ""
+    # Vehicle / official support site
     vehicle_support_official_url: str = ""
     vehicle_support_http_timeout_seconds: int = 8
     vehicle_support_min_evidence_score: float = 0.65
@@ -317,7 +316,6 @@ def load_settings() -> Settings:
         sop_sync_state_path=sop_sync_state,
         session_db_path=session_db,
         env_file=env_file,
-        bing_api_key=_env("BING_API_KEY"),
         vehicle_support_official_url=_env("VEHICLE_SUPPORT_OFFICIAL_URL"),
         vehicle_support_http_timeout_seconds=_env_int("VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS", 8),
         vehicle_support_min_evidence_score=_env_float("VEHICLE_SUPPORT_MIN_EVIDENCE_SCORE", 0.65),

@@ -1,4 +1,4 @@
-"""Builtin search_official_site and search_web — no tenant tool ids."""
+"""Builtin search_official_site — no tenant tool ids."""
 from __future__ import annotations
 
 import unittest
@@ -38,20 +38,6 @@ class OfficialSiteToolTests(unittest.TestCase):
         self.assertTrue(out["ok"])
         self.assertTrue(out["results"])
         self.assertIn("Toyota Alphard", out["results"][0]["text"])
-
-    @patch("kai.settings.get_settings")
-    def test_web_search_handles_missing_key(self, mock_settings: object) -> None:
-        mock_profile_ids_patch = patch(
-            "kai.workspace.tools_config._profile_tool_ids",
-            return_value=["search_web"],
-        )
-        with mock_profile_ids_patch:
-            reload_tools_config()
-            mock_settings.return_value.bing_api_key = ""
-            reg = AgentToolRegistry(HybridRetriever(provider=None), SimpleReranker(provider=None))
-            out = reg.call("search_web", {"query": "example ACC LKA specs"})
-        self.assertFalse(out["ok"])
-        self.assertEqual(out["error"], "missing_bing_api_key")
 
 
 if __name__ == "__main__":

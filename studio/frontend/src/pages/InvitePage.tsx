@@ -117,7 +117,7 @@ export default function InvitePage() {
           </div>
           <h1 className="text-lg font-semibold text-gray-900">Join {preview.tenant_name}</h1>
           <p className="text-sm text-gray-500">
-            You have been invited to collaborate on this tenant in Kai Studio.
+            You have been invited to collaborate on this agent in Kai Studio.
           </p>
         </div>
         <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 rounded-xl px-3 py-2">

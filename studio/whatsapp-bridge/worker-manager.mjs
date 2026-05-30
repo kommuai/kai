@@ -17,8 +17,11 @@ import {
   extractTextFromWAMessage,
   resolveInboundDm,
   resolveOutboundChatJid,
+  resolveReplyChatJid,
   userIdFromContactJid,
 } from "./message-text.mjs";
+import { humanizedWhatsAppSend, guardedWhatsAppSend } from "./human-reply.mjs";
+import { createTenantGuard } from "./tenant-guard.mjs";
 
 const log = pino({ level: process.env.LOG_LEVEL || "info" });
 const SCAN_MS = Number(process.env.WHATSAPP_WORKER_SCAN_MS || 15000);
@@ -49,6 +52,8 @@ let scanTimer = null;
  * @property {number} reconnectAttempts
  * @property {boolean} reconnectScheduled
  * @property {number} [configMtime]
+ * @property {ReturnType<typeof createTenantGuard>} [guard]
+ * @property {string} [pausedReason]
  */
 
 function disconnectCode(lastDisconnect) {
@@ -56,7 +61,11 @@ function disconnectCode(lastDisconnect) {
   return err?.output?.statusCode ?? err?.data?.statusCode;
 }
 
-function shouldReconnect(code) {
+function shouldReconnect(code, entry) {
+  const classification = entry?.guard?.classifyDisconnectCode?.(code);
+  if (classification) {
+    return classification.shouldReconnect;
+  }
   if (code == null) return true;
   if (code === DisconnectReason.loggedOut) return false;
   if (code === DisconnectReason.badSession) return false;
@@ -101,6 +110,7 @@ export function resumeAuthDir(authDir) {
 function stopTenant(key) {
   const entry = tenants.get(key);
   if (!entry) return;
+  entry.guard?.stopPersistInterval?.();
   endSocket(entry);
   tenants.delete(key);
 }
@@ -144,7 +154,19 @@ async function handleInboundMessage(entry, chatJid, userId, text, msgId, contact
       return;
     }
 
-    await sendWhatsAppText(entry, chatJid, result.answer, chainKey);
+    const delivered = await humanizedWhatsAppSend({
+      entry,
+      chatJid,
+      text: result.answer,
+      chainKey,
+      sendCore: sendWhatsAppText,
+    });
+    if (!delivered) {
+      log.error(
+        { slug: entry.slug, userId, chatJid },
+        "bot reply saved in Studio but not delivered on WhatsApp",
+      );
+    }
   });
 }
 
@@ -182,32 +204,48 @@ export async function sendWorkerOutbound({ slug, userId, text }) {
   }
 
   const directory = loadContactDirectory(entry.home);
-  const chatJid = resolveOutboundChatJid(uid, directory);
+  const chatJid = resolveReplyChatJid(null, resolveOutboundChatJid(uid, directory));
   if (!chatJid) {
     return { ok: false, error: "invalid_user_id" };
   }
 
   const chainKey = `${entry.slug}:${uid}`;
   const hadPending = pendingOutbound.has(chainKey);
-  await sendWhatsAppText(entry, chatJid, body, chainKey);
-  const queued = hadPending || pendingOutbound.has(chainKey);
+  const sendResult = await sendWhatsAppText(entry, chatJid, body, chainKey);
+  const queued = hadPending || pendingOutbound.has(chainKey) || sendResult.queued;
+
+  if (!sendResult.sent) {
+    return { ok: false, error: sendResult.reason || "whatsapp_send_failed", chat_jid: chatJid, queued };
+  }
 
   log.info({ slug: entry.slug, userId: uid, chatJid, queued }, "studio outbound WhatsApp");
   return { ok: true, chat_jid: chatJid, queued };
 }
 
+/**
+ * @returns {Promise<{ sent: boolean, queued?: boolean, reason?: string }>}
+ */
 async function sendWhatsAppText(entry, chatJid, text, chainKey) {
   if (!entry.sock) {
     pendingOutbound.set(chainKey, { chatJid, answer: text });
-    return;
+    return { sent: false, queued: true, reason: "socket_unavailable" };
+  }
+  if (entry.guard?.isOutboundPaused?.()) {
+    log.error({ slug: entry.slug, chatJid, pausedReason: entry.pausedReason }, "outbound paused — message queued");
+    pendingOutbound.set(chainKey, { chatJid, answer: text });
+    return { sent: false, queued: true, reason: "outbound_paused" };
   }
   try {
     await entry.sock.sendMessage(chatJid, { text });
     pendingOutbound.delete(chainKey);
+    entry.guard?.antiban?.afterSend(chatJid, text);
     log.info({ slug: entry.slug, chatJid, outLen: text.length }, "sent WhatsApp reply");
+    return { sent: true };
   } catch (e) {
+    entry.guard?.antiban?.afterSendFailed?.(String(e?.message || e));
     pendingOutbound.set(chainKey, { chatJid, answer: text });
     log.error({ err: e, slug: entry.slug, chatJid }, "sendMessage failed — queued for retry");
+    return { sent: false, queued: true, reason: "send_failed" };
   }
 }
 
@@ -239,16 +277,24 @@ async function runWorkerSocket(entry) {
 
   endSocket(entry);
 
+  if (!entry.guard) {
+    entry.guard = createTenantGuard({ home: entry.home, slug: entry.slug, log });
+  }
+
+  const stealth = entry.guard.stealthSocketConfig();
   const sock = makeWASocket({
     version,
     auth: state,
     logger: pino({ level: "silent" }),
     printQRInTerminal: false,
     syncFullHistory: false,
-    markOnlineOnConnect: false,
+    markOnlineOnConnect: stealth.markOnlineOnConnect,
+    browser: stealth.browser,
   });
   entry.sock = sock;
   entry.state = "connecting";
+
+  entry.guard.wireSocketEvents(entry, sock);
 
   sock.ev.on("creds.update", saveCreds);
 
@@ -334,6 +380,7 @@ async function handleConnectionUpdate(entry, sock, resolved, saveCreds, update) 
       } catch {
         /* ignore */
       }
+      entry.guard?.rampPresence(sock).catch(() => {});
       await flushPendingOutbound(entry);
       return;
     }
@@ -348,9 +395,11 @@ async function handleConnectionUpdate(entry, sock, resolved, saveCreds, update) 
       return;
     }
 
-    if (!shouldReconnect(code)) {
+    const classification = entry.guard?.classifyDisconnectCode(code) ?? null;
+
+    if (!shouldReconnect(code, entry)) {
       entry.state = code === DisconnectReason.loggedOut ? "logged_out" : "error";
-      entry.error = lastDisconnect?.error?.message || "Connection closed";
+      entry.error = classification?.message || lastDisconnect?.error?.message || "Connection closed";
       return;
     }
 
@@ -366,7 +415,10 @@ async function handleConnectionUpdate(entry, sock, resolved, saveCreds, update) 
     entry.reconnectScheduled = true;
     entry.state = "reconnecting";
 
-    const delayMs = code === DisconnectReason.restartRequired ? 500 : 2000;
+    const delayMs =
+      classification?.backoffMs ??
+      (code === DisconnectReason.restartRequired ? 500 : 2000);
+    log.info({ slug: entry.slug, code, delayMs, category: classification?.category }, "worker reconnect scheduled");
     setTimeout(async () => {
       entry.reconnectScheduled = false;
       if (pausedAuthDirs.has(resolved)) return;
@@ -396,6 +448,7 @@ async function startTenant(def) {
       reconnectAttempts: 0,
       reconnectScheduled: false,
       configMtime: workspaceMtime(def.home),
+      guard: createTenantGuard({ home: def.home, slug: def.slug, log }),
     };
     tenants.set(def.key, entry);
   } else {
@@ -458,6 +511,14 @@ export function workerStatus() {
       phone: t.phone || null,
       error: t.error || null,
       home: t.home,
+      paused_reason: t.pausedReason || null,
+      antiban: t.guard
+        ? {
+            paused: t.guard.isOutboundPaused(),
+            health: t.guard.getStats()?.health?.risk,
+            session_degraded: t.guard.getStats()?.sessionStability?.isDegraded ?? false,
+          }
+        : null,
     })),
   };
 }

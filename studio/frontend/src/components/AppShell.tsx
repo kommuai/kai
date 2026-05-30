@@ -98,7 +98,7 @@ export default function AppShell() {
         className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all mb-2"
       >
         <ChevronLeft size={15} />
-        <span>All tenants</span>
+        <span>All agents</span>
       </Link>
 
       {/* Tenant identity */}
@@ -125,13 +125,13 @@ export default function AppShell() {
 
       <div className="h-px bg-gray-100 mx-1 mb-2" />
 
-      <NavLink to={`/t/${tenantSlug}`} end className={navCls}>
-        <SlidersHorizontal size={17} />
-        Configuration
-      </NavLink>
       <NavLink to={`/t/${tenantSlug}/inbox`} className={navCls}>
         <Inbox size={17} />
         Inbox
+      </NavLink>
+      <NavLink to={`/t/${tenantSlug}/configuration`} end className={navCls}>
+        <SlidersHorizontal size={17} />
+        Configuration
       </NavLink>
       <NavLink to={`/t/${tenantSlug}/contacts`} className={navCls}>
         <Users size={17} />
@@ -190,8 +190,13 @@ export default function AppShell() {
     </nav>
   );
 
+  const isTenantRoute = Boolean(tenantSlug);
+  // Inbox/conversation only — Configuration scrolls on mobile so the editor pane keeps height.
+  const isFullHeightRoute =
+    isTenantRoute && location.pathname.startsWith(`/t/${tenantSlug}/inbox`);
+
   return (
-    <div className="min-h-screen flex bg-surface-muted">
+    <div className="h-dvh flex overflow-hidden bg-surface-muted">
       {/* ── Desktop sidebar ── */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-gray-100 fixed inset-y-0 left-0 z-30">
         {sidebar}
@@ -218,9 +223,9 @@ export default function AppShell() {
       )}
 
       {/* ── Main content ── */}
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+      <div className="flex-1 md:ml-64 flex flex-col min-h-0 min-w-0 overflow-hidden">
         {/* Mobile top bar */}
-        <header className="md:hidden sticky top-0 z-20 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-3">
+        <header className="md:hidden shrink-0 z-20 bg-white border-b border-gray-100 flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
           <button
             onClick={() => setSidebarOpen(true)}
             className="btn-ghost btn-icon text-gray-600"
@@ -242,8 +247,22 @@ export default function AppShell() {
           <Avatar name={user?.name || "User"} url={user?.avatar_url} />
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          <Outlet />
+        <main
+          className={clsx(
+            "flex-1 min-h-0 min-w-0 flex flex-col max-w-7xl w-full mx-auto",
+            isFullHeightRoute ? "p-0 sm:p-4 md:p-6 lg:p-8 overflow-hidden" : "p-4 sm:p-6 lg:p-8 overflow-hidden",
+          )}
+        >
+          <div
+            className={clsx(
+              "flex-1 min-h-0 min-w-0",
+              isFullHeightRoute
+                ? "flex flex-col overflow-hidden"
+                : "overflow-y-auto overflow-x-hidden",
+            )}
+          >
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

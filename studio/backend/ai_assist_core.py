@@ -22,6 +22,9 @@ CONFIG_FILES: dict[str, str] = {
     "faq": "knowledge/master_faq.md",
 }
 
+# AI Assist context injected into the config LLM (not the support agent).
+_CONFIG_CONTEXT_CHARS = 128_000
+
 PLUGIN_TEMPLATE = '''\
 #!/usr/bin/env python3
 """<one-line description — deterministic CLI plugin for Kai agent tools."""
@@ -61,10 +64,12 @@ You are KAI CONFIG ASSISTANT — a friendly, guided assistant helping non-techni
 
 ## Your only purpose
 Help the user configure these resources in their tenant workspace:
-1. **workspace.yaml** — channels, office hours, handover keywords, agent settings, and **skills/plugins list**.
-2. **system_prompt.md** — the personality, scope, and escalation rules for the AI support agent.
-3. **knowledge/master_faq.md** — the official FAQ / knowledge base.
-4. **Plugin scripts** — Python files at `tools/plugins/<plugin_name>/main.py` that implement custom actions.
+
+**Three files, three jobs — never duplicate content across them:**
+1. **workspace.yaml — Wiring** (what exists, when, how): channels, office hours, handover keywords, skills/plugins, session limits, fixed reply copy. **Not** product facts or long agent instructions.
+2. **system_prompt.md — Brain rules** (how to think and act): personality, when to call tools, JSON format, escalation tone. **Not** prices, policies, or install links.
+3. **knowledge/master_faq.md — Truth** (what is true): pricing, policies, links, warranty, install steps, troubleshooting answers. **Not** tool wiring or JSON rules.
+4. **Plugin scripts** — Python at `tools/plugins/<plugin_name>/main.py` for custom actions (register in workspace.yaml only).
 
 You are NOT a general assistant. Politely refuse anything outside these resources.
 
@@ -102,6 +107,11 @@ Reply with ONE JSON block inside a fenced code block tagged `kai-patch`:
       "content": "<FULL updated file content>"
     },
     {
+      "type": "faq_intent",
+      "intent_id": "vehicle_manufacturer_warranty",
+      "content": "aliases:\\n- plug and play warranty\\nanswer:\\nYour updated answer here."
+    },
+    {
       "type": "plugin_file",
       "plugin_name": "my_plugin_name",
       "content": "<FULL Python script content>"
@@ -112,10 +122,12 @@ Reply with ONE JSON block inside a fenced code block tagged `kai-patch`:
 ```
 
 ### Patch types
-- `config_file`: edits one of workspace, system_prompt, faq. `content` = full new file.
+- `config_file`: edits **workspace** or **system_prompt** only. `content` = full new file.
+- `faq_intent`: edits **one** FAQ intent in master_faq.md. `intent_id` = existing or new intent slug; `content` = that intent's body (`aliases:` / `answer:` lines only, or a full `## intent: id` block). Never send the whole FAQ file.
 - `plugin_file`: creates or overwrites `tools/plugins/<plugin_name>/main.py`. `plugin_name` must be snake_case.
 
-ALWAYS provide the FULL file content — never partial snippets or diffs.
+For workspace and system_prompt: ALWAYS provide the FULL file content.
+For FAQ: ALWAYS use `faq_intent` — one patch per intent changed.
 ALWAYS preserve YAML / Markdown / Python formatting exactly.
 
 ## Tone and flow
@@ -148,7 +160,8 @@ Reply with ONLY one fenced block tagged `kai-patch` (no other prose):
 - Use facts from the questionnaire and uploaded documents only — do not invent pricing, policies, or features.
 - master_faq.md must use the project's FAQ markdown format with `## intent_id` sections when possible.
 - workspace.yaml must remain valid YAML; keep tools_profile minimal (search_faq, search_session_memory, escalate_to_human) unless documents clearly require more.
-- Merge questionnaire personality, scope, escalation, and fallback into system_prompt.md.
+- Put **facts** (pricing, policies, links) in master_faq.md; put **behavior** in system_prompt.md; put **wiring** in workspace.yaml — do not duplicate across files.
+- Merge questionnaire personality, scope, escalation, and fallback into system_prompt.md (brain rules only).
 - If documents lack FAQ detail, create a small starter FAQ from questionnaire product summary only.
 
 ## Skills
@@ -215,13 +228,41 @@ def current_skills_summary(home: Path) -> str:
         return "(Could not load skills list)"
 
 
+def _faq_intent_index(faq_text: str) -> str:
+    try:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+        from kai.core.faq_markdown import _split_schema_blocks
+
+        ids = [name for kind, name, _ in _split_schema_blocks(faq_text) if kind == "intent"]
+        if not ids:
+            return ""
+        if len(ids) <= 80:
+            return "FAQ intent ids (" + str(len(ids)) + "): " + ", ".join(ids)
+        return (
+            "FAQ intent ids (" + str(len(ids)) + ", first 80): "
+            + ", ".join(ids[:80])
+            + ", …"
+        )
+    except Exception:
+        return ""
+
+
 def build_context(home: Path) -> str:
     files = current_config_files(home)
     plugins = current_plugins(home)
     parts: list[str] = []
     for key, content in files.items():
         rel = CONFIG_FILES[key]
-        parts.append(f"### Current {key} ({rel}):\n```\n{content[:8000]}\n```")
+        limit = _CONFIG_CONTEXT_CHARS
+        snippet = content if len(content) <= limit else content[:limit]
+        if len(content) > limit:
+            snippet += f"\n\n... [truncated — file is {len(content)} chars; showing first {limit}]"
+        block = f"### Current {key} ({rel}):\n```\n{snippet}\n```"
+        if key == "faq":
+            index = _faq_intent_index(content)
+            if index:
+                block += f"\n\n{index}"
+        parts.append(block)
     parts.append(f"### Current skills overview:\n{current_skills_summary(home)}")
     if plugins:
         for p in plugins:
@@ -229,6 +270,20 @@ def build_context(home: Path) -> str:
     else:
         parts.append(f"### Plugin template:\n```python\n{PLUGIN_TEMPLATE}\n```")
     return "\n\n".join(parts)
+
+
+def validate_ai_assist_patches(patches: list[dict[str, Any]]) -> None:
+    """AI Assist chat must use faq_intent for FAQ; full-file faq is for onboarding bootstrap only."""
+    for patch in patches:
+        ptype = (patch.get("type") or "config_file").strip()
+        if ptype == "faq_intent":
+            continue
+        if ptype == "config_file" or ("file" in patch and "type" not in patch):
+            if (patch.get("file") or "").strip() == "faq":
+                raise HTTPException(
+                    status_code=422,
+                    detail="FAQ edits must use faq_intent patches (one intent per patch), not a full faq file.",
+                )
 
 
 def extract_patch(text: str) -> dict[str, Any] | None:
@@ -241,8 +296,46 @@ def extract_patch(text: str) -> dict[str, Any] | None:
         return None
 
 
+def _apply_faq_intent_patch(home: Path, intent_id: str, content: str) -> dict[str, str]:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+    from kai.core.faq_markdown import upsert_intent_block
+
+    rel = CONFIG_FILES["faq"]
+    p = home / rel
+    old_content = p.read_text(encoding="utf-8", errors="replace") if p.is_file() else ""
+    try:
+        new_content = upsert_intent_block(old_content, intent_id, content)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(new_content, encoding="utf-8")
+    diff = "".join(
+        difflib.unified_diff(
+            old_content.splitlines(keepends=True),
+            new_content.splitlines(keepends=True),
+            fromfile=f"a/{rel}",
+            tofile=f"b/{rel}",
+            lineterm="",
+        )
+    )
+    return {
+        "type": "faq_intent",
+        "file": "faq",
+        "intent_id": intent_id,
+        "path": rel,
+        "diff": diff,
+    }
+
+
 def apply_patch_item(home: Path, patch: dict[str, Any]) -> dict[str, str] | None:
     ptype = (patch.get("type") or "config_file").strip()
+
+    if ptype == "faq_intent":
+        intent_id = (patch.get("intent_id") or "").strip()
+        content = patch.get("content", "")
+        if not intent_id:
+            raise HTTPException(status_code=422, detail="faq_intent patch requires intent_id")
+        return _apply_faq_intent_patch(home, intent_id, content)
 
     if ptype == "config_file" or ("file" in patch and "type" not in patch):
         file_key = (patch.get("file") or "").strip()
@@ -321,8 +414,42 @@ def preview_patches(home: Path, patches: list[dict[str, Any]]) -> list[dict[str,
     previews: list[dict[str, str]] = []
     for patch in patches:
         ptype = (patch.get("type") or "config_file").strip()
-        if ptype == "config_file" or ("file" in patch and "type" not in patch):
+        if ptype == "faq_intent":
+            intent_id = (patch.get("intent_id") or "").strip()
+            content = patch.get("content", "")
+            if not intent_id:
+                continue
+            rel = CONFIG_FILES["faq"]
+            old = current_configs.get("faq", "")
+            try:
+                sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+                from kai.core.faq_markdown import upsert_intent_block
+
+                new_content = upsert_intent_block(old, intent_id, content)
+            except ValueError:
+                continue
+            diff = "".join(
+                difflib.unified_diff(
+                    old.splitlines(keepends=True),
+                    new_content.splitlines(keepends=True),
+                    fromfile=f"a/{rel}",
+                    tofile=f"b/{rel}",
+                    lineterm="",
+                )
+            )
+            previews.append(
+                {
+                    "type": "faq_intent",
+                    "file": "faq",
+                    "intent_id": intent_id,
+                    "path": rel,
+                    "diff": diff,
+                }
+            )
+        elif ptype == "config_file" or ("file" in patch and "type" not in patch):
             file_key = (patch.get("file") or "").strip()
+            if file_key == "faq":
+                continue
             new_content = patch.get("content", "")
             rel = CONFIG_FILES.get(file_key)
             if not rel:

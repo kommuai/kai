@@ -414,9 +414,11 @@ export const tenantsApi = {
 };
 
 export interface AiAssistPatch {
-  file: "workspace" | "system_prompt" | "faq";
+  file: string;
   path: string;
   diff: string;
+  type?: string;
+  intent_id?: string;
 }
 
 export interface AiAssistApplyResult {

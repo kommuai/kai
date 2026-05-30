@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.18",
+    "baileys-antiban": "^3.9.0",
     "express": "^4.21.2",
     "js-yaml": "^4.1.0",
     "pino": "^9.6.0",

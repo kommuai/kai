@@ -28,7 +28,7 @@ export async function finishAuthAndNavigate(
     try {
       const tenant = await tenantsApi.acceptInvite(token);
       toast.success(`Joined ${tenant.display_name}`);
-      navigate(`/t/${tenant.slug}`, { replace: true });
+      navigate(`/t/${tenant.slug}/inbox`, { replace: true });
       return;
     } catch (err: unknown) {
       toast.error(formatApiError(err, "Could not accept invite. Try opening your invite link again."));
@@ -45,7 +45,7 @@ export async function acceptInviteToken(
     const tenant = await tenantsApi.acceptInvite(token);
     clearPendingInviteToken();
     toast.success(`Joined ${tenant.display_name}`);
-    navigate(`/t/${tenant.slug}`, { replace: true });
+    navigate(`/t/${tenant.slug}/inbox`, { replace: true });
     return tenant;
   } catch (err: unknown) {
     toast.error(formatApiError(err, "Could not accept invite."));

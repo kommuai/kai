@@ -52,7 +52,7 @@ def redeem_invite(db: Session, user: User, inv: TenantInvite) -> Tenant:
     db.commit()
     t = db.query(Tenant).filter(Tenant.id == inv.tenant_id).first()
     if not t:
-        raise HTTPException(status_code=404, detail="Tenant not found")
+        raise HTTPException(status_code=404, detail="Agent not found")
     return t
 
 

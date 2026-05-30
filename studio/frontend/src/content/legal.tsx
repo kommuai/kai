@@ -22,7 +22,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     id: "service",
     title: "2. Description of the Service",
     paragraphs: [
-      `${SERVICE_NAME} is a web-based administration console for configuring and operating AI-powered customer-support agents ("Agents") across one or more logical tenants ("Tenants"). Features may include workspace configuration, knowledge-base editing, compilation, conversation inbox views, contact management, messaging channel setup, and related tooling.`,
+      `${SERVICE_NAME} is a web-based administration console for configuring and operating AI-powered customer-support agents ("Agents"). Features may include workspace configuration, knowledge-base editing, compilation, conversation inbox views, contact management, messaging channel setup, and related tooling.`,
       "The Service is an operator tool. It does not replace your own policies, contracts, or compliance obligations toward your end customers. Deployed Agents may interact with third-party channels (e.g. messaging platforms) under your configuration and credentials.",
     ],
   },
@@ -40,15 +40,15 @@ export const TERMS_SECTIONS: LegalSection[] = [
     title: "4. Acceptable use",
     paragraphs: [
       "You will not use the Service to: violate law or third-party rights; transmit malware or abusive content; attempt unauthorised access to systems or data; reverse engineer the Service except where permitted by law; overload or disrupt infrastructure; or misrepresent identity or affiliation.",
-      "You are solely responsible for Tenant content (prompts, FAQs, configurations, tags, replies sent through integrated channels) and for ensuring it is lawful, accurate, and appropriate for your audience.",
+      "You are solely responsible for Agent content (prompts, FAQs, configurations, tags, replies sent through integrated channels) and for ensuring it is lawful, accurate, and appropriate for your audience.",
     ],
   },
   {
     id: "content",
     title: "5. Your content and data",
     paragraphs: [
-      "You retain ownership of content you upload or configure. You grant us a non-exclusive, worldwide licence to host, process, copy, and display that content solely to provide, secure, and improve the Service, including running compile jobs and reading tenant session databases you point the Service at.",
-      "You represent that you have all rights necessary for your content and that it does not infringe others' rights. We may remove content or suspend Tenants that we reasonably believe violate these Terms or pose risk to the Service or others.",
+      "You retain ownership of content you upload or configure. You grant us a non-exclusive, worldwide licence to host, process, copy, and display that content solely to provide, secure, and improve the Service, including running compile jobs and reading agent session databases you point the Service at.",
+      "You represent that you have all rights necessary for your content and that it does not infringe others' rights. We may remove content or suspend Agents that we reasonably believe violate these Terms or pose risk to the Service or others.",
     ],
   },
   {
@@ -64,7 +64,7 @@ export const TERMS_SECTIONS: LegalSection[] = [
     title: "7. Third-party services",
     paragraphs: [
       "The Service may integrate with or depend on third parties (hosting, OAuth providers, messaging APIs, model providers). We are not responsible for their availability, terms, or acts. Your use of those services is at your own risk and under their agreements.",
-      "You are responsible for API keys, webhooks, and channel credentials you configure in Tenant workspaces.",
+      "You are responsible for API keys, webhooks, and channel credentials you configure in Agent workspaces.",
     ],
   },
   {
@@ -149,7 +149,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     title: "2. Roles",
     paragraphs: [
       "For account and Studio usage data, we act as data controller (or equivalent) for the purposes described here.",
-      "For end-customer messages and contact data stored in tenant session databases that you connect to the Service, you are typically the controller and we process on your instructions when displaying inbox, tags, or sending replies you authorise.",
+      "For end-customer messages and contact data stored in agent session databases that you connect to the Service, you are typically the controller and we process on your instructions when displaying inbox, tags, or sending replies you authorise.",
     ],
   },
   {
@@ -157,9 +157,9 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     title: "3. Data we collect",
     paragraphs: [
       "Account data: name, email address, authentication provider identifiers, password hash (for email sign-in), profile picture URL from OAuth, and account timestamps.",
-      "Tenant metadata: tenant names, slugs, workspace paths, membership and invite records stored in the Studio admin database.",
+      "Agent metadata: agent names, slugs, workspace paths, membership and invite records stored in the Studio admin database.",
       "Configuration content: files you edit in the Service (e.g. workspace.yaml, system prompts, FAQ/knowledge files) and compile outputs triggered through the Service.",
-      "Operational data: conversation and message content read from tenant session databases you configure; contact tags you create; server logs (IP address, user agent, request paths, errors, timestamps).",
+      "Operational data: conversation and message content read from agent session databases you configure; contact tags you create; server logs (IP address, user agent, request paths, errors, timestamps).",
       "Cookies and local storage: session tokens (e.g. JWT in browser storage) to keep you signed in.",
     ],
   },
@@ -167,7 +167,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     id: "use",
     title: "4. How we use data",
     paragraphs: [
-      "Provide, maintain, and secure the Service; authenticate users; enforce access to Tenants you are permitted to use.",
+      "Provide, maintain, and secure the Service; authenticate users; enforce access to Agents you are permitted to use.",
       "Display inbox and contact features; execute compile and integration actions you request.",
       "Diagnose errors, prevent abuse, and improve reliability.",
       "Comply with law and respond to lawful requests.",
@@ -194,7 +194,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     title: "7. Retention",
     paragraphs: [
       "Account and admin-database records are kept while your account is active and for a reasonable period afterward for backup, audit, and legal compliance.",
-      "Tenant session and message data remain in locations you control (tenant workspace databases); the Service reads them on demand and does not necessarily copy full histories into the admin database.",
+      "Agent session and message data remain in locations you control (agent workspace databases); the Service reads them on demand and does not necessarily copy full histories into the admin database.",
       "Logs may be retained for a limited period unless longer retention is required for security or legal reasons.",
     ],
   },
@@ -203,7 +203,7 @@ export const PRIVACY_SECTIONS: LegalSection[] = [
     title: "8. Security",
     paragraphs: [
       "We use reasonable technical and organisational measures (access controls, hashing of passwords, HTTPS in production deployments, least-privilege practices). No method of transmission or storage is 100% secure.",
-      "You are responsible for securing deployment credentials, API keys, and tenant workspace access on your infrastructure.",
+      "You are responsible for securing deployment credentials, API keys, and agent workspace access on your infrastructure.",
     ],
   },
   {

@@ -19,6 +19,7 @@ from ai_assist_core import (
     extract_patch,
     make_deepseek_client,
     preview_patches,
+    validate_ai_assist_patches,
 )
 from database import get_db
 from deps import get_current_user
@@ -52,6 +53,7 @@ def ai_assist_chat(
         if last_assistant:
             patch_block = extract_patch(last_assistant)
             if patch_block and patch_block.get("patches"):
+                validate_ai_assist_patches(patch_block["patches"])
                 applied = apply_patches(home, patch_block["patches"])
                 payload: dict[str, Any] = {
                     "ok": True,
@@ -121,10 +123,18 @@ def ai_assist_chat(
 
             patch_block = extract_patch(full_text)
             patches_preview: list[dict[str, str]] = []
+            patch_error = ""
             if patch_block and patch_block.get("patches"):
-                patches_preview = preview_patches(home, patch_block["patches"])
+                try:
+                    validate_ai_assist_patches(patch_block["patches"])
+                    patches_preview = preview_patches(home, patch_block["patches"])
+                except HTTPException as exc:
+                    patch_error = str(exc.detail)
 
-            yield f"data: {json.dumps({'type': 'done', 'patches': patches_preview, 'summary': patch_block.get('summary', '') if patch_block else ''})}\n\n"
+            summary = patch_block.get("summary", "") if patch_block else ""
+            if patch_error:
+                summary = (summary + " " if summary else "") + f"[Patch rejected: {patch_error}]"
+            yield f"data: {json.dumps({'type': 'done', 'patches': patches_preview, 'summary': summary})}\n\n"
         except Exception as exc:
             log.exception("AI assist stream error")
             yield f"data: {json.dumps({'type': 'error', 'content': str(exc)})}\n\n"

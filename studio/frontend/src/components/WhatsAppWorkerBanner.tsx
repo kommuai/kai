@@ -45,7 +45,7 @@ export default function WhatsAppWorkerBanner() {
       <div>
         <p className="font-medium flex items-center gap-2">
           <Radio size={14} className="text-amber-600" />
-          WhatsApp linked but not live ({stale.length} tenant{stale.length === 1 ? "" : "s"})
+          WhatsApp linked but not live ({stale.length} agent{stale.length === 1 ? "" : "s"})
         </p>
         <ul className="mt-1.5 text-xs text-amber-900/90 list-disc list-inside">
           {stale.map((t) => (

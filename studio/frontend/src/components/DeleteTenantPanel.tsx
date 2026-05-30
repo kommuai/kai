@@ -28,30 +28,32 @@ export default function DeleteTenantPanel({ tenant, redirectTo = "/dashboard", c
     mutationFn: () => tenantsApi.delete(tenant.id, { deleteWorkspace }),
     onSuccess: () => {
       toast.success(
-        deleteWorkspace ? "Tenant and workspace folder removed" : "Tenant removed from Studio",
+        deleteWorkspace ? "Agent and workspace folder removed" : "Agent removed from Studio",
       );
       qc.invalidateQueries({ queryKey: ["tenants"] });
       qc.removeQueries({ queryKey: ["tenantBySlug", tenant.slug] });
       navigate(redirectTo, { replace: true });
     },
-    onError: (err) => toast.error(formatApiError(err, "Could not delete tenant")),
+    onError: (err) => toast.error(formatApiError(err, "Could not delete agent")),
   });
 
   if (!open) {
     return (
       <div className={clsx("card p-5 border border-red-100", className)}>
-        <div className="flex items-start gap-3">
-          <div className="h-9 w-9 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-            <AlertTriangle size={18} className="text-red-600" />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+          <div className="flex items-start gap-3 min-w-0 flex-1">
+            <div className="h-9 w-9 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+              <AlertTriangle size={18} className="text-red-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="font-semibold text-gray-900 text-sm">Delete agent</h3>
+              <p className="text-xs text-gray-500 mt-1">
+                Remove <strong>{tenant.display_name}</strong> from Kai Studio. Workspace files on disk are kept
+                unless you choose to delete them.
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-gray-900 text-sm">Delete tenant</h3>
-            <p className="text-xs text-gray-500 mt-1">
-              Remove <strong>{tenant.display_name}</strong> from Kai Studio. Workspace files on disk are kept
-              unless you choose to delete them.
-            </p>
-          </div>
-          <button type="button" className="btn-danger btn-sm shrink-0" onClick={() => setOpen(true)}>
+          <button type="button" className="btn-danger btn-sm w-full sm:w-auto shrink-0" onClick={() => setOpen(true)}>
             <Trash2 size={14} />
             Delete
           </button>
@@ -67,7 +69,7 @@ export default function DeleteTenantPanel({ tenant, redirectTo = "/dashboard", c
         Confirm deletion
       </h3>
       <p className="text-xs text-red-800/90 mt-2 leading-relaxed">
-        This removes the tenant from Studio (memberships, invites, contact tags). Inbox data in{" "}
+        This removes the agent from Studio (memberships, invites, contact tags). Inbox data in{" "}
         <code className="font-mono text-[11px] bg-white/60 px-1 rounded">sessions.db</code> is not deleted by
         this action.
       </p>

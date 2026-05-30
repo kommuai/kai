@@ -33,4 +33,8 @@ def run_tenant_compile(workspace_home: str | Path) -> CompileResult:
 
 
 def patch_list_touches_faq(applied: list[dict[str, str]]) -> bool:
-    return any((row.get("file") or "").strip() == "faq" for row in applied)
+    return any(
+        (row.get("file") or "").strip() == "faq"
+        or (row.get("type") or "").strip() == "faq_intent"
+        for row in applied
+    )

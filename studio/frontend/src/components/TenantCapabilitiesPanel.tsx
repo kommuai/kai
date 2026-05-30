@@ -176,7 +176,7 @@ export default function TenantCapabilitiesPanel({ tenantId, embedded = false }: 
 
   if (embedded) {
     return (
-      <div className="h-full overflow-y-auto bg-white">
+      <div className="flex-1 min-h-0 overflow-y-auto bg-white">
         {data.skills.length === 0 ? empty : list}
       </div>
     );

@@ -142,7 +142,7 @@ export default function WhatsAppBaileysLink({
           <img
             src={qrDataUrl}
             alt="WhatsApp QR code"
-            className="rounded-xl border border-white shadow-sm bg-white p-2 w-[280px] h-[280px]"
+            className="rounded-xl border border-white shadow-sm bg-white p-2 w-full max-w-[280px] aspect-square h-auto object-contain"
           />
           <p className="text-xs text-gray-500">QR refreshes automatically — scan within 60 seconds</p>
         </div>

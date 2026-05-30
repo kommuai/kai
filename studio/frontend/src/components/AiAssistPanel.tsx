@@ -32,11 +32,20 @@ const FILE_LABELS: Record<string, string> = {
 };
 
 function patchLabel(patch: AiAssistPatch): string {
+  if (patch.intent_id) {
+    return `knowledge/master_faq.md → ${patch.intent_id}`;
+  }
   if (patch.file.startsWith("plugin:")) {
     const name = patch.file.slice("plugin:".length);
     return `tools/plugins/${name}/main.py`;
   }
   return FILE_LABELS[patch.file] ?? patch.path;
+}
+
+/** Hide raw kai-patch JSON from the chat bubble; diff card shows changes. */
+function assistantDisplayContent(content: string): string {
+  const stripped = content.replace(/```kai-patch[\s\S]*?```/g, "").trim();
+  return stripped || content;
 }
 
 const STARTER_SUGGESTIONS = [
@@ -223,20 +232,23 @@ export default function AiAssistPanel({ tenantId }: { tenantId: string }) {
   const isEmpty = messages.length === 0;
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="studio-panel-fill h-full min-h-0">
       {/* ── Header banner ── */}
-      <div className="flex-none px-4 py-3 border-b border-purple-100 bg-gradient-to-r from-purple-50 to-indigo-50 flex items-start gap-3">
-        <div className="h-8 w-8 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
-          <Sparkles size={16} className="text-white" />
+      <div className="shrink-0 px-3 sm:px-4 py-3 border-b border-purple-100 bg-gradient-to-r from-purple-50 to-indigo-50 flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
+        <div className="flex items-start gap-3 min-w-0 flex-1">
+          <div className="h-8 w-8 rounded-xl bg-purple-600 flex items-center justify-center flex-shrink-0">
+            <Sparkles size={16} className="text-white" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-purple-900">AI Config Assistant</p>
+            <p className="text-xs text-purple-600 leading-snug mt-0.5">
+              Chat to update your system prompt, knowledge base, workspace settings, or skills &amp; plugins — no code
+              needed.
+            </p>
+          </div>
         </div>
-        <div>
-          <p className="text-sm font-semibold text-purple-900">AI Config Assistant</p>
-          <p className="text-xs text-purple-600 leading-snug mt-0.5">
-            Chat to update your system prompt, knowledge base, workspace settings, or skills &amp; plugins — no code needed.
-          </p>
-        </div>
-        <div className="ml-auto flex-shrink-0">
-          <div className="flex items-center gap-1 bg-purple-100 rounded-full px-2 py-0.5 text-[10px] text-purple-700 font-medium">
+        <div className="flex-shrink-0 self-start sm:self-auto">
+          <div className="inline-flex items-center gap-1 bg-purple-100 rounded-full px-2 py-0.5 text-[10px] text-purple-700 font-medium">
             <Info size={10} />
             DeepSeek powered
           </div>
@@ -279,7 +291,7 @@ export default function AiAssistPanel({ tenantId }: { tenantId: string }) {
                   <Sparkles size={13} className="text-white" />
                 </div>
               )}
-              <div className={clsx("max-w-[80%] space-y-2", isUser && "items-end flex flex-col")}>
+              <div className={clsx("max-w-[min(100%,20rem)] sm:max-w-[80%] space-y-2", isUser && "items-end flex flex-col")}>
                 <div
                   className={clsx(
                     "rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap",
@@ -288,7 +300,7 @@ export default function AiAssistPanel({ tenantId }: { tenantId: string }) {
                       : "bg-white border border-gray-200 text-gray-800 rounded-tl-sm shadow-sm",
                   )}
                 >
-                  {msg.content}
+                  {msg.role === "assistant" ? assistantDisplayContent(msg.content) : msg.content}
                   {msg.isStreaming && (
                     <span className="inline-block ml-1 w-1.5 h-4 bg-purple-400 rounded-sm animate-pulse align-bottom" />
                   )}
@@ -401,12 +413,12 @@ export default function AiAssistPanel({ tenantId }: { tenantId: string }) {
       {/* ── Scope notice ── */}
       <div className="flex-none px-4 pb-1">
         <p className="text-[10px] text-gray-400 text-center">
-          AI Config Assistant edits workspace.yaml, system_prompt.md, master_faq.md, and plugin scripts only.
+          Wiring (workspace.yaml), brain rules (system_prompt.md), truth (master_faq.md), and plugin scripts only.
         </p>
       </div>
 
       {/* ── Input bar ── */}
-      <div className="flex-none px-4 pb-4">
+      <div className="shrink-0 px-3 sm:px-4 pb-3 sm:pb-4 pb-safe">
         <div className="flex items-end gap-2 bg-white rounded-2xl border border-gray-200 shadow-sm px-3 py-2 focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100 transition-all">
           <textarea
             ref={inputRef}

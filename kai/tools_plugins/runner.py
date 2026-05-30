@@ -4,6 +4,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -61,7 +62,8 @@ def run_plugin_tool(
         return {"ok": False, "error": f"missing_plugin_script:{plugin_id}"}
 
     timeout = timeout_sec or int(params.get("timeout_seconds") or os.getenv("KAI_PLUGIN_TIMEOUT_SECONDS", "180"))
-    cmd = ["python3", str(script)]
+    python = os.getenv("KAI_PYTHON") or sys.executable
+    cmd = [python, str(script)]
     for key, value in (args or {}).items():
         if value is None or value == "":
             continue

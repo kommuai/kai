@@ -33,8 +33,9 @@ def master_faq_system_block() -> str:
     if manifest.knowledge.inject_mode == "retrieval_first":
         return (
             "## Knowledge base\n\n"
-            "Use **search_faq** for policy and product answers. Do not invent facts outside tool results "
-            "and this conversation.\n"
+            "Product and policy **facts** live in **master_faq.md** (compiled chunks). "
+            "Call **search_faq** before stating them — see **system_prompt.md** for when and how. "
+            "Do not invent facts from general knowledge.\n"
         )
 
     body = load_master_faq_text().strip()

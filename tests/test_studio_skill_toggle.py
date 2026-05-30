@@ -25,15 +25,15 @@ class StudioSkillToggleTests(unittest.TestCase):
         shutil.rmtree(self._tmp, ignore_errors=True)
 
     def test_disable_and_enable_profile_skill(self) -> None:
-        set_profile_skill_enabled(self.home, "search_web", False)
+        set_profile_skill_enabled(self.home, "search_session_memory", False)
         caps = get_capabilities(self.home)
-        web = next(s for s in caps["skills"] if s["id"] == "search_web")
-        self.assertFalse(web["enabled"])
+        mem = next(s for s in caps["skills"] if s["id"] == "search_session_memory")
+        self.assertFalse(mem["enabled"])
 
-        set_profile_skill_enabled(self.home, "search_web", True)
+        set_profile_skill_enabled(self.home, "search_session_memory", True)
         caps2 = get_capabilities(self.home)
-        web2 = next(s for s in caps2["skills"] if s["id"] == "search_web")
-        self.assertTrue(web2["enabled"])
+        mem2 = next(s for s in caps2["skills"] if s["id"] == "search_session_memory")
+        self.assertTrue(mem2["enabled"])
 
     def test_disabled_skill_excluded_from_runtime_config(self) -> None:
         import os

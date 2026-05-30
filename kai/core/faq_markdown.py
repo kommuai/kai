@@ -7,16 +7,90 @@ from typing import Any
 SOP_SYNC_START_DEFAULT = "<!-- sop-sync:start -->"
 SOP_SYNC_END_DEFAULT = "<!-- sop-sync:end -->"
 
+_SCHEMA_HEADER_RE = re.compile(
+    r"^##\s+(intent|workflow|data|dynamic)\s*:\s*([A-Za-z0-9_\-./]+)\s*$"
+)
+_INTENT_HEADER_RE = re.compile(r"^##\s+intent\s*:\s*([A-Za-z0-9_\-./]+)\s*$", re.IGNORECASE)
+
+
+def safe_intent_id(intent_id: str) -> bool:
+    return bool(re.fullmatch(r"[A-Za-z0-9_\-./]+", (intent_id or "").strip()))
+
+
+def normalize_intent_block(intent_id: str, content: str) -> str:
+    """Return a full `## intent:` block (aliases + answer) for intent_id."""
+    iid = (intent_id or "").strip()
+    if not safe_intent_id(iid):
+        raise ValueError(f"Invalid intent_id: {intent_id!r}")
+    body = (content or "").strip()
+    if not body:
+        raise ValueError(f"Empty content for intent '{iid}'")
+    if _INTENT_HEADER_RE.match(body.splitlines()[0].strip()):
+        probe = body
+    else:
+        probe = f"## intent: {iid}\n{body}"
+    parsed = parse_master_faq_schema(probe)
+    intents = parsed.get("intents") or []
+    if not intents:
+        raise ValueError(f"Could not parse intent block for '{iid}'")
+    row = intents[0]
+    if (row.get("intent_id") or "").strip() != iid:
+        raise ValueError(f"Intent header id does not match intent_id '{iid}'")
+    return render_master_faq_schema({"intents": [row], "workflows": [], "data": [], "dynamic": []}).strip()
+
+
+def upsert_intent_block(full_text: str, intent_id: str, content: str) -> str:
+    """Replace or append one intent section in master_faq.md."""
+    new_block = normalize_intent_block(intent_id, content)
+    text = (full_text or "").replace("\r\n", "\n")
+    lines = text.split("\n")
+    out: list[str] = []
+    i = 0
+    replaced = False
+    while i < len(lines):
+        line = lines[i]
+        m = _INTENT_HEADER_RE.match(line.strip())
+        if m and m.group(1) == intent_id:
+            replaced = True
+            i += 1
+            while i < len(lines) and not _SCHEMA_HEADER_RE.match(lines[i].strip()):
+                i += 1
+            if out and out[-1].strip():
+                out.append("")
+            out.extend(new_block.split("\n"))
+            out.append("")
+            continue
+        out.append(line)
+        i += 1
+    merged = "\n".join(out).rstrip()
+    if replaced:
+        return merged + "\n"
+    return _append_intent_block(merged, new_block)
+
+
+def _append_intent_block(text: str, new_block: str) -> str:
+    end_marker = SOP_SYNC_END_DEFAULT
+    block = new_block.strip()
+    if end_marker in text:
+        before, after = text.split(end_marker, 1)
+        before = before.rstrip()
+        if before and not before.endswith("\n"):
+            before += "\n"
+        return f"{before}\n\n{block}\n\n{end_marker}{after}"
+    base = text.rstrip()
+    if base:
+        return f"{base}\n\n{block}\n"
+    return f"{block}\n"
+
 
 def _split_schema_blocks(text: str) -> list[tuple[str, str, str]]:
     lines = (text or "").replace("\r\n", "\n").split("\n")
-    header_re = re.compile(r"^##\s+(intent|workflow|data|dynamic)\s*:\s*([A-Za-z0-9_\-./]+)\s*$")
     out: list[tuple[str, str, str]] = []
     cur_kind = ""
     cur_name = ""
     cur_body: list[str] = []
     for line in lines:
-        m = header_re.match(line.strip())
+        m = _SCHEMA_HEADER_RE.match(line.strip())
         if m:
             if cur_kind:
                 out.append((cur_kind, cur_name, "\n".join(cur_body).strip()))

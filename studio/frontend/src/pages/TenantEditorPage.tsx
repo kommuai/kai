@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useOutletContext } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Editor from "@monaco-editor/react";
 import toast from "react-hot-toast";
 import {
   Save,
@@ -30,6 +29,7 @@ import DeleteTenantPanel from "../components/DeleteTenantPanel";
 import TenantCapabilitiesPanel from "../components/TenantCapabilitiesPanel";
 import TenantChannelPanel from "../components/TenantChannelPanel";
 import AiAssistPanel from "../components/AiAssistPanel";
+import ConfigMonacoEditor from "../components/ConfigMonacoEditor";
 import { useAuthStore } from "../lib/auth";
 
 type FileKey = "workspace" | "system_prompt" | "faq";
@@ -53,27 +53,27 @@ const TABS: Tab[] = [
     label: "Workspace",
     icon: <FileCode2 size={16} />,
     language: "yaml",
-    description: "Core configuration: tenant ID, channels, tools profile, and admin settings.",
+    description: "Wiring — channels, tools, office hours, handover keywords, and fixed reply text.",
   },
   {
     key: "skills",
     label: "Skills",
     icon: <Puzzle size={16} />,
-    description: "Turn agent actions and plugins on or off. Changes apply to workspace.yaml immediately.",
+    description: "Tools your agent can call — search, lookups, escalation, and custom plugins.",
   },
   {
     key: "system_prompt",
     label: "System Prompt",
     icon: <FileText size={16} />,
     language: "markdown",
-    description: "Instructions that shape your AI support agent's personality, rules, and response format.",
+    description: "Brain rules — personality, when to call tools, and response format. Not product facts.",
   },
   {
     key: "faq",
     label: "FAQ / Knowledge",
     icon: <BookOpen size={16} />,
     language: "markdown",
-    description: "The authoritative knowledge base. Add intents, aliases, and answers here.",
+    description: "Truth — prices, policies, links, and answers the agent must cite via search_faq.",
   },
 ];
 
@@ -91,7 +91,7 @@ function CompilePanel({ tenantId }: { tenantId: string }) {
 
   return (
     <div className="border-t border-gray-100 bg-gray-50/80">
-      <div className="px-4 py-3 flex items-center justify-between gap-4">
+      <div className="px-3 sm:px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2 text-xs text-gray-500">
           <TerminalSquare size={14} />
           <span>Knowledge compiler</span>
@@ -99,7 +99,7 @@ function CompilePanel({ tenantId }: { tenantId: string }) {
         <button
           onClick={() => mutate()}
           disabled={isPending}
-          className="btn-secondary btn-sm flex items-center gap-1.5"
+          className="btn-secondary btn-sm flex items-center justify-center gap-1.5 w-full sm:w-auto"
         >
           {isPending ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />}
           Compile
@@ -158,9 +158,26 @@ export default function TenantEditorPage() {
 
   // Load all files in parallel
   const tenantId = tenant?.id;
-  const { data: wsFile } = useQuery({ queryKey: ["file", tenantId, "workspace"], queryFn: () => tenantsApi.getFile(tenantId!, "workspace"), enabled: !!tenantId });
-  const { data: spFile } = useQuery({ queryKey: ["file", tenantId, "system_prompt"], queryFn: () => tenantsApi.getFile(tenantId!, "system_prompt"), enabled: !!tenantId });
-  const { data: faqFile } = useQuery({ queryKey: ["file", tenantId, "faq"], queryFn: () => tenantsApi.getFile(tenantId!, "faq"), enabled: !!tenantId });
+  const { data: wsFile, isLoading: wsLoading } = useQuery({
+    queryKey: ["file", tenantId, "workspace"],
+    queryFn: () => tenantsApi.getFile(tenantId!, "workspace"),
+    enabled: !!tenantId,
+  });
+  const { data: spFile, isLoading: spLoading } = useQuery({
+    queryKey: ["file", tenantId, "system_prompt"],
+    queryFn: () => tenantsApi.getFile(tenantId!, "system_prompt"),
+    enabled: !!tenantId,
+  });
+  const { data: faqFile, isLoading: faqLoading } = useQuery({
+    queryKey: ["file", tenantId, "faq"],
+    queryFn: () => tenantsApi.getFile(tenantId!, "faq"),
+    enabled: !!tenantId,
+  });
+
+  const fileLoading =
+    (activeTab === "workspace" && wsLoading) ||
+    (activeTab === "system_prompt" && spLoading) ||
+    (activeTab === "faq" && faqLoading);
 
   useEffect(() => {
     if (wsFile) setContent((p) => ({ ...p, workspace: wsFile.content }));
@@ -251,15 +268,17 @@ export default function TenantEditorPage() {
     );
   }
 
-  if (!tenant) return <div className="text-center py-20 text-gray-400">Tenant not found.</div>;
+  if (!tenant) return <div className="text-center py-20 text-gray-400">Agent not found.</div>;
 
   const activeTabDef = TABS.find((t) => t.key === activeTab)!;
 
+  const editorPaneMinH = "min-h-[min(58dvh,560px)] sm:min-h-[min(62dvh,640px)] lg:min-h-[calc(100dvh-15rem)]";
+
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="studio-page space-y-3 sm:space-y-4 animate-fade-in pb-6">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between shrink-0">
+        <div className="min-w-0">
           <h1 className="text-base font-semibold text-gray-900">Configuration</h1>
           <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
             <Clock size={11} />
@@ -270,7 +289,7 @@ export default function TenantEditorPage() {
           <button
             onClick={handleSave}
             disabled={!dirty[activeTab] || saveMutation.isPending}
-            className={clsx("btn-primary btn-sm", !dirty[activeTab] && "opacity-50")}
+            className={clsx("btn-primary btn-sm w-full sm:w-auto shrink-0", !dirty[activeTab] && "opacity-50")}
           >
             {saveMutation.isPending ? (
               <Spinner size="sm" className="text-white" />
@@ -285,14 +304,14 @@ export default function TenantEditorPage() {
         )}
       </div>
 
-      {tenantId && <TenantChannelPanel tenantId={tenantId} />}
+      {tenantId && <div className="shrink-0"><TenantChannelPanel tenantId={tenantId} /></div>}
 
       {/* ── Editor card ── */}
-      <div className="card overflow-hidden flex flex-col" style={{ height: "calc(100dvh - 180px)", minHeight: 480 }}>
+      <div className={clsx("card overflow-hidden flex flex-col min-w-0", editorPaneMinH)}>
 
         {/* ── Mode toggle bar ── */}
-        <div className="flex items-center justify-between px-3 pt-2 pb-0 border-b border-gray-100 bg-gray-50/60">
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between px-2 sm:px-3 pt-2 pb-0 border-b border-gray-100 bg-gray-50/60 shrink-0">
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide min-w-0 -mx-1 px-1">
             {editorMode === "edit" && TABS.map((tab) => (
               <button
                 key={tab.key}
@@ -320,7 +339,7 @@ export default function TenantEditorPage() {
           </div>
 
           {/* Mode switcher pill */}
-          <div className="flex-shrink-0 ml-3 mb-1 flex items-center gap-0.5 bg-gray-100 rounded-xl p-0.5">
+          <div className="flex-shrink-0 sm:ml-3 mb-1 flex items-center gap-0.5 bg-gray-100 rounded-xl p-0.5 self-stretch sm:self-auto">
             <button
               onClick={() => setEditorMode("edit")}
               className={clsx(
@@ -351,39 +370,28 @@ export default function TenantEditorPage() {
         {editorMode === "edit" ? (
           <>
             {/* Description bar */}
-            <div className="px-4 py-2 bg-white border-b border-gray-100 text-xs text-gray-500 flex items-center gap-2">
-              {activeTabDef.icon}
-              {activeTabDef.description}
+            <div className="px-3 sm:px-4 py-2 bg-white border-b border-gray-100 text-xs text-gray-500 flex items-start gap-2 shrink-0">
+              <span className="shrink-0 mt-0.5">{activeTabDef.icon}</span>
+              <span className="leading-snug">{activeTabDef.description}</span>
             </div>
 
             {/* Editor or skills list */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 min-h-[280px] overflow-hidden flex flex-col relative">
+              {fileLoading && isFileTab(activeTab) && (
+                <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/80">
+                  <Spinner className="text-brand-600" />
+                </div>
+              )}
               {activeTab === "skills" && tenantId ? (
                 <TenantCapabilitiesPanel tenantId={tenantId} embedded />
               ) : isFileTab(activeTab) ? (
-                <Editor
+                <ConfigMonacoEditor
+                  editorKey={activeTab}
                   language={activeTabDef.language ?? "plaintext"}
                   value={content[activeTab]}
                   onChange={(v) => {
-                    setContent((p) => ({ ...p, [activeTab]: v || "" }));
+                    setContent((p) => ({ ...p, [activeTab]: v }));
                     setDirty((p) => ({ ...p, [activeTab]: true }));
-                  }}
-                  theme="vs"
-                  options={{
-                    fontSize: 13,
-                    lineHeight: 22,
-                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-                    fontLigatures: true,
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    wordWrap: "on",
-                    renderLineHighlight: "gutter",
-                    smoothScrolling: true,
-                    padding: { top: 16, bottom: 16 },
-                    overviewRulerLanes: 0,
-                    folding: true,
-                    lineNumbers: "on",
-                    tabSize: 2,
                   }}
                 />
               ) : null}
@@ -393,14 +401,14 @@ export default function TenantEditorPage() {
             {tenantId && activeTab === "faq" && <CompilePanel tenantId={tenantId} />}
           </>
         ) : (
-          <div className="flex-1 overflow-hidden bg-gray-50/30">
+          <div className="flex-1 min-h-0 overflow-hidden bg-gray-50/30 flex flex-col">
             {tenantId && <AiAssistPanel tenantId={tenantId} />}
           </div>
         )}
       </div>
 
       {/* ── Members / Invites ── */}
-      <div className="card p-5">
+      <div className="card p-4 sm:p-5 shrink-0">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-2">
             <div className="h-9 w-9 rounded-2xl bg-brand-50 flex items-center justify-center">

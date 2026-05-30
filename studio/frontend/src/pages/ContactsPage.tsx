@@ -51,7 +51,11 @@ export default function ContactsPage() {
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="studio-page space-y-4 animate-fade-in pb-4">
+      <div>
+        <h1 className="text-lg sm:text-xl font-bold text-gray-900">Contacts</h1>
+        <p className="text-xs sm:text-sm text-gray-500 mt-0.5">People who have messaged this agent.</p>
+      </div>
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />

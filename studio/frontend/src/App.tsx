@@ -40,7 +40,8 @@ export default function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/tenants/new" element={<NewTenantPage />} />
               <Route path="/t/:slug" element={<TenantShell />}>
-                <Route index element={<TenantEditorPage />} />
+                <Route index element={<Navigate to="inbox" replace />} />
+                <Route path="configuration" element={<TenantEditorPage />} />
                 <Route path="inbox" element={<InboxPage />}>
                   <Route path=":userId" element={<ConversationPage />} />
                 </Route>
@@ -54,7 +55,8 @@ export default function App() {
       </BrowserRouter>
 
       <Toaster
-        position="top-right"
+        position="top-center"
+        containerClassName="!top-[max(0.75rem,env(safe-area-inset-top))] sm:!top-4"
         toastOptions={{
           duration: 3500,
           style: {

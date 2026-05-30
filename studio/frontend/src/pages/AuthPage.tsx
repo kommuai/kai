@@ -130,7 +130,7 @@ export default function AuthPage() {
         <div className="relative z-10 max-w-md">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm text-brand-100">
             <Sparkles size={14} />
-            Multi-tenant AI chatbot platform
+            AI support agent platform
           </div>
           <h1 className="text-4xl font-bold text-white leading-tight">
             Configure your AI support agents in one place
@@ -139,7 +139,7 @@ export default function AuthPage() {
 
         <div className="relative z-10 grid grid-cols-3 gap-4">
           {[
-            { label: "Tenants", value: "∞" },
+            { label: "Agents", value: "∞" },
             { label: "Languages", value: "EN/BM" },
             { label: "Channels", value: "WA +" },
           ].map(({ label, value }) => (

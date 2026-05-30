@@ -181,7 +181,7 @@ export default function ConversationPage() {
   const tagCount = detail.tags.length;
 
   const aiControlBtn =
-    "shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white text-amber-900 px-3 py-1.5 text-[11px] font-medium hover:bg-amber-50 disabled:opacity-50";
+    "shrink-0 inline-flex items-center justify-center gap-1.5 rounded-lg border border-amber-300 bg-white text-amber-900 px-2.5 sm:px-3 py-1.5 text-[11px] font-medium hover:bg-amber-50 disabled:opacity-50 w-full sm:w-auto";
 
   const tagsBody = (
     <>
@@ -287,22 +287,32 @@ export default function ConversationPage() {
 
       <div
         className={clsx(
-          "flex items-center gap-2 px-3 py-2 sm:px-4 text-[11px] border-b shrink-0",
+          "flex flex-col gap-2 sm:flex-row sm:items-center px-3 py-2 sm:px-4 text-[11px] border-b shrink-0",
           detail.frozen
             ? "bg-amber-50 border-amber-100 text-amber-900"
             : "bg-slate-50 border-gray-100 text-gray-700",
         )}
       >
-        {detail.frozen ? (
-          <Snowflake size={13} className="shrink-0" aria-hidden />
-        ) : (
-          <Bot size={13} className="shrink-0 text-brand-600" aria-hidden />
-        )}
-        <span className="flex-1 min-w-0">
-          {detail.frozen
-            ? "Human handover — AI support agent paused"
-            : "AI support agent active"}
-        </span>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          {detail.frozen ? (
+            <Snowflake size={13} className="shrink-0" aria-hidden />
+          ) : (
+            <Bot size={13} className="shrink-0 text-brand-600" aria-hidden />
+          )}
+          <span className="min-w-0 leading-snug">
+            {detail.frozen ? (
+              <>
+                <span className="sm:hidden">Handover — AI paused</span>
+                <span className="hidden sm:inline">Human handover — AI support agent paused</span>
+              </>
+            ) : (
+              <>
+                <span className="sm:hidden">AI active</span>
+                <span className="hidden sm:inline">AI support agent active</span>
+              </>
+            )}
+          </span>
+        </div>
         {detail.frozen ? (
           <button
             type="button"
@@ -316,7 +326,8 @@ export default function ConversationPage() {
             ) : (
               <Bot size={12} />
             )}
-            Resume AI support
+            <span className="sm:hidden">Resume AI</span>
+            <span className="hidden sm:inline">Resume AI support</span>
           </button>
         ) : (
           <button
@@ -331,7 +342,8 @@ export default function ConversationPage() {
             ) : (
               <UserRound size={12} />
             )}
-            Hand over to human
+            <span className="sm:hidden">Hand over</span>
+            <span className="hidden sm:inline">Hand over to human</span>
           </button>
         )}
       </div>

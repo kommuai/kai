@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Building2,
+  CheckCircle2,
   FileUp,
   HeartHandshake,
   ShieldCheck,
@@ -28,7 +29,36 @@ import { formatApiError } from "../lib/apiErrors";
 import Spinner from "../components/Spinner";
 import WhatsAppBaileysLink from "../components/WhatsAppBaileysLink";
 
-type WizardStep = 1 | 2;
+type WizardStep = 1 | 2 | 3;
+
+const WIZARD_STEPS: { n: WizardStep; label: string }[] = [
+  { n: 1, label: "Business setup" },
+  { n: 2, label: "Channel" },
+  { n: 3, label: "Done" },
+];
+
+function WizardStepper({ step }: { step: WizardStep }) {
+  return (
+    <div
+      className="flex w-full items-center justify-center gap-2 mb-4 text-xs text-gray-500 flex-wrap"
+      aria-label="Creation progress"
+    >
+      {WIZARD_STEPS.map((s, i) => (
+        <span key={s.n} className="inline-flex items-center gap-2">
+          {i > 0 && <span className="text-gray-300">→</span>}
+          <span
+            className={clsx(
+              "px-2 py-1 rounded-full whitespace-nowrap",
+              step === s.n ? "bg-brand-100 text-brand-800 font-medium" : "bg-gray-100",
+            )}
+          >
+            {s.n}. {s.label}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
+}
 type ChannelType = "none" | "telegram" | "whatsapp_cloud" | "whatsapp_baileys";
 
 function slugify(s: string) {
@@ -73,6 +103,7 @@ export default function NewTenantPage() {
   const [channelType, setChannelType] = useState<ChannelType>("whatsapp_baileys");
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
+  const [createdTenant, setCreatedTenant] = useState<{ slug: string; display_name: string } | null>(null);
 
   const displayName = companyName.trim();
   const description = productSummary.trim();
@@ -182,14 +213,15 @@ export default function NewTenantPage() {
       qc.invalidateQueries({ queryKey: ["tenants"] });
       toast.success(
         uploadedDocs.length > 0
-          ? "Tenant created and configured from your documents!"
-          : "Tenant created!",
+          ? "Support agent created and configured from your documents!"
+          : "Support agent created!",
       );
-      navigate(`/t/${tenant.slug}`);
+      setCreatedTenant({ slug: tenant.slug, display_name: tenant.display_name });
+      setStep(3);
     },
     onError: (err: any) => {
       setBootstrapActive(false);
-      toast.error(err?.message || err?.response?.data?.detail || "Failed to create tenant");
+      toast.error(err?.message || err?.response?.data?.detail || "Failed to create agent");
     },
   });
 
@@ -252,12 +284,13 @@ export default function NewTenantPage() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (step === 3) return;
     if (step === 1) {
       goToChannelStep();
       return;
     }
     if (channelType === "whatsapp_baileys" && !whatsappConnected) {
-      toast.error("Scan the QR code to connect WhatsApp before creating the tenant.");
+      toast.error("Scan the QR code to connect WhatsApp before creating the agent.");
       return;
     }
     mutate();
@@ -295,37 +328,54 @@ export default function NewTenantPage() {
   ];
 
   return (
-    <div className="max-w-xl mx-auto animate-fade-in">
+    <div className="studio-page max-w-xl mx-auto animate-fade-in pb-6">
       <button onClick={() => navigate(-1)} className="btn-ghost mb-6 -ml-2 text-gray-500">
         <ArrowLeft size={16} />
         Back
       </button>
 
-      <div className="flex items-center gap-4 mb-8">
-        <div className="h-12 w-12 rounded-2xl bg-brand-50 flex items-center justify-center">
+      <div className="flex items-start gap-3 sm:gap-4 mb-6 sm:mb-8">
+        <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-2xl bg-brand-50 flex items-center justify-center shrink-0">
           <Building2 size={24} className="text-brand-600" />
         </div>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">New tenant</h1>
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900">New Support Agent Creation</h1>
           <p className="text-sm text-gray-500">
             {step === 1
               ? "Fill what you know. You can refine later in Configuration."
-              : "Choose how customers reach your AI support agent."}
+              : step === 2
+                ? "Choose how customers reach your AI support agent."
+                : "Your support agent is ready. Open Configuration to review or adjust settings."}
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
-        <span className={clsx("px-2 py-1 rounded-full", step === 1 ? "bg-brand-100 text-brand-800 font-medium" : "bg-gray-100")}>
-          1. Business setup
-        </span>
-        <span className="text-gray-300">→</span>
-        <span className={clsx("px-2 py-1 rounded-full", step === 2 ? "bg-brand-100 text-brand-800 font-medium" : "bg-gray-100")}>
-          2. Channel
-        </span>
-      </div>
+      <WizardStepper step={step} />
 
-      <form onSubmit={handleSubmit} className="card p-6 space-y-5">
+      <form onSubmit={handleSubmit} className="card p-4 sm:p-6 space-y-5">
+        {step === 3 && createdTenant && (
+          <div className="py-4 sm:py-6 text-center space-y-4">
+            <div className="mx-auto h-14 w-14 rounded-2xl bg-emerald-50 flex items-center justify-center">
+              <CheckCircle2 size={32} className="text-emerald-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{createdTenant.display_name}</h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Support agent created
+                {uploadedDocs.length > 0 ? " and configured from your documents" : ""}.
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn-primary btn-lg w-full"
+              onClick={() => navigate(`/t/${createdTenant.slug}/configuration`)}
+            >
+              Open configuration
+              <ArrowRight size={18} />
+            </button>
+          </div>
+        )}
+
         {step === 2 && (
           <div className="space-y-4">
             <div>
@@ -403,7 +453,7 @@ export default function NewTenantPage() {
               <p className="text-sm font-medium text-gray-900">Upload documents (optional)</p>
               <p className="text-xs text-gray-500 mt-0.5">
                 Add FAQs, product sheets, or policies (.txt, .md, .pdf, .csv). We&apos;ll use AI to fill your system
-                prompt, knowledge base, and skills when you create the tenant.
+                prompt, knowledge base, and skills when you create the agent.
               </p>
             </div>
           </div>
@@ -435,7 +485,7 @@ export default function NewTenantPage() {
           {uploadedDocs.length > 0 ? (
             <div className="space-y-1.5">
               <p className="text-xs font-medium text-emerald-800">
-                {uploadedDocs.length} file{uploadedDocs.length === 1 ? "" : "s"} ready — will configure the tenant on
+                {uploadedDocs.length} file{uploadedDocs.length === 1 ? "" : "s"} ready — will configure the agent on
                 create
               </p>
               <ul className="space-y-1">
@@ -646,34 +696,36 @@ export default function NewTenantPage() {
           </>
         )}
 
-        <div className="flex gap-2 pt-1">
-          {step === 2 && (
-            <button
-              type="button"
-              className="btn-secondary flex-1"
-              disabled={busy}
-              onClick={() => setStep(1)}
-            >
-              Back
-            </button>
-          )}
-          <button type="submit" disabled={busy} className="btn-primary btn-lg flex-1">
-            {busy ? (
-              <Spinner size="sm" className="text-white" />
-            ) : step === 1 ? (
-              <>
-                Continue to channel
-                <ArrowRight size={18} />
-              </>
-            ) : (
-              <>
-                {uploadedDocs.length > 0 ? "Create tenant & configure" : "Create tenant"}
-                {channelType === "whatsapp_baileys" && whatsappPhone ? ` (${whatsappPhone})` : null}
-                <ArrowRight size={18} />
-              </>
+        {step !== 3 && (
+          <div className="flex gap-2 pt-1">
+            {step === 2 && (
+              <button
+                type="button"
+                className="btn-secondary flex-1"
+                disabled={busy}
+                onClick={() => setStep(1)}
+              >
+                Back
+              </button>
             )}
-          </button>
-        </div>
+            <button type="submit" disabled={busy} className="btn-primary btn-lg flex-1">
+              {busy ? (
+                <Spinner size="sm" className="text-white" />
+              ) : step === 1 ? (
+                <>
+                  Continue to channel
+                  <ArrowRight size={18} />
+                </>
+              ) : (
+                <>
+                  {uploadedDocs.length > 0 ? "Create support agent & configure" : "Create support agent"}
+                  {channelType === "whatsapp_baileys" && whatsappPhone ? ` (${whatsappPhone})` : null}
+                  <ArrowRight size={18} />
+                </>
+              )}
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

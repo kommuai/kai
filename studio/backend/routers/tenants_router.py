@@ -65,17 +65,17 @@ def _assert_tenant_member(tenant_id: str, user: User, db: Session) -> Tenant:
         .first()
     )
     if not m:
-        raise HTTPException(status_code=404, detail="Tenant not found")
+        raise HTTPException(status_code=404, detail="Agent not found")
     t = db.query(Tenant).filter(Tenant.id == tenant_id).first()
     if not t:
-        raise HTTPException(status_code=404, detail="Tenant not found")
+        raise HTTPException(status_code=404, detail="Agent not found")
     return t
 
 
 def _assert_tenant_member_by_slug(slug: str, user: User, db: Session) -> Tenant:
     t = db.query(Tenant).filter(Tenant.slug == slug).first()
     if not t:
-        raise HTTPException(status_code=404, detail="Tenant not found")
+        raise HTTPException(status_code=404, detail="Agent not found")
     _assert_tenant_member(t.id, user, db)
     return t
 
@@ -83,7 +83,7 @@ def _assert_tenant_member_by_slug(slug: str, user: User, db: Session) -> Tenant:
 def _assert_tenant_owner(tenant_id: str, user: User, db: Session) -> Tenant:
     t = _assert_tenant_member(tenant_id, user, db)
     if t.owner_id != user.id:
-        raise HTTPException(status_code=403, detail="Only the tenant owner can delete this tenant.")
+        raise HTTPException(status_code=403, detail="Only the agent owner can delete this agent.")
     return t
 
 
@@ -95,14 +95,14 @@ def _safe_remove_workspace(slug: str, workspace_home: str) -> None:
     if home != expected:
         raise HTTPException(
             status_code=400,
-            detail="Workspace path does not match the standard tenant folder; remove files manually.",
+            detail="Workspace path does not match the standard agent folder; remove files manually.",
         )
     try:
         home.relative_to(root)
     except ValueError:
         raise HTTPException(
             status_code=400,
-            detail="Workspace is outside the tenants root; remove files manually.",
+            detail="Workspace is outside the agent workspaces root; remove files manually.",
         )
     if home.is_dir():
         shutil.rmtree(home)
@@ -377,7 +377,7 @@ def invite_preview(token: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Invite not found")
     t = db.query(Tenant).filter(Tenant.id == inv.tenant_id).first()
     if not t:
-        raise HTTPException(status_code=404, detail="Tenant not found")
+        raise HTTPException(status_code=404, detail="Agent not found")
     expired = inv.status == "expired" or (inv.status == "pending" and _invite_expired(inv))
     return InvitePreviewOut(
         email=inv.email,
@@ -423,10 +423,6 @@ knowledge:
   format: master_faq_v1
   compile: kb_chunks.jsonl
   inject_mode: full_context
-  faq_preamble: |
-    ## Authoritative FAQ
-
-    This is the only source of truth for {name} answers. Use tools when the FAQ does not cover the request.
 tools:
   enabled: []
 channels:
@@ -585,7 +581,7 @@ You are **{bot}**, the official customer support assistant for **{company}**.
 {_section("Business context", product)}
 {_section("Scope — what you must not answer", cannot_answer)}
 ## Source of truth
-Use **master_faq.md** as the source of truth. If the answer is not confirmed in **master_faq.md**, do not guess—escalate to a human.
+Factual answers (pricing, policies, specs, links) live in **master_faq.md** only. Call **search_faq** before stating them. This prompt is **brain rules** only — do not embed product facts here.
 
 {_section("Escalation rules", escalation)}
 {_section("Fallback behavior", fallback)}

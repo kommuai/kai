@@ -5,12 +5,10 @@ import {
   Building2,
   ChevronRight,
   Clock,
-  Radio,
   Coins,
   Zap,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import clsx from "clsx";
 import Spinner from "../components/Spinner";
 import UsageDailyChart from "../components/UsageDailyChart";
 import WhatsAppWorkerBanner from "../components/WhatsAppWorkerBanner";
@@ -47,7 +45,7 @@ function TenantCard({
 
   return (
     <Link
-      to={`/t/${tenant.slug}`}
+      to={`/t/${tenant.slug}/inbox`}
       className="card group flex flex-col p-5 hover:shadow-card-lg transition-all duration-200 hover:-translate-y-0.5"
     >
       <div className="flex items-start justify-between mb-4">
@@ -92,13 +90,13 @@ function EmptyState() {
       <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-brand-50">
         <Building2 size={36} className="text-brand-500" />
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">No tenants yet</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">No agents yet</h3>
       <p className="text-sm text-gray-500 mb-6 max-w-xs">
-        Create your first tenant to start configuring an AI support agent.
+        Create your first support agent to get started.
       </p>
       <Link to="/tenants/new" className="btn-primary">
         <Plus size={16} />
-        Create tenant
+        Create agent
       </Link>
     </div>
   );
@@ -141,48 +139,21 @@ export default function DashboardPage() {
   const firstName = user?.name?.split(" ")[0] || user?.email?.split("@")[0] || "there";
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="studio-page space-y-6 sm:space-y-8 animate-fade-in pb-4">
       {/* ── Page header ── */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
           {greeting}, {firstName} 👋
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          Manage your AI support tenants from here.
+          Manage your AI support agents from here.
         </p>
       </div>
 
       <WhatsAppWorkerBanner />
 
       {/* ── Stats row ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card p-4 flex items-center gap-4">
-          <div className="rounded-xl p-2.5 text-brand-600 bg-brand-50">
-            <Building2 size={20} />
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-gray-900">{tenants?.length ?? "—"}</div>
-            <div className="text-xs text-gray-500">Tenants</div>
-          </div>
-        </div>
-        <div className="card p-4 flex items-center gap-4">
-          <div
-            className={clsx(
-              "rounded-xl p-2.5",
-              worker?.bridge_reachable && (worker?.live_tenant_count ?? 0) > 0
-                ? "text-emerald-600 bg-emerald-50"
-                : "text-gray-500 bg-gray-100",
-            )}
-          >
-            <Radio size={20} />
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-gray-900">
-              {worker?.bridge_reachable ? (worker.live_tenant_count ?? 0) : "—"}
-            </div>
-            <div className="text-xs text-gray-500">WhatsApp live</div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="card p-4 flex items-center gap-4">
           <div className="rounded-xl p-2.5 text-amber-600 bg-amber-50">
             <Zap size={20} />
@@ -247,7 +218,7 @@ export default function DashboardPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-xs text-gray-500 border-b border-gray-100">
-                    <th className="pb-2 font-medium">Tenant</th>
+                    <th className="pb-2 font-medium">Agent</th>
                     <th className="pb-2 font-medium text-right">Tokens</th>
                     <th className="pb-2 font-medium text-right">Est. USD</th>
                     <th className="pb-2 font-medium text-right">Calls</th>
@@ -278,9 +249,9 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ── Tenant grid ── */}
+      {/* ── Agent grid ── */}
       <div>
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Your tenants</h2>
+        <h2 className="text-base font-semibold text-gray-900 mb-4">Your agents</h2>
 
         {isLoading ? (
           <div className="flex justify-center py-16">
@@ -304,7 +275,7 @@ export default function DashboardPage() {
               <div className="h-12 w-12 rounded-2xl bg-gray-100 flex items-center justify-center">
                 <Plus size={24} />
               </div>
-              <span className="text-sm font-medium">Add tenant</span>
+              <span className="text-sm font-medium">Add agent</span>
             </Link>
           </div>
         )}

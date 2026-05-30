@@ -15,10 +15,6 @@ knowledge:
   format: master_faq_v1
   compile: kb_chunks.jsonl
   inject_mode: retrieval_first
-  faq_preamble: |
-    ## Authoritative FAQ
-
-    Use this FAQ as the source of truth. Use tools when the FAQ does not cover the request.
 tools:
   enabled: []
 channels:
@@ -96,13 +92,11 @@ tools_profile:
     minimal:
     - search_faq
     - search_session_memory
-    - search_web
     - escalate_to_human
     - stub_action
     standard:
     - search_faq
     - search_official_site
-    - search_web
     - stub_action
   profile_overrides:
     escalate_to_human:

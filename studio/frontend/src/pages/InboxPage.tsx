@@ -138,23 +138,24 @@ export default function InboxPage() {
           <div className="flex gap-1 rounded-lg bg-gray-100 p-0.5">
             {(
               [
-                ["all", "All"],
-                ["active", "AI support agent active"],
-                ["frozen", "Handover"],
+                ["all", "All", "All"],
+                ["active", "AI", "AI active"],
+                ["frozen", "Handover", "Handover"],
               ] as const
-            ).map(([key, label]) => (
+            ).map(([key, short, long]) => (
               <button
                 key={key}
                 type="button"
                 onClick={() => setStatus(key)}
                 className={clsx(
-                  "flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-all",
+                  "flex-1 rounded-md px-1.5 sm:px-2 py-1.5 text-[11px] sm:text-xs font-medium transition-all min-w-0",
                   status === key
                     ? "bg-white text-gray-900 shadow-sm"
                     : "text-gray-500 hover:text-gray-800",
                 )}
               >
-                {label}
+                <span className="sm:hidden">{short}</span>
+                <span className="hidden sm:inline">{long}</span>
               </button>
             ))}
           </div>
@@ -198,9 +199,9 @@ export default function InboxPage() {
                           className="text-sm min-w-0"
                         />
                         {row.conv.frozen ? (
-                          <span className="badge-orange">Handover</span>
+                          <span className="badge-orange shrink-0">Handover</span>
                         ) : (
-                          <span className="badge-green">AI support agent</span>
+                          <span className="badge-green shrink-0">AI</span>
                         )}
                       </div>
                       <p className="text-sm text-gray-600 truncate mt-0.5">
@@ -223,7 +224,7 @@ export default function InboxPage() {
                     className={clsx(
                       "absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg",
                       "text-gray-400 hover:text-red-600 hover:bg-red-50",
-                      "opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity",
+                      "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity",
                     )}
                     onClick={(e) => {
                       e.preventDefault();
@@ -259,7 +260,7 @@ export default function InboxPage() {
                     className={clsx(
                       "absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg",
                       "text-gray-400 hover:text-red-600 hover:bg-red-50",
-                      "opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity",
+                      "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 transition-opacity",
                     )}
                     onClick={(e) => {
                       e.preventDefault();
@@ -279,7 +280,7 @@ export default function InboxPage() {
   );
 
   return (
-    <div className="animate-fade-in card overflow-hidden flex flex-col lg:flex-row h-[calc(100dvh-7rem)] md:h-[calc(100dvh-3rem)] lg:h-[calc(100dvh-4rem)]">
+    <div className="studio-panel-fill animate-fade-in card overflow-hidden lg:flex-row min-h-0">
       {/* Left panel: conversation list */}
       <div
         className={clsx(

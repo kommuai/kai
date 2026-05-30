@@ -70,8 +70,17 @@ export function resolveOutboundChatJid(userId, directory = {}) {
 
   const digits = uid.replace(/\D/g, "");
 
-  if (directory && typeof directory === "object" && directory[uid]) {
-    return `${uid}@lid`;
+  if (directory && typeof directory === "object") {
+    if (directory[uid]) {
+      return `${uid}@lid`;
+    }
+    // Directory keys are often @lid ids; session userId may be the phone from remoteJidAlt.
+    for (const [lidKey, meta] of Object.entries(directory)) {
+      const listedPhone = String(meta?.phone || "").replace(/\D/g, "");
+      if (listedPhone && digits && listedPhone === digits) {
+        return `${lidKey}@lid`;
+      }
+    }
   }
 
   if (isLikelyLidDigits(digits)) {
@@ -83,6 +92,21 @@ export function resolveOutboundChatJid(userId, directory = {}) {
   }
 
   return `${uid}@s.whatsapp.net`;
+}
+
+/**
+ * Reply on the same WhatsApp identity the user used. Never rewrite @lid → @s.whatsapp.net
+ * for outbound (causes "Waiting for this message" / undecryptable payloads).
+ *
+ * @param {string} preferredJid — inbound remoteJid when available
+ * @param {string} fallbackJid — resolved from userId/directory
+ */
+export function resolveReplyChatJid(preferredJid, fallbackJid) {
+  const preferred = String(preferredJid || "").trim();
+  const fallback = String(fallbackJid || "").trim();
+  if (preferred.endsWith("@lid")) return preferred;
+  if (fallback.endsWith("@lid")) return fallback;
+  return preferred || fallback;
 }
 
 /**

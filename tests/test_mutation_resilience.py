@@ -15,7 +15,7 @@ class _FailingProvider:
     def chat_messages(self, messages, temperature=0.2, max_tokens=1200):
         self.calls += 1
         if self.calls == 1:
-            return '{"action":"tool","tool":"search_web","args":{"query":"vehicle specs"}}'
+            return '{"action":"tool","tool":"search_faq","args":{"query":"vehicle specs"}}'
         return '{"action":"final","decision":"clarifying_question","question":"What is your exact vehicle model and year?","confidence":0.66}'
 
 

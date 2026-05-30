@@ -35,8 +35,8 @@ export default function TenantChannelPanel({ tenantId }: Props) {
   if (live && !relink) {
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 px-4 py-3 space-y-2">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-sm text-emerald-900">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2 text-sm text-emerald-900 min-w-0">
             <Radio size={18} className="text-emerald-600 shrink-0" />
             <div>
               <p className="font-medium">WhatsApp live</p>
@@ -58,8 +58,8 @@ export default function TenantChannelPanel({ tenantId }: Props) {
   if (configured && !relink) {
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 px-4 py-3 space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-2 text-sm text-emerald-900">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-2 text-sm text-emerald-900 min-w-0">
             <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
             <div>
               <p className="font-medium">WhatsApp linked in Kai Studio</p>
@@ -121,7 +121,7 @@ export default function TenantChannelPanel({ tenantId }: Props) {
     <div className="space-y-2">
       <div className="flex items-center gap-2 text-sm text-gray-700">
         <MessageCircle size={16} className="text-emerald-600" />
-        <span className="font-medium">Connect WhatsApp for this tenant</span>
+        <span className="font-medium">Connect WhatsApp for this agent</span>
       </div>
       <WhatsAppBaileysLink
         tenantId={tenantId}

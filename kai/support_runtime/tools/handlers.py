@@ -66,30 +66,6 @@ class ToolHandlers:
             payload["best_canonical"] = best
         return payload
 
-    def search_web(self, query: str) -> dict[str, Any]:
-        from kai.settings import get_settings
-
-        key = (get_settings().bing_api_key or "").strip()
-        if not key:
-            return {"ok": False, "error": "missing_bing_api_key", "results": []}
-        try:
-            resp = requests.get(
-                "https://api.bing.microsoft.com/v7.0/search",
-                params={"q": query, "count": 5, "textFormat": "Raw"},
-                headers={"Ocp-Apim-Subscription-Key": key},
-                timeout=self._http_timeout(),
-            )
-            if not resp.ok:
-                return {"ok": False, "error": f"bing_http_{resp.status_code}", "results": []}
-            items = ((resp.json() or {}).get("webPages") or {}).get("value") or []
-            out = [
-                {"url": i.get("url", ""), "name": i.get("name", ""), "snippet": i.get("snippet", "")}
-                for i in items[:5]
-            ]
-            return {"ok": True, "results": out}
-        except Exception as exc:  # noqa: BLE001
-            return {"ok": False, "error": f"bing_exception:{exc}", "results": []}
-
     def search_official_site(self, query: str) -> dict[str, Any]:
         p = self._params("search_official_site")
         official_url = str(p.get("official_url") or "").strip()

@@ -48,7 +48,7 @@ router = APIRouter(prefix="/tenants", tags=["inbox"])
 def _sessions_db_path(tenant: Tenant) -> Path:
     ws = Path(tenant.workspace_home) / "workspace.yaml"
     if not ws.is_file():
-        raise HTTPException(status_code=503, detail="workspace.yaml not found for tenant")
+        raise HTTPException(status_code=503, detail="workspace.yaml not found for agent")
     data = yaml.safe_load(ws.read_text(encoding="utf-8")) or {}
     rel = (data.get("session_store") or {}).get("path", "data/sessions.db")
     return Path(tenant.workspace_home) / rel
@@ -372,11 +372,11 @@ def _deliver_studio_reply_whatsapp(tenant: Tenant, user_id: str, text: str) -> t
     ch = get_channel_status(home)
     wa = ch.get("whatsapp_baileys") if isinstance(ch.get("whatsapp_baileys"), dict) else {}
     if not wa.get("configured"):
-        return False, "WhatsApp channel not configured for this tenant"
+        return False, "WhatsApp channel not configured for this agent"
 
     slug = (tenant.slug or "").strip()
     if not slug:
-        return False, "Tenant slug missing"
+        return False, "Agent slug missing"
 
     try:
         result = send_worker_message(slug, user_id, text)

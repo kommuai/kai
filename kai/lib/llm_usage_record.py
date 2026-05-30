@@ -90,7 +90,7 @@ def record_openai_usage(
         log.debug("Skipping usage record: unknown model %r", model)
         return None
 
-    slug = tenant_slug if tenant_slug is not None else usage_tenant_slug.get()
+    slug = resolve_usage_tenant_slug(tenant_slug if tenant_slug is not None else usage_tenant_slug.get())
     src = source or usage_source.get() or "engine"
     return _insert_event(
         tenant_slug=slug,

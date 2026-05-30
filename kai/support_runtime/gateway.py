@@ -52,6 +52,10 @@ def run_support_turn(
     apply_grounding: bool = True,
 ) -> SupportTurnOutcome:
     """Single entry for WhatsApp, HTTP, and query APIs."""
+    from kai.lib.llm_usage_record import resolve_usage_tenant_slug, set_usage_context
+
+    set_usage_context(tenant_slug=resolve_usage_tenant_slug(), source="engine_chat")
+
     text = (text or "").strip()
     user_id = (user_id or "").strip()
     lang = lang or resolve_lang(user_id=user_id)

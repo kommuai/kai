@@ -1,10 +1,12 @@
 import unittest
 
 from kai.core.faq_markdown import (
+    normalize_intent_block,
     parse_faq_markdown,
     parse_master_faq_schema,
     replace_sop_sync_region,
     render_qas_markdown,
+    upsert_intent_block,
 )
 
 
@@ -43,6 +45,40 @@ class FaqMarkdownTests(unittest.TestCase):
         self.assertIn("aliases:", out)
         self.assertIn("NA", out)
         self.assertNotIn("old", out)
+
+    def test_upsert_intent_replaces_existing_block(self):
+        text = (
+            "# header\n\n"
+            "## intent: old_one\n"
+            "aliases:\n- one\n"
+            "answer:\nA1\n\n"
+            "## intent: keep_me\n"
+            "answer:\nStay\n"
+        )
+        body = "aliases:\n- two\nanswer:\nA2\n"
+        out = upsert_intent_block(text, "old_one", body)
+        self.assertIn("A2", out)
+        self.assertNotIn("A1", out)
+        self.assertIn("Stay", out)
+        parsed = parse_master_faq_schema(out)
+        ids = [r["intent_id"] for r in parsed["intents"]]
+        self.assertEqual(ids, ["old_one", "keep_me"])
+
+    def test_upsert_intent_appends_inside_sop_sync(self):
+        text = (
+            "preamble\n<!-- sop-sync:start -->\n"
+            "## intent: existing\nanswer:\nHi\n"
+            "<!-- sop-sync:end -->\n"
+        )
+        out = upsert_intent_block(text, "new_one", "aliases:\n- n\nanswer:\nNew\n")
+        self.assertIn("## intent: new_one", out)
+        self.assertIn("New", out)
+        self.assertIn("<!-- sop-sync:end -->", out)
+        self.assertLess(out.index("new_one"), out.index("<!-- sop-sync:end -->"))
+
+    def test_normalize_intent_block_requires_answer(self):
+        with self.assertRaises(ValueError):
+            normalize_intent_block("x", "aliases:\n- only\n")
 
     def test_dynamic_block_parses_lifespan_and_priority(self):
         text = (

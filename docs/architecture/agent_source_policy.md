@@ -1,16 +1,26 @@
 # Agent source policy (immutable)
 
-The ReAct support brain may use **only** these context sources:
+The ReAct support brain uses **three tenant-owned layers**. Keep each in its lane:
 
-| Source | File / mechanism |
-|--------|------------------|
-| Workspace settings | `workspace.yaml` → injected via `agent_context.workspace_settings_block()` |
-| System prompt | `system_prompt.md` |
-| Master FAQ | `knowledge/master_faq.md` (full inject or `search_faq` compiled from it) |
+| Layer | File | Job (layman) |
+|-------|------|----------------|
+| **Wiring** | `workspace.yaml` | What exists, when, how — channels, tools, hours, handover, copy strings |
+| **Brain rules** | `system_prompt.md` | How to think and act — personality, MUST-call tools, JSON format |
+| **Truth** | `knowledge/master_faq.md` | What is true — prices, policies, links, answers (via `search_faq` or full inject) |
+
+Runtime assembly (`agent_context.build_agent_system_prompt`):
+
+| Source | Mechanism |
+|--------|-----------|
+| Workspace settings | `workspace.yaml` → timezone, tenant id, inject mode |
+| System prompt | `system_prompt.md` (full file) |
+| Master FAQ | compiled chunks + `search_faq`; or full inject when `inject_mode: full_context` |
 | Skills / tools | `tools_profile` → registry schemas + tool results |
-| Session clock | Derived from workspace timezone (scheduling only) |
+| Session clock | Derived from workspace timezone |
 
-**Not allowed** in the system prompt: `learnt_faq.md`, document `skills/*.md`, raw SOP Google Doc text, env secrets, or ad-hoc hardcoded product copy.
+**Not allowed** in `system_prompt.md`: product prices, policies, install links, or other facts that belong in master_faq.  
+**Not allowed** in `workspace.yaml`: long agent instructions or FAQ answers.  
+**Not allowed** anywhere in the brain prompt: `learnt_faq.md`, document `skills/*.md`, env secrets.
 
 Implementation: `kai/support_runtime/agent_context.py`  
 Enforcement: `assert_prompt_sources_only()` at runtime startup; tests in `tests/test_agent_source_policy.py`.
