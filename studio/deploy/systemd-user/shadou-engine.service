@@ -1,0 +1,20 @@
+[Unit]
+Description=Shadou support engine (uvicorn :6090)
+PartOf=shadou.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/workspace/shadou
+EnvironmentFile=-%h/.config/shadou/shadou-stack.env
+Environment=PYTHONPATH=%h/workspace/shadou
+ExecStartPre=/usr/bin/test -f %h/workspace/shadou/app.py
+ExecStart=/bin/bash -c 'exec "${SHADOU_PYTHON:?Set SHADOU_PYTHON in shadou-stack.env}" -m uvicorn app:app --host 127.0.0.1 --port 6090'
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=shadou.target

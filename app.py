@@ -1,5 +1,5 @@
-"""ASGI entrypoint. Implementation: kai.app_factory.create_app()."""
+"""ASGI entrypoint. Implementation: shadou.app_factory.create_app()."""
 
-from kai.app_factory import create_app
+from shadou.app_factory import create_app
 
 app = create_app()

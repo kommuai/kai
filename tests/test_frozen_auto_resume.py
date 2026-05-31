@@ -8,7 +8,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from kai.lib.session_state import (
+from shadou.lib.session_state import (
     auto_unfreeze_stale_handoff,
     ensure_active_session,
     freeze,
@@ -17,7 +17,7 @@ from kai.lib.session_state import (
     reset_memory,
     save_session,
 )
-from kai.services.container import kai_service
+from shadou.services.container import shadou_service
 
 
 class FrozenAutoResumeTests(unittest.TestCase):
@@ -54,7 +54,7 @@ class FrozenAutoResumeTests(unittest.TestCase):
 
     def test_manual_resume_sends_ack(self):
         freeze(self.uid, True)
-        out = kai_service.pre_router({"content": "resume", "phone_number": self.uid})
+        out = shadou_service.pre_router({"content": "resume", "phone_number": self.uid})
         self.assertEqual(out.get("type"), "reply")
         self.assertIn("Bot resumed", out.get("message", ""))
         self.assertEqual(out.get("next_state"), "bot")
@@ -66,7 +66,7 @@ class FrozenAutoResumeTests(unittest.TestCase):
         sess = get_session(self.uid)
         sess["frozen_at"] = old
         save_session(self.uid, sess)
-        out = kai_service.pre_router({"content": "what is the price?", "phone_number": self.uid})
+        out = shadou_service.pre_router({"content": "what is the price?", "phone_number": self.uid})
         self.assertIsNone(out)
         self.assertFalse(get_session(self.uid).get("frozen"))
 
@@ -76,7 +76,7 @@ class FrozenAutoResumeTests(unittest.TestCase):
         sess = get_session(self.uid)
         sess["frozen_at"] = old
         save_session(self.uid, sess)
-        out = kai_service.pre_router({"content": "what is the price?", "phone_number": self.uid})
+        out = shadou_service.pre_router({"content": "what is the price?", "phone_number": self.uid})
         self.assertIsNone(out)
         self.assertFalse(get_session(self.uid).get("frozen"))
 

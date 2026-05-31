@@ -43,7 +43,7 @@ async def post_session_documents(
 ):
     """Accept any multipart file field (browser may name it 'file' or 'files')."""
     import logging
-    log = logging.getLogger("kai.upload")
+    log = logging.getLogger("shadou.upload")
     ct = request.headers.get("content-type", "")
     log.info("upload content-type: %s", ct)
 

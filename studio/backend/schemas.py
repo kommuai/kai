@@ -54,10 +54,17 @@ class UserOut(BaseModel):
 
 # ── Tenant ────────────────────────────────────────────────────────────────────
 
+class TrainingJobOut(BaseModel):
+    id: str
+    label: str
+    description: str = ""
+
+
 class TenantCreate(BaseModel):
     display_name: str
     description: Optional[str] = ""
     slug: str
+    agent_job: Optional[str] = "customer_support"
     personality: Optional[str] = "friendly"
     bot_name: Optional[str] = ""
     company_name: Optional[str] = ""
@@ -147,6 +154,18 @@ class TenantCreate(BaseModel):
         return v
 
 
+class AgentTrainingSummaryOut(BaseModel):
+    agent_job: str = "customer_support"
+    agent_job_label: str = "Customer Support"
+    current_level: int = 0
+    current_level_title: str = ""
+    current_level_emoji: str = ""
+    next_level: int | None = None
+    progress_to_next: float = 0.0
+    last_assessed_at: datetime | None = None
+    earned_badges: list[str] = []
+
+
 class TenantOut(BaseModel):
     id: str
     owner_id: str
@@ -156,9 +175,105 @@ class TenantOut(BaseModel):
     workspace_home: str
     created_at: datetime
     updated_at: datetime
+    training_summary: AgentTrainingSummaryOut | None = None
 
     class Config:
         from_attributes = True
+
+
+class TrainingLevelDefOut(BaseModel):
+    id: str
+    number: int
+    title: str
+    tagline: str
+    emoji: str
+    color: str
+    meaning: str
+    requirements: list[dict[str, str]]
+
+
+class TrainingGateOut(BaseModel):
+    name: str
+    value: float | None = None
+    threshold: float
+    ok: bool
+
+
+class TrainingQuestOut(BaseModel):
+    id: str
+    text: str
+    done: bool
+
+
+class TrainingLevelResultOut(BaseModel):
+    level_number: int
+    title: str
+    passed: bool
+    score_pct: float
+    gates: list[TrainingGateOut] = []
+    quests: list[TrainingQuestOut] = []
+
+
+class TrainingSpecializationDefOut(BaseModel):
+    id: str
+    branch: str
+    title: str
+    tagline: str
+    emoji: str
+    color: str
+    prereq_level: int
+    meaning: str
+    requirements: list[dict[str, str]]
+
+
+class TrainingBadgeResultOut(BaseModel):
+    specialization_id: str
+    branch: str = ""
+    title: str = ""
+    passed: bool = False
+    score_pct: float = 0.0
+    locked: bool = False
+    lock_reason: str = ""
+    gates: list[TrainingGateOut] = []
+    quests: list[TrainingQuestOut] = []
+
+
+class TrainingStatusOut(BaseModel):
+    agent_job: str
+    agent_job_label: str
+    levels: list[TrainingLevelDefOut]
+    specializations: list[TrainingSpecializationDefOut] = []
+    current_level: int
+    current_level_title: str
+    current_level_emoji: str
+    next_level: int | None
+    progress_to_next: float
+    last_assessed_at: datetime | None
+    level_results: dict[int, TrainingLevelResultOut] = {}
+    badge_results: dict[str, TrainingBadgeResultOut] = {}
+    earned_badges: list[str] = []
+    quests_next: list[TrainingQuestOut] = []
+
+
+class TrainingAssessIn(BaseModel):
+    level: int | None = None
+    specialization: str | None = None
+
+
+class TrainingAssessOut(BaseModel):
+    run_id: str
+    status: str
+    summary: dict
+
+
+class TrainingRunOut(BaseModel):
+    id: str
+    tenant_id: str
+    level_number: int
+    passed: bool
+    duration_ms: int
+    created_at: datetime
+    summary: dict
 
 
 class SkillCapabilityOut(BaseModel):
@@ -232,7 +347,7 @@ class CompileResult(BaseModel):
     intents: Optional[int] = None
 
 
-# ── Inbox / Contacts (Kai sessions.db read-only + contact_tags) ───────────────
+# ── Inbox / Contacts (Shadou sessions.db read-only + contact_tags) ───────────────
 
 class MessageOut(BaseModel):
     role: str

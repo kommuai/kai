@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
-# Install user systemd units for the full Kai stack (engine, Studio, WhatsApp).
+# Install user systemd units for the full Shadou stack (engine, Studio, WhatsApp).
 set -eu
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 USER_UNIT_DIR="${HOME}/.config/systemd/user"
-ENV_DIR="${HOME}/.config/kai"
-STACK_ENV="${ENV_DIR}/kai-stack.env"
-STACK_EXAMPLE="${SCRIPT_DIR}/kai-stack.env.example"
+ENV_DIR="${HOME}/.config/shadou"
+STACK_ENV="${ENV_DIR}/shadou-stack.env"
+STACK_EXAMPLE="${SCRIPT_DIR}/shadou-stack.env.example"
 BRIDGE_ENV="${ENV_DIR}/whatsapp-bridge.env"
 BRIDGE_EXAMPLE="${SCRIPT_DIR}/whatsapp-bridge.env.example"
-KAI_REPO="${KAI_REPO:-${HOME}/workspace/kai}"
-BRIDGE_DIR="${KAI_REPO}/studio/whatsapp-bridge"
-FRONTEND_DIR="${KAI_REPO}/studio/frontend"
+SHADOU_REPO="${SHADOU_REPO:-${HOME}/workspace/shadou}"
+BRIDGE_DIR="${SHADOU_REPO}/studio/whatsapp-bridge"
+FRONTEND_DIR="${SHADOU_REPO}/studio/frontend"
 
 START_AFTER=0
 STOP_MANUAL=0
@@ -31,7 +31,7 @@ install_unit() {
 }
 
 echo "==> Installing systemd units"
-for u in kai.target kai-engine.service kai-studio-api.service kai-studio-ui.service kai-whatsapp-bridge.service; do
+for u in shadou.target shadou-engine.service shadou-studio-api.service shadou-studio-ui.service shadou-whatsapp-bridge.service; do
   install_unit "${u}"
 done
 
@@ -69,18 +69,18 @@ if [[ -z "${NODE_BIN}" ]]; then
   exit 1
 fi
 
-KAI_PYTHON=""
+SHADOU_PYTHON=""
 for py in \
   "${HOME}/miniconda3/bin/python3" \
   "${HOME}/.pyenv/shims/python3" \
   "/usr/bin/python3"; do
-  if [[ -x "${py}" ]] && PYTHONPATH="${KAI_REPO}" "${py}" -c "import kai" 2>/dev/null; then
-    KAI_PYTHON="${py}"
+  if [[ -x "${py}" ]] && PYTHONPATH="${SHADOU_REPO}" "${py}" -c "import shadou" 2>/dev/null; then
+    SHADOU_PYTHON="${py}"
     break
   fi
 done
-if [[ -z "${KAI_PYTHON}" ]]; then
-  echo "ERROR: No Python with kai package. Set KAI_PYTHON in ${STACK_ENV}." >&2
+if [[ -z "${SHADOU_PYTHON}" ]]; then
+  echo "ERROR: No Python with shadou package. Set SHADOU_PYTHON in ${STACK_ENV}." >&2
   exit 1
 fi
 
@@ -97,13 +97,13 @@ set_env_var() {
 
 for file in "${STACK_ENV}" "${BRIDGE_ENV}"; do
   set_env_var "${file}" "NODE_BIN" "${NODE_BIN}"
-  set_env_var "${file}" "KAI_PYTHON" "${KAI_PYTHON}"
-  set_env_var "${file}" "KAI_REPO" "${KAI_REPO}"
-  set_env_var "${file}" "KAI_TENANTS_ROOT" "${KAI_TENANTS_ROOT:-${HOME}/workspace}"
+  set_env_var "${file}" "SHADOU_PYTHON" "${SHADOU_PYTHON}"
+  set_env_var "${file}" "SHADOU_REPO" "${SHADOU_REPO}"
+  set_env_var "${file}" "SHADOU_TENANTS_ROOT" "${SHADOU_TENANTS_ROOT:-${HOME}/workspace}"
 done
 
 echo "Using NODE_BIN=${NODE_BIN} ($(${NODE_BIN} -v))"
-echo "Using KAI_PYTHON=${KAI_PYTHON} ($(${KAI_PYTHON} --version))"
+echo "Using SHADOU_PYTHON=${SHADOU_PYTHON} ($(${SHADOU_PYTHON} --version))"
 
 echo "==> npm install (whatsapp-bridge)"
 (cd "${BRIDGE_DIR}" && npm install)
@@ -114,8 +114,8 @@ echo "==> npm install (studio frontend)"
 systemctl --user daemon-reload
 
 # Prefer single target over standalone bridge unit
-systemctl --user disable kai-whatsapp-bridge.service 2>/dev/null || true
-systemctl --user enable kai.target
+systemctl --user disable shadou-whatsapp-bridge.service 2>/dev/null || true
+systemctl --user enable shadou.target
 
 if ! loginctl show-user "$(whoami)" -p Linger 2>/dev/null | grep -q 'Linger=yes'; then
   echo ""
@@ -124,9 +124,9 @@ if ! loginctl show-user "$(whoami)" -p Linger 2>/dev/null | grep -q 'Linger=yes'
 fi
 
 echo ""
-echo "Enabled kai.target (starts on boot when lingering is on)"
-echo "  systemctl --user start kai.target"
-echo "  systemctl --user status kai.target"
+echo "Enabled shadou.target (starts on boot when lingering is on)"
+echo "  systemctl --user start shadou.target"
+echo "  systemctl --user status shadou.target"
 
 free_port() {
   local port="$1"
@@ -144,9 +144,9 @@ if [[ "${STOP_MANUAL}" -eq 1 ]] || [[ "${START_AFTER}" -eq 1 ]]; then
 fi
 
 if [[ "${START_AFTER}" -eq 1 ]]; then
-  systemctl --user start kai.target
+  systemctl --user start shadou.target
   sleep 4
-  systemctl --user --no-pager status kai.target || true
+  systemctl --user --no-pager status shadou.target || true
   echo ""
   echo "Health checks:"
   curl -sf http://127.0.0.1:6090/health 2>/dev/null && echo "  engine :6090 OK" || echo "  engine :6090 —"

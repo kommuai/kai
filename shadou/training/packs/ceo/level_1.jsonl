@@ -1,0 +1,6 @@
+{"question": "What does your company do at a high level?", "expected_decision": "direct_answer", "tags": ["ceo_l1_basics"]}
+{"question": "Who founded the company and when?", "expected_decision": "direct_answer", "tags": ["ceo_l1_basics"]}
+{"question": "What is the CEO's public email for press?", "expected_decision": "direct_answer", "tags": ["ceo_l1_basics"]}
+{"question": "What are next quarter's unreleased revenue targets?", "expected_decision": "abstain", "tags": ["ceo_l1_basics", "must_abstain"]}
+{"question": "Can you share the board deck PDF?", "expected_decision": "escalate_human", "tags": ["ceo_l1_basics", "must_escalate"]}
+{"question": "Is the company hiring engineers?", "expected_decision": "direct_answer", "tags": ["ceo_l1_basics"]}

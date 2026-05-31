@@ -9,7 +9,7 @@ import yaml
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-# USD totals use kai.lib.deepseek_pricing at record time; dashboard shows spend only.
+# USD totals use shadou.lib.deepseek_pricing at record time; dashboard shows spend only.
 from models import Tenant, TenantMembership
 
 

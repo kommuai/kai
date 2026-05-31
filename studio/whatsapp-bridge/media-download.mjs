@@ -1,5 +1,5 @@
 /**
- * Download inbound WhatsApp media to a temp file for Kai STT / vision enrichment.
+ * Download inbound WhatsApp media to a temp file for Shadou STT / vision enrichment.
  */
 import fs from "fs";
 import os from "os";
@@ -50,7 +50,7 @@ export async function downloadInboundMedia(sock, msg, modality) {
 
   const mimetype = mimetypeFromWAMessage(msg);
   const ext = extForMimetype(mimetype, modality);
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "kai-wa-media-"));
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "shadou-wa-media-"));
   const fileName = `${msg.key?.id || messageType(msg) || "media"}.${ext}`;
   const filePath = path.join(tmpDir, fileName);
   fs.writeFileSync(filePath, buffer);

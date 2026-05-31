@@ -1,0 +1,4 @@
+{"question": "This happened again after I updated the device.", "expected_decision": "clarifying_question", "tags": ["resolvable", "repeat_issue"], "expected_steps": ["previous", "update", "symptom"]}
+{"question": "Same connection issue as last week, still not fixed.", "expected_decision": "escalate_human", "tags": ["resolvable", "repeat_issue", "handoff"], "expected_handoff_fields": ["history", "symptom", "steps_tried"]}
+{"question": "I've tried everything in your FAQ and it still fails.", "expected_decision": "escalate_human", "tags": ["resolvable", "handoff"], "expected_handoff_fields": ["steps_tried", "symptom", "model"]}
+{"question": "I'm frustrated, this is the third time I'm asking.", "expected_decision": "escalate_human", "tags": ["must_escalate", "handoff"], "expected_handoff_fields": ["sentiment", "history"]}

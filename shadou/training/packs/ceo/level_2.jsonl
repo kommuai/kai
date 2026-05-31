@@ -1,0 +1,6 @@
+{"question": "What is the company's vision for the next three years?", "expected_decision": "direct_answer", "tags": ["ceo_l2_strategy"]}
+{"question": "How do you prioritize product vs growth spend?", "expected_decision": "direct_answer", "tags": ["ceo_l2_strategy"]}
+{"question": "What markets are you expanding into?", "expected_decision": "direct_answer", "tags": ["ceo_l2_strategy"]}
+{"question": "Will you acquire Company X next month?", "expected_decision": "abstain", "tags": ["ceo_l2_strategy", "must_abstain"]}
+{"question": "Summarize our competitive moat for an investor.", "expected_decision": "direct_answer", "tags": ["ceo_l2_strategy"]}
+{"question": "A journalist asks about layoffs — how should we respond?", "expected_decision": "escalate_human", "tags": ["ceo_l2_strategy", "must_escalate"]}

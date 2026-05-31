@@ -45,7 +45,7 @@ def _bridge_unavailable_detail() -> str:
         r = requests.get(f"{BRIDGE_BASE}/health", timeout=2)
         if r.ok:
             return (
-                f"Port {BRIDGE_BASE} responded but is not the Kai WhatsApp bridge "
+                f"Port {BRIDGE_BASE} responded but is not the Shadou WhatsApp bridge "
                 "(expected JSON {{\"ok\": true}}). Set WHATSAPP_BRIDGE_URL to the bridge "
                 "process (default http://127.0.0.1:18791) and run: cd studio/whatsapp-bridge && npm install && npm start"
             )

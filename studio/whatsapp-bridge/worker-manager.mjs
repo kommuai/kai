@@ -10,7 +10,7 @@ import makeWASocket, {
   useMultiFileAuthState,
 } from "@whiskeysockets/baileys";
 import { discoverWhatsAppTenants } from "./tenant-discovery.mjs";
-import { runKaiInbound } from "./inbound-kai.mjs";
+import { runShadouInbound } from "./inbound-shadou.mjs";
 import { persistContactMeta } from "./contact-persist.mjs";
 import { cleanupMediaTemp, downloadInboundMedia } from "./media-download.mjs";
 import {
@@ -137,7 +137,7 @@ async function handleInboundMessage(entry, chatJid, userId, text, msgId, contact
       { slug: entry.slug, userId, chatJid, msgId, len: text.length, media: media?.modality || null },
       "inbound WhatsApp",
     );
-    const result = await runKaiInbound({
+    const result = await runShadouInbound({
       home: entry.home,
       userId,
       text: text || "",
@@ -146,7 +146,7 @@ async function handleInboundMessage(entry, chatJid, userId, text, msgId, contact
     });
 
     if (!result.ok) {
-      log.error({ slug: entry.slug, userId, error: result.error }, "kai_inbound failed");
+      log.error({ slug: entry.slug, userId, error: result.error }, "shadou_inbound failed");
       return;
     }
 

@@ -6,9 +6,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kai.support_runtime.models import RuntimeResult
-from kai.support_runtime.hitl import maybe_record_hitl_ticket, _impact_reasons
-from kai.workspace.hitl_config import HitlConfig, reload_hitl_config
+from shadou.support_runtime.models import RuntimeResult
+from shadou.support_runtime.hitl import maybe_record_hitl_ticket, _impact_reasons
+from shadou.workspace.hitl_config import HitlConfig, reload_hitl_config
 
 
 class ImpactReasonTests(unittest.TestCase):
@@ -49,20 +49,20 @@ class MaybeRecordHitlTicketTests(unittest.TestCase):
             "admin:\n  whitelist_numbers: []\n",
             encoding="utf-8",
         )
-        os.environ["KAI_HOME"] = str(self._home)
+        os.environ["SHADOU_HOME"] = str(self._home)
         self._clear_caches()
 
     def tearDown(self):
-        os.environ.pop("KAI_HOME", None)
+        os.environ.pop("SHADOU_HOME", None)
         self._clear_caches()
 
     def _clear_caches(self):
         for fn in (
-            "kai.settings.get_settings",
-            "kai.workspace.manifest.load_workspace_data",
-            "kai.workspace.manifest._load_workspace_manifest_cached",
-            "kai.workspace.hitl_config.get_hitl_config",
-            "kai.workspace.admin_config.get_admin_config",
+            "shadou.settings.get_settings",
+            "shadou.workspace.manifest.load_workspace_data",
+            "shadou.workspace.manifest._load_workspace_manifest_cached",
+            "shadou.workspace.hitl_config.get_hitl_config",
+            "shadou.workspace.admin_config.get_admin_config",
         ):
             try:
                 mod_name, func_name = fn.rsplit(".", 1)
@@ -72,7 +72,7 @@ class MaybeRecordHitlTicketTests(unittest.TestCase):
             except Exception:
                 pass
         reload_hitl_config()
-        from kai.workspace.admin_config import reload_admin_config
+        from shadou.workspace.admin_config import reload_admin_config
         reload_admin_config()
 
     def test_creates_ticket_low_confidence_high_impact(self):
@@ -80,7 +80,7 @@ class MaybeRecordHitlTicketTests(unittest.TestCase):
         tid = maybe_record_hitl_ticket(user_id="60123456789", user_question="refund my order", result=result)
         self.assertIsNotNone(tid)
 
-        from kai.lib.hitl_tickets import list_tickets
+        from shadou.lib.hitl_tickets import list_tickets
         tickets = list_tickets(status="open")
         self.assertEqual(len(tickets), 1)
         self.assertEqual(tickets[0]["user_question"], "refund my order")

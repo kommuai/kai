@@ -168,7 +168,7 @@ export function messageType(msg) {
 }
 
 /**
- * Kai modality for inbound media (voice, audio, image, video).
+ * Shadou modality for inbound media (voice, audio, image, video).
  * @returns {string | null}
  */
 export function resolveInboundMediaModality(msg) {

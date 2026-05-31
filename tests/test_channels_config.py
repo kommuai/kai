@@ -1,6 +1,6 @@
 import unittest
 
-from kai.content.channels import get_channel_config, reload_channel_config
+from shadou.content.channels import get_channel_config, reload_channel_config
 
 
 class ChannelConfigTests(unittest.TestCase):

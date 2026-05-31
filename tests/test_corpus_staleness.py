@@ -8,7 +8,7 @@ import unittest
 from datetime import date, timedelta
 from pathlib import Path
 
-from kai.support_runtime.verifier import check_corpus_staleness
+from shadou.support_runtime.verifier import check_corpus_staleness
 
 
 def _write_corpus_map(compiled_dir: Path, compiled_at: str) -> None:
@@ -21,11 +21,11 @@ def _write_corpus_map(compiled_dir: Path, compiled_at: str) -> None:
 
 def _clear_caches():
     for fn in (
-        "kai.settings.get_settings",
-        "kai.workspace.runtime_settings.load_workspace_settings_yaml",
-        "kai.workspace.runtime_settings.get_runtime_settings",
-        "kai.workspace.manifest.load_workspace_data",
-        "kai.workspace.manifest._load_workspace_manifest_cached",
+        "shadou.settings.get_settings",
+        "shadou.workspace.runtime_settings.load_workspace_settings_yaml",
+        "shadou.workspace.runtime_settings.get_runtime_settings",
+        "shadou.workspace.manifest.load_workspace_data",
+        "shadou.workspace.manifest._load_workspace_manifest_cached",
     ):
         try:
             mod_name, func_name = fn.rsplit(".", 1)
@@ -50,11 +50,11 @@ class CheckCorpusStalenessTests(unittest.TestCase):
             "eval:\n  max_corpus_age_days: 30\n",
             encoding="utf-8",
         )
-        os.environ["KAI_HOME"] = str(self._home)
+        os.environ["SHADOU_HOME"] = str(self._home)
         _clear_caches()
 
     def tearDown(self):
-        os.environ.pop("KAI_HOME", None)
+        os.environ.pop("SHADOU_HOME", None)
         _clear_caches()
 
     def test_fresh_corpus_not_stale(self):
@@ -100,16 +100,16 @@ class VerifierStalenessIntegrationTests(unittest.TestCase):
             "eval:\n  max_corpus_age_days: 30\n  verifier_on_fail: flag\n",
             encoding="utf-8",
         )
-        os.environ["KAI_HOME"] = str(self._home)
+        os.environ["SHADOU_HOME"] = str(self._home)
         _clear_caches()
 
     def tearDown(self):
-        os.environ.pop("KAI_HOME", None)
+        os.environ.pop("SHADOU_HOME", None)
         _clear_caches()
 
     def _run_verify(self, compiled_at: str):
-        from kai.support_runtime.models import EvidenceItem, RuntimeResult
-        from kai.support_runtime.verifier import verify_result
+        from shadou.support_runtime.models import EvidenceItem, RuntimeResult
+        from shadou.support_runtime.verifier import verify_result
         _write_corpus_map(self._compiled, compiled_at)
         _clear_caches()
         ev = EvidenceItem(tool="search_faq", source_id="faq:x", snippet="some text", score=0.9)
@@ -129,19 +129,19 @@ class VerifierStalenessIntegrationTests(unittest.TestCase):
 
 class EvalRunStaleCitationRateTests(unittest.TestCase):
     def test_stale_citation_rate_in_results(self):
-        from kai.tools.eval_run import run_eval
+        from shadou.tools.eval_run import run_eval
         items = [{"question": "hi", "expected_decision": "direct_answer", "tags": []}]
         results = run_eval(items, open_book=True)
         self.assertIn("stale_citation_rate", results)
 
     def test_stale_citation_rate_is_float(self):
-        from kai.tools.eval_run import run_eval
+        from shadou.tools.eval_run import run_eval
         items = [{"question": "hello", "expected_decision": "direct_answer", "tags": []}]
         results = run_eval(items, open_book=True)
         self.assertIsInstance(results["stale_citation_rate"], float)
 
     def test_item_results_have_stale_evidence_field(self):
-        from kai.tools.eval_run import run_eval
+        from shadou.tools.eval_run import run_eval
         items = [{"question": "what is this?", "expected_decision": "direct_answer", "tags": []}]
         results = run_eval(items, open_book=True)
         for ir in results["items"]:

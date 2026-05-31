@@ -12,7 +12,7 @@ if str(_ROOT) not in sys.path:
 def main():
     import yaml
 
-    from kai.workspace.manifest import load_workspace_data, workspace_yaml_path
+    from shadou.workspace.manifest import load_workspace_data, workspace_yaml_path
 
     ap = argparse.ArgumentParser()
     ap.add_argument("--id", required=True, help="context id, e.g. public_repo")

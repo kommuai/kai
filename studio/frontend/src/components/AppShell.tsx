@@ -12,7 +12,9 @@ import {
   Users,
   SlidersHorizontal,
   ClipboardCheck,
+  Trophy,
 } from "lucide-react";
+import LevelBadge from "./LevelBadge";
 import clsx from "clsx";
 import Logo from "./Logo";
 import { useAuthStore } from "../lib/auth";
@@ -115,6 +117,17 @@ export default function AppShell() {
               {currentTenant?.display_name ?? tenantSlug}
             </div>
             <div className="text-[10px] font-mono text-gray-400 truncate mt-0.5">{tenantSlug}</div>
+            {currentTenant?.training_summary && (
+              <div className="mt-2">
+                <LevelBadge
+                  level={currentTenant.training_summary.current_level}
+                  title={currentTenant.training_summary.current_level_title}
+                  emoji={currentTenant.training_summary.current_level_emoji}
+                  progress={currentTenant.training_summary.progress_to_next}
+                  size="sm"
+                />
+              </div>
+            )}
             {channelStatus?.whatsapp_baileys && (
               <div className="mt-1.5">
                 <WhatsAppDeliveryBadge wa={channelStatus.whatsapp_baileys} size="xs" />
@@ -133,6 +146,10 @@ export default function AppShell() {
       <NavLink to={`/t/${tenantSlug}/review`} className={navCls}>
         <ClipboardCheck size={17} />
         Review
+      </NavLink>
+      <NavLink to={`/t/${tenantSlug}/academy`} className={navCls}>
+        <Trophy size={17} />
+        Academy
       </NavLink>
       <NavLink to={`/t/${tenantSlug}/configuration`} end className={navCls}>
         <SlidersHorizontal size={17} />

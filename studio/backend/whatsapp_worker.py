@@ -116,5 +116,5 @@ def global_worker_status() -> dict[str, Any]:
         "live_tenant_count": live_count,
         "detail": None
         if bridge_reachable
-        else "WhatsApp bridge is not running. Start it with: systemctl --user start kai-whatsapp-bridge.service",
+        else "WhatsApp bridge is not running. Start it with: systemctl --user start shadou-whatsapp-bridge.service",
     }

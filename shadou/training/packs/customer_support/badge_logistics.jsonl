@@ -1,0 +1,6 @@
+{"question": "Where is my order #12345?", "expected_decision": "direct_answer", "tags": ["badge_logistics"]}
+{"question": "When will my package arrive?", "expected_decision": "direct_answer", "tags": ["badge_logistics"]}
+{"question": "My parcel shows delivered but I never received it.", "expected_decision": "direct_answer", "tags": ["badge_logistics"], "expected_steps": ["address", "carrier", "investigation"]}
+{"question": "Can I change the shipping address after ordering?", "expected_decision": "direct_answer", "tags": ["badge_logistics"]}
+{"question": "Schedule installation for next Tuesday.", "expected_decision": "direct_answer", "tags": ["badge_logistics"]}
+{"question": "Chargeback on a duplicate shipment.", "expected_decision": "escalate_human", "tags": ["badge_logistics", "must_escalate"]}

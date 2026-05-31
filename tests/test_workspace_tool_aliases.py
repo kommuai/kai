@@ -5,17 +5,17 @@ from __future__ import annotations
 import unittest
 from pathlib import Path
 
-from kai.support_runtime.tools.catalog import reload_tool_aliases, resolve_builtin_id
-from kai.workspace.runtime_settings import reload_grounded_tools, reload_workspace_settings_yaml
+from shadou.support_runtime.tools.catalog import reload_tool_aliases, resolve_builtin_id
+from shadou.workspace.runtime_settings import reload_grounded_tools, reload_workspace_settings_yaml
 
 _MINIMAL = Path(__file__).resolve().parent / "fixtures" / "minimal_workspace"
 
 
 class WorkspaceToolAliasesTests(unittest.TestCase):
     def setUp(self) -> None:
-        from tests.conftest import _apply_kai_home
+        from tests.conftest import _apply_shadou_home
 
-        _apply_kai_home(_MINIMAL)
+        _apply_shadou_home(_MINIMAL)
 
     def test_minimal_fixture_resolves_aliases(self) -> None:
         reload_workspace_settings_yaml()

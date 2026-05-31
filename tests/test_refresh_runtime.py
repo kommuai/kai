@@ -3,11 +3,11 @@ from unittest.mock import patch
 
 
 class RefreshRuntimeTests(unittest.TestCase):
-    @patch("kai.services.container.get_kai_service")
-    @patch("kai.services.container.get_support_runtime_service")
-    @patch("kai.workspace.reload.reload_workspace_caches")
-    def test_refresh_calls_startup(self, reload_mock, runtime_mock, kai_mock):
-        from kai.engine.refresh import refresh_runtime_knowledge
+    @patch("shadou.services.container.get_shadou_service")
+    @patch("shadou.services.container.get_support_runtime_service")
+    @patch("shadou.workspace.reload.reload_workspace_caches")
+    def test_refresh_calls_startup(self, reload_mock, runtime_mock, _shadou_mock):
+        from shadou.engine.refresh import refresh_runtime_knowledge
 
         runtime = runtime_mock.return_value
         runtime.startup.return_value = {"chunks": 1}

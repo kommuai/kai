@@ -4,7 +4,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -51,6 +51,13 @@ class Tenant(Base):
     display_name: Mapped[str] = mapped_column(String, nullable=False)
     description: Mapped[str] = mapped_column(String, nullable=False, default="")
     workspace_home: Mapped[str] = mapped_column(String, nullable=False)
+    training_job: Mapped[str] = mapped_column(String, nullable=False, default="customer_support")
+    training_level: Mapped[int] = mapped_column(default=0)
+    training_level_title: Mapped[str] = mapped_column(String, nullable=False, default="")
+    training_level_emoji: Mapped[str] = mapped_column(String, nullable=False, default="")
+    training_progress_pct: Mapped[float] = mapped_column(default=0.0)
+    training_last_assessed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    training_badges_json: Mapped[str] = mapped_column(String, nullable=False, default="[]")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, onupdate=_now)
 
@@ -98,7 +105,7 @@ class TenantInvite(Base):
 
 
 class ContactTag(Base):
-    """Kai contact key (e.g. WhatsApp phone) scoped tags — stored in admin DB."""
+    """Shadou contact key (e.g. WhatsApp phone) scoped tags — stored in admin DB."""
 
     __tablename__ = "contact_tags"
     __table_args__ = (UniqueConstraint("tenant_id", "user_id", "tag", name="uq_contact_tag"),)
@@ -110,3 +117,19 @@ class ContactTag(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     tenant: Mapped[Tenant] = relationship("Tenant", back_populates="contact_tags")
+
+
+class AgentTrainingRun(Base):
+    __tablename__ = "agent_training_runs"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=_uuid)
+    tenant_id: Mapped[str] = mapped_column(ForeignKey("tenants.id"), nullable=False, index=True)
+    level_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    passed: Mapped[bool] = mapped_column(Boolean, default=False)
+    gates_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    summary_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+    duration_ms: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    triggered_by_user_id: Mapped[str] = mapped_column(String, nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    tenant: Mapped[Tenant] = relationship("Tenant")

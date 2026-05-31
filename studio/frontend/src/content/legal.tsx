@@ -1,7 +1,7 @@
-/** Legal copy for Kai Studio. Update LEGAL_ENTITY and contact before production. */
+/** Legal copy for Shadou Studio. Update LEGAL_ENTITY and contact before production. */
 
 export const LEGAL_ENTITY = "Kommu AI";
-export const SERVICE_NAME = "Kai Studio";
+export const SERVICE_NAME = "Shadou Studio";
 export const CONTACT_EMAIL = "legal@kommu.ai";
 export const PRIVACY_EMAIL = "privacy@kommu.ai";
 export const EFFECTIVE_DATE = "28 May 2026";

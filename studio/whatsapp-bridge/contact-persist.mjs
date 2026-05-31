@@ -8,17 +8,17 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-function kaiRepoRoot() {
-  if (process.env.KAI_REPO) return path.resolve(process.env.KAI_REPO);
+function shadouRepoRoot() {
+  if (process.env.SHADOU_REPO) return path.resolve(process.env.SHADOU_REPO);
   return path.resolve(__dirname, "../..");
 }
 
 function pythonBin() {
-  return process.env.KAI_PYTHON || "python3";
+  return process.env.SHADOU_PYTHON || "python3";
 }
 
 function storeScript() {
-  return path.join(kaiRepoRoot(), "studio", "backend", "store_contact_meta.py");
+  return path.join(shadouRepoRoot(), "studio", "backend", "store_contact_meta.py");
 }
 
 function updateContactDirectory(home, userId, meta) {
@@ -47,7 +47,7 @@ function updateContactDirectory(home, userId, meta) {
 }
 
 /**
- * @param {string} home tenant workspace (KAI_HOME)
+ * @param {string} home tenant workspace (SHADOU_HOME)
  * @param {string} userId session user id
  * @param {{ pushName?: string, phone?: string, notify?: string, verifiedName?: string }} meta
  */
@@ -68,10 +68,10 @@ export function persistContactMeta(home, userId, meta) {
   const proc = spawn(pythonBin(), [storeScript(), home, userId, payload], {
     env: {
       ...process.env,
-      KAI_HOME: home,
-      PYTHONPATH: [kaiRepoRoot(), process.env.PYTHONPATH].filter(Boolean).join(path.delimiter),
+      SHADOU_HOME: home,
+      PYTHONPATH: [shadouRepoRoot(), process.env.PYTHONPATH].filter(Boolean).join(path.delimiter),
     },
-    cwd: kaiRepoRoot(),
+    cwd: shadouRepoRoot(),
     stdio: "ignore",
   });
   proc.unref();

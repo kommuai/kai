@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from kai.lib.deepseek_pricing import (
+from shadou.lib.deepseek_pricing import (
     OFFICIAL_PRICING_URL,
     TokenUsage,
     compute_usage_cost_usd,

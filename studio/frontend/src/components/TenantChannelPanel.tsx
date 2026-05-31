@@ -62,7 +62,7 @@ export default function TenantChannelPanel({ tenantId }: Props) {
           <div className="flex items-start gap-2 text-sm text-emerald-900 min-w-0">
             <CheckCircle2 size={18} className="text-emerald-600 shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium">WhatsApp linked in Kai Studio</p>
+              <p className="font-medium">WhatsApp linked in Shadou Studio</p>
               {phone && <p className="text-xs font-mono text-emerald-800/80 mt-0.5">{phone}</p>}
               <div className="mt-2">
                 <WhatsAppDeliveryBadge wa={wa} />
@@ -78,7 +78,7 @@ export default function TenantChannelPanel({ tenantId }: Props) {
             <WifiOff size={14} className="shrink-0 mt-0.5" />
             <p>
               Credentials are saved but the message worker is not running. Start it with{" "}
-              <code className="font-mono text-[11px]">systemctl --user start kai-whatsapp-bridge.service</code>
+              <code className="font-mono text-[11px]">systemctl --user start shadou-whatsapp-bridge.service</code>
             </p>
           </div>
         )}

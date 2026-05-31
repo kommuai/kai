@@ -17,10 +17,10 @@ from ai_assist_core import (
     chat_completion,
     extract_patch,
 )
-from kai_paths import kai_tenants_root
+from shadou_paths import shadou_tenants_root
 from schemas import DEFAULT_SCOPE_CANNOT_ANSWER
 
-ONBOARDING_ROOT = kai_tenants_root() / ".studio-onboarding"
+ONBOARDING_ROOT = shadou_tenants_root() / ".studio-onboarding"
 MAX_FILES = 20
 MAX_FILE_BYTES = 10 * 1024 * 1024   # 10 MB (raised for PDFs)
 MAX_SESSION_BYTES = 50 * 1024 * 1024
@@ -260,7 +260,7 @@ def bootstrap_stream(
         f"## Uploaded documents\n{doc_block}\n\n"
         f"## Current workspace (update as needed)\n{build_context(tenant_home)}\n\n"
         "Populate workspace.yaml, system_prompt.md, and master_faq.md from the documents and questionnaire. "
-        "Output only the kai-patch block."
+        "Output only the shadou-patch block."
     )
 
     try:

@@ -1,4 +1,4 @@
-"""Run kai.cli compile for a tenant workspace (KAI_HOME)."""
+"""Run shadou.cli compile for a tenant workspace (SHADOU_HOME)."""
 from __future__ import annotations
 
 import os
@@ -6,7 +6,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from kai_paths import kai_repo_root
+from shadou_paths import shadou_repo_root
 from schemas import CompileResult
 
 
@@ -14,12 +14,12 @@ def run_tenant_compile(workspace_home: str | Path) -> CompileResult:
     home = str(Path(workspace_home).resolve())
     try:
         result = subprocess.run(
-            ["python3", "-m", "kai.cli", "compile"],
+            ["python3", "-m", "shadou.cli", "compile"],
             capture_output=True,
             text=True,
             timeout=60,
-            cwd=str(kai_repo_root()),
-            env={**os.environ, "KAI_HOME": home, "PYTHONPATH": str(kai_repo_root())},
+            cwd=str(shadou_repo_root()),
+            env={**os.environ, "SHADOU_HOME": home, "PYTHONPATH": str(shadou_repo_root())},
         )
         if result.returncode != 0:
             return CompileResult(ok=False, message=result.stderr or result.stdout or "compile failed")

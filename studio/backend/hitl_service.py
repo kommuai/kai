@@ -20,7 +20,7 @@ from ai_assist_core import (
 )
 from tenant_compile import patch_list_touches_faq, run_tenant_compile
 
-log = logging.getLogger("kai.hitl_service")
+log = logging.getLogger("shadou.hitl_service")
 
 HITL_KB_USER_PROMPT = """A live support turn needs a knowledge-base update after human review.
 
@@ -36,7 +36,7 @@ Operator verified reply sent to the customer:
 Task: add or update ONE FAQ intent in master_faq.md so similar future questions are answered from the knowledge base.
 
 Rules:
-- Output ONLY a ```kai-patch``` JSON block (faq_intent patch type only).
+- Output ONLY a ```shadou-patch``` JSON block (faq_intent patch type only).
 - intent_id: short snake_case slug derived from the topic.
 - Include aliases the customer might use and the operator reply as the canonical answer.
 - Do not change workspace.yaml or system_prompt.md.
@@ -79,7 +79,7 @@ def propose_kb_patch(home: Path, ticket: dict[str, Any], *, tenant_slug: str = "
     full_text = resp.json().get("choices", [{}])[0].get("message", {}).get("content", "") or ""
     patch_block = extract_patch(full_text)
     if not patch_block or not patch_block.get("patches"):
-        raise HTTPException(status_code=422, detail="AI did not produce a valid kai-patch block")
+        raise HTTPException(status_code=422, detail="AI did not produce a valid shadou-patch block")
 
     validate_ai_assist_patches(patch_block["patches"])
     patches_preview = preview_patches(home, patch_block["patches"])

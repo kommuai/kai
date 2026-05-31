@@ -4,20 +4,20 @@
 
 | Area | Path |
 |------|------|
-| HTTP routes, ReAct loop, builtins | `kai/` |
-| CLI, installer, Docker | `kai/cli/`, `scripts/` |
+| HTTP routes, ReAct loop, builtins | `shadou/` |
+| CLI, installer, Docker | `shadou/cli/`, `scripts/` |
 | Tests + fixtures | `tests/` |
 | Generic template (stubs only) | `templates/workspace/generic/` |
 
 ## Tenant (never in engine repo)
 
-| Area | Path under `KAI_HOME` |
+| Area | Path under `SHADOU_HOME` |
 |------|------------------------|
 | Config | `workspace.yaml` |
 | Prompt + FAQ | `system_prompt.md`, `knowledge/master_faq.md` |
 | Plugins | `tools/plugins/` |
 
-Do not add business-specific FAQ, prompts, or plugins to the engine repo. Use a tenant pack (`kai pack install`).
+Do not add business-specific FAQ, prompts, or plugins to the engine repo. Use a tenant pack (`shadou pack install`).
 
 ## Stable chat path
 

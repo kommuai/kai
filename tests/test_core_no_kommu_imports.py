@@ -6,7 +6,7 @@ import re
 import unittest
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parents[1] / "kai" / "support_runtime"
+_ROOT = Path(__file__).resolve().parents[1] / "shadou" / "support_runtime"
 _FORBIDDEN = re.compile(
     r"search_kommu_support|kommu\.ai|kommuai/bukapilot",
     re.I,

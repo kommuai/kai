@@ -1,6 +1,6 @@
 import unittest
 
-from kai.support_runtime.compiler import compile_canonical_knowledge
+from shadou.support_runtime.compiler import compile_canonical_knowledge
 
 
 class CompiledKnowledgeTests(unittest.TestCase):

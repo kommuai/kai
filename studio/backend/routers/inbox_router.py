@@ -21,7 +21,7 @@ from deps import get_current_user
 from models import ContactTag, Tenant, User
 from contact_profile import correspondent_profile, load_facts_by_user, load_whatsapp_contact_directory
 from channel_config import get_channel_status
-from routers.tenants_router import KAI_REPO, _assert_tenant_member
+from routers.tenants_router import SHADOU_REPO, _assert_tenant_member
 from whatsapp_bridge_client import send_worker_message
 from schemas import (
     ContactDetailOut,
@@ -322,13 +322,13 @@ def get_conversation(
     )
 
 
-_KAI_REPLY_SCRIPT = Path(__file__).resolve().parents[1] / "kai_reply.py"
-_KAI_RESUME_SCRIPT = Path(__file__).resolve().parents[1] / "kai_resume_bot.py"
-_KAI_HANDOVER_SCRIPT = Path(__file__).resolve().parents[1] / "kai_handover_bot.py"
+_SHADOU_REPLY_SCRIPT = Path(__file__).resolve().parents[1] / "shadou_reply.py"
+_SHADOU_RESUME_SCRIPT = Path(__file__).resolve().parents[1] / "shadou_resume_bot.py"
+_SHADOU_HANDOVER_SCRIPT = Path(__file__).resolve().parents[1] / "shadou_handover_bot.py"
 
 
 def _send_studio_reply(tenant: Tenant, user_id: str, text: str) -> dict[str, Any]:
-    """Run kai_reply.py with tenant KAI_HOME to append an agent message to sessions.db."""
+    """Run shadou_reply.py with tenant SHADOU_HOME to append an agent message to sessions.db."""
     _, path = _open_sessions_ro(tenant)
     if path and not path.is_file():
         raise HTTPException(
@@ -336,17 +336,17 @@ def _send_studio_reply(tenant: Tenant, user_id: str, text: str) -> dict[str, Any
             detail=f"No sessions database yet at {path}. Run the AI support agent once to create sessions.",
         )
 
-    env = {**os.environ, "KAI_HOME": tenant.workspace_home}
+    env = {**os.environ, "SHADOU_HOME": tenant.workspace_home}
     py_path = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = os.pathsep.join([str(KAI_REPO), py_path]) if py_path else str(KAI_REPO)
+    env["PYTHONPATH"] = os.pathsep.join([str(SHADOU_REPO), py_path]) if py_path else str(SHADOU_REPO)
 
     try:
         result = subprocess.run(
-            [sys.executable, str(_KAI_REPLY_SCRIPT), tenant.workspace_home, user_id, text],
+            [sys.executable, str(_SHADOU_REPLY_SCRIPT), tenant.workspace_home, user_id, text],
             capture_output=True,
             text=True,
             timeout=45,
-            cwd=str(KAI_REPO),
+            cwd=str(SHADOU_REPO),
             env=env,
         )
     except subprocess.TimeoutExpired as exc:
@@ -450,17 +450,17 @@ def _resume_bot_for_studio(tenant: Tenant, user_id: str) -> dict[str, Any]:
             detail=f"No sessions database yet at {path}. Run the AI support agent once to create sessions.",
         )
 
-    env = {**os.environ, "KAI_HOME": tenant.workspace_home}
+    env = {**os.environ, "SHADOU_HOME": tenant.workspace_home}
     py_path = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = os.pathsep.join([str(KAI_REPO), py_path]) if py_path else str(KAI_REPO)
+    env["PYTHONPATH"] = os.pathsep.join([str(SHADOU_REPO), py_path]) if py_path else str(SHADOU_REPO)
 
     try:
         result = subprocess.run(
-            [sys.executable, str(_KAI_RESUME_SCRIPT), tenant.workspace_home, user_id],
+            [sys.executable, str(_SHADOU_RESUME_SCRIPT), tenant.workspace_home, user_id],
             capture_output=True,
             text=True,
             timeout=30,
-            cwd=str(KAI_REPO),
+            cwd=str(SHADOU_REPO),
             env=env,
         )
     except subprocess.TimeoutExpired as exc:
@@ -489,17 +489,17 @@ def _handover_bot_for_studio(tenant: Tenant, user_id: str) -> dict[str, Any]:
             detail=f"No sessions database yet at {path}. Run the AI support agent once to create sessions.",
         )
 
-    env = {**os.environ, "KAI_HOME": tenant.workspace_home}
+    env = {**os.environ, "SHADOU_HOME": tenant.workspace_home}
     py_path = env.get("PYTHONPATH", "")
-    env["PYTHONPATH"] = os.pathsep.join([str(KAI_REPO), py_path]) if py_path else str(KAI_REPO)
+    env["PYTHONPATH"] = os.pathsep.join([str(SHADOU_REPO), py_path]) if py_path else str(SHADOU_REPO)
 
     try:
         result = subprocess.run(
-            [sys.executable, str(_KAI_HANDOVER_SCRIPT), tenant.workspace_home, user_id],
+            [sys.executable, str(_SHADOU_HANDOVER_SCRIPT), tenant.workspace_home, user_id],
             capture_output=True,
             text=True,
             timeout=30,
-            cwd=str(KAI_REPO),
+            cwd=str(SHADOU_REPO),
             env=env,
         )
     except subprocess.TimeoutExpired as exc:

@@ -52,7 +52,7 @@ def _hitl_conn(tenant: Tenant) -> sqlite3.Connection:
             status_code=503,
             detail=f"No sessions database yet at {path}. Run the AI support agent once.",
         )
-    os.environ["KAI_HOME"] = str(Path(tenant.workspace_home).resolve())
+    os.environ["SHADOU_HOME"] = str(Path(tenant.workspace_home).resolve())
     conn = sqlite3.connect(str(path), check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn

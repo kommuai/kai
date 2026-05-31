@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 import { tenantsApi, type Tenant } from "./api";
 import { formatApiError } from "./apiErrors";
 
-const PENDING_INVITE_KEY = "kai_pending_invite_token";
+const PENDING_INVITE_KEY = "shadou_pending_invite_token";
 
 export function setPendingInviteToken(token: string) {
   localStorage.setItem(PENDING_INVITE_KEY, token);

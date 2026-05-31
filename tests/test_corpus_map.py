@@ -28,23 +28,23 @@ class CorpusMapTests(unittest.TestCase):
         compiled_dir = self._home / "compiled"
         compiled_dir.mkdir()
         self._compiled_dir = compiled_dir
-        os.environ["KAI_HOME"] = str(self._home)
+        os.environ["SHADOU_HOME"] = str(self._home)
 
     def tearDown(self):
-        os.environ.pop("KAI_HOME", None)
-        from kai.settings import get_settings as _gs
+        os.environ.pop("SHADOU_HOME", None)
+        from shadou.settings import get_settings as _gs
         try:
             _gs.cache_clear()  # type: ignore[attr-defined]
         except Exception:
             pass
 
     def _compile(self) -> dict:
-        from kai.settings import get_settings
+        from shadou.settings import get_settings
         try:
             get_settings.cache_clear()  # type: ignore[attr-defined]
         except Exception:
             pass
-        from kai.support_runtime.compiler import compile_canonical_knowledge
+        from shadou.support_runtime.compiler import compile_canonical_knowledge
         return compile_canonical_knowledge()
 
     def test_corpus_map_written_after_compile(self):
@@ -91,14 +91,14 @@ class CorpusMapTests(unittest.TestCase):
     def test_system_prompt_includes_kb_summary(self):
         _write_minimal_faq(self._faq_path, n_intents=2)
         self._compile()
-        from kai.support_runtime.agent_context import _corpus_map_summary
+        from shadou.support_runtime.agent_context import _corpus_map_summary
         summary = _corpus_map_summary()
         self.assertIn("chunks", summary.lower())
         self.assertGreater(len(summary), 0)
 
     def test_system_prompt_kb_summary_absent_when_no_map(self):
         # No compile run — no corpus_map.json
-        from kai.support_runtime.agent_context import _corpus_map_summary
+        from shadou.support_runtime.agent_context import _corpus_map_summary
         summary = _corpus_map_summary()
         # Should return empty string, not crash
         self.assertIsInstance(summary, str)

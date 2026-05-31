@@ -1,12 +1,12 @@
 import tempfile
 import unittest
 
-from kai.workspace.tools_config import load_tools_config, reload_tools_config
+from shadou.workspace.tools_config import load_tools_config, reload_tools_config
 
 
 class ToolProfileTests(unittest.TestCase):
     def test_profile_expands_when_tools_list_empty(self):
-        from kai.workspace import tools_config as tc
+        from shadou.workspace import tools_config as tc
 
         ids = tc._profile_tool_ids(
             {

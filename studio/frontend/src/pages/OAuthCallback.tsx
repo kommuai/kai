@@ -27,7 +27,7 @@ export default function OAuthCallback() {
       return;
     }
 
-    localStorage.setItem("kai_token", token);
+    localStorage.setItem("shadou_token", token);
     authApi
       .me()
       .then((user) => {
@@ -38,7 +38,7 @@ export default function OAuthCallback() {
       .catch((err) => {
         const msg = formatApiError(err, "Could not verify your sign-in. Please try again.");
         toast.error(msg);
-        localStorage.removeItem("kai_token");
+        localStorage.removeItem("shadou_token");
         navigate("/login", { replace: true });
       });
   }, [params, navigate, setAuth]);

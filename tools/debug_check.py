@@ -1,4 +1,4 @@
-# debug_check.py  — Kai health/debug tool
+# debug_check.py  — Shadou health/debug tool
 import os, io, csv, re
 import requests
 from pathlib import Path
@@ -18,7 +18,7 @@ from config import (
 EXTRA_WARRANTY_CSV_URL = os.getenv("EXTRA_WARRANTY_CSV_URL", "")
 
 try:
-    from kai.lib.deepseek_client import chat_completion
+    from shadou.lib.deepseek_client import chat_completion
 except Exception:
     chat_completion = None
 
@@ -35,7 +35,7 @@ def warn(m):  print(Fore.YELLOW+ "WARN " + m + Style.RESET_ALL)
 
 def fetch_text(url):
     try:
-        r = requests.get(url, timeout=20, headers={"User-Agent":"Kai-Debug/1.0"})
+        r = requests.get(url, timeout=20, headers={"User-Agent":"Shadou-Debug/1.0"})
         r.raise_for_status()
         return True, r.text, None
     except Exception as e:
@@ -43,7 +43,7 @@ def fetch_text(url):
 
 def fetch_csv(url):
     try:
-        r = requests.get(url, timeout=20, headers={"User-Agent":"Kai-Debug/1.0"})
+        r = requests.get(url, timeout=20, headers={"User-Agent":"Shadou-Debug/1.0"})
         r.raise_for_status()
         content = r.content.decode("utf-8", errors="ignore")
         rows = list(csv.DictReader(io.StringIO(content)))
@@ -61,7 +61,7 @@ def check_csv_url_format(label, url):
     return True
 
 def main():
-    print(Style.BRIGHT + "\n=== Kai Debug Check ===\n" + Style.RESET_ALL)
+    print(Style.BRIGHT + "\n=== Shadou Debug Check ===\n" + Style.RESET_ALL)
 
     # ---------- Env ----------
     header("Env")

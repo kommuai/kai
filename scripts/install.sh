@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Kai engine installer — per-user layout (Hermes-style)
+# Shadou engine installer — per-user layout (Hermes-style)
 set -euo pipefail
 
-KAI_HOME="${KAI_HOME:-$HOME/.kai}"
-INSTALL_DIR="${KAI_INSTALL_DIR:-$HOME/.local/share/kai}"
-BIN_DIR="${KAI_BIN_DIR:-$HOME/.local/bin}"
-REPO_URL="${KAI_REPO_URL:-}"
+SHADOU_HOME="${SHADOU_HOME:-$HOME/.shadou}"
+INSTALL_DIR="${SHADOU_INSTALL_DIR:-$HOME/.local/share/shadou}"
+BIN_DIR="${SHADOU_BIN_DIR:-$HOME/.local/bin}"
+REPO_URL="${SHADOU_REPO_URL:-}"
 
 log() { printf '==> %s\n' "$*"; }
 
@@ -23,7 +23,7 @@ if ! "$PYTHON" -c 'import sys; assert sys.version_info >= (3, 11)' 2>/dev/null; 
 fi
 
 if [ -n "$REPO_URL" ]; then
-  log "Cloning Kai engine into $INSTALL_DIR"
+  log "Cloning Shadou engine into $INSTALL_DIR"
   mkdir -p "$(dirname "$INSTALL_DIR")"
   if [ -d "$INSTALL_DIR/.git" ]; then
     git -C "$INSTALL_DIR" pull --ff-only
@@ -50,20 +50,20 @@ pip install -q --upgrade pip
 pip install -q -r requirements.txt
 
 mkdir -p "$BIN_DIR"
-ln -sf "$INSTALL_DIR/.venv/bin/python" "$BIN_DIR/kai-python" 2>/dev/null || true
-cat > "$BIN_DIR/kai" <<EOF
+ln -sf "$INSTALL_DIR/.venv/bin/python" "$BIN_DIR/shadou-python" 2>/dev/null || true
+cat > "$BIN_DIR/shadou" <<EOF
 #!/usr/bin/env bash
-cd "$INSTALL_DIR" && exec "$INSTALL_DIR/.venv/bin/python" -m kai.cli "\$@"
+cd "$INSTALL_DIR" && exec "$INSTALL_DIR/.venv/bin/python" -m shadou.cli "\$@"
 EOF
-chmod +x "$BIN_DIR/kai"
+chmod +x "$BIN_DIR/shadou"
 
-export KAI_HOME
-if [ ! -f "$KAI_HOME/workspace.yaml" ]; then
-  log "Initializing KAI_HOME at $KAI_HOME"
-  KAI_HOME="$KAI_HOME" python -m kai.cli workspace init --home "$KAI_HOME" || true
+export SHADOU_HOME
+if [ ! -f "$SHADOU_HOME/workspace.yaml" ]; then
+  log "Initializing SHADOU_HOME at $SHADOU_HOME"
+  SHADOU_HOME="$SHADOU_HOME" python -m shadou.cli workspace init --home "$SHADOU_HOME" || true
 fi
 
-ENV_FILE="$KAI_HOME/.env"
+ENV_FILE="$SHADOU_HOME/.env"
 if [ ! -f "$ENV_FILE" ] && [ -f "$INSTALL_DIR/.env.example" ]; then
   cp "$INSTALL_DIR/.env.example" "$ENV_FILE"
   log "Created $ENV_FILE from .env.example — add API keys"
@@ -72,7 +72,7 @@ fi
 log "Install complete"
 echo ""
 echo "  export PATH=\"$BIN_DIR:\$PATH\""
-echo "  export KAI_HOME=\"$KAI_HOME\""
-echo "  kai pack install /path/to/tenant-pack"
-echo "  kai doctor"
+echo "  export SHADOU_HOME=\"$SHADOU_HOME\""
+echo "  shadou pack install /path/to/tenant-pack"
+echo "  shadou doctor"
 echo "  cd $INSTALL_DIR && docker compose up -d   # optional"

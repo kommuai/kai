@@ -4,18 +4,18 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from kai.support_runtime.agent_tools import AgentToolRegistry
-from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
-from kai.workspace.tools_config import reload_tools_config
+from shadou.support_runtime.agent_tools import AgentToolRegistry
+from shadou.support_runtime.retrieval import HybridRetriever, SimpleReranker
+from shadou.workspace.tools_config import reload_tools_config
 
 
 class OfficialSiteToolTests(unittest.TestCase):
     def setUp(self) -> None:
         reload_tools_config()
 
-    @patch("kai.workspace.tools_config._profile_tool_ids")
+    @patch("shadou.workspace.tools_config._profile_tool_ids")
     @patch(
-        "kai.support_runtime.tools.site_search._load_vehicle_catalog",
+        "shadou.support_runtime.tools.site_search._load_vehicle_catalog",
         return_value=[
             {
                 "name": "Toyota Alphard",

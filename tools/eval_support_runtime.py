@@ -9,7 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from kai.support_runtime.service import SupportRuntimeService
+from shadou.support_runtime.service import SupportRuntimeService
 
 
 def _safe_rate(num: int, den: int) -> float:

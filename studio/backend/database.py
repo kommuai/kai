@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 
 from models import Base
 
-DB_DIR = Path(os.getenv("KAI_ADMIN_DB_DIR", Path(__file__).parent / "data"))
+DB_DIR = Path(os.getenv("SHADOU_ADMIN_DB_DIR", Path(__file__).parent / "data"))
 DB_DIR.mkdir(parents=True, exist_ok=True)
 DATABASE_URL = f"sqlite:///{DB_DIR / 'admin.db'}"
 
@@ -122,6 +122,44 @@ def init_db() -> None:
         )
         conn.execute(
             text("CREATE INDEX IF NOT EXISTS ix_llm_usage_events_tenant_slug ON llm_usage_events(tenant_slug)")
+        )
+
+        for col, ddl in (
+            ("training_job", "TEXT NOT NULL DEFAULT 'customer_support'"),
+            ("training_level", "INTEGER NOT NULL DEFAULT 0"),
+            ("training_level_title", "TEXT NOT NULL DEFAULT ''"),
+            ("training_level_emoji", "TEXT NOT NULL DEFAULT ''"),
+            ("training_progress_pct", "REAL NOT NULL DEFAULT 0"),
+            ("training_last_assessed_at", "DATETIME"),
+            ("training_badges_json", "TEXT NOT NULL DEFAULT '[]'"),
+        ):
+            try:
+                conn.execute(text(f"ALTER TABLE tenants ADD COLUMN {col} {ddl}"))
+            except Exception:
+                pass
+
+        conn.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS agent_training_runs (
+                  id TEXT PRIMARY KEY,
+                  tenant_id TEXT NOT NULL,
+                  level_number INTEGER NOT NULL DEFAULT 0,
+                  passed INTEGER NOT NULL DEFAULT 0,
+                  gates_json TEXT NOT NULL DEFAULT '{}',
+                  summary_json TEXT NOT NULL DEFAULT '{}',
+                  duration_ms INTEGER NOT NULL DEFAULT 0,
+                  triggered_by_user_id TEXT NOT NULL DEFAULT '',
+                  created_at DATETIME,
+                  FOREIGN KEY(tenant_id) REFERENCES tenants(id)
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                "CREATE INDEX IF NOT EXISTS ix_agent_training_runs_tenant_id ON agent_training_runs(tenant_id)"
+            )
         )
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import unittest
 
-from kai.tools.eval_run import _check_gates, run_eval
+from shadou.tools.eval_run import _check_gates, run_eval
 
 
 class VerificationFlagRateTests(unittest.TestCase):

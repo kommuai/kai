@@ -1,6 +1,6 @@
 import unittest
 
-from kai.tools_plugins.runner import _cli_flag
+from shadou.tools_plugins.runner import _cli_flag
 
 
 class PluginRunnerCliFlagTests(unittest.TestCase):

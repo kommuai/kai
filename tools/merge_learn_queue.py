@@ -13,9 +13,9 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from config import MASTER_FAQ_PATH, resolve_master_faq_path
-from kai.support_runtime.compiler import compile_canonical_knowledge
-from kai.support_runtime.faq_learn_queue import list_proposals, load_proposal, set_proposal_status
-from kai.support_runtime.faq_merge import merge_proposal_into_master
+from shadou.support_runtime.compiler import compile_canonical_knowledge
+from shadou.support_runtime.faq_learn_queue import list_proposals, load_proposal, set_proposal_status
+from shadou.support_runtime.faq_merge import merge_proposal_into_master
 
 
 def main() -> int:

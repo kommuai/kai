@@ -3,8 +3,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from kai.settings.loader import load_settings
-from kai.support_runtime.compiler import compile_canonical_knowledge
+from shadou.settings.loader import load_settings
+from shadou.support_runtime.compiler import compile_canonical_knowledge
 
 
 class SopFaqPathAlignmentTests(unittest.TestCase):
@@ -28,13 +28,13 @@ class SopFaqPathAlignmentTests(unittest.TestCase):
             )
             env = {"AGENT_WORKSPACE": str(ws), "MASTER_FAQ_PATH": str(faq)}
             with patch.dict("os.environ", env, clear=False):
-                from kai.settings.loader import get_settings
+                from shadou.settings.loader import get_settings
 
                 get_settings.cache_clear()
                 s = load_settings()
                 resolved = s.resolve_master_faq_path()
                 self.assertEqual(resolved, faq.resolve())
-                with patch("kai.support_runtime.compiler.get_settings", return_value=s):
+                with patch("shadou.support_runtime.compiler.get_settings", return_value=s):
                     counts = compile_canonical_knowledge()
                 self.assertGreater(counts.get("chunks", 0), 0)
                 get_settings.cache_clear()

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Restore or seed Kai Studio admin.db.
+"""Restore or seed Shadou Studio admin.db.
 
 Usage:
   # Copy an existing backup:
   python3 scripts/restore_admin_db.py /path/to/admin.db
 
-  # Seed from kai-tenant-* dirs + optional user (no backup file):
+  # Seed from shadou-tenant-* dirs + optional user (no backup file):
   STUDIO_SEED_EMAIL=you@example.com STUDIO_SEED_PASSWORD='your-pass' \\
     python3 scripts/restore_admin_db.py --seed
 
@@ -28,10 +28,10 @@ if str(_BACKEND) not in sys.path:
 
 from auth import hash_password  # noqa: E402
 from database import init_db  # noqa: E402
-from kai_paths import kai_tenants_root  # noqa: E402
+from shadou_paths import shadou_tenants_root  # noqa: E402
 from sqlalchemy import create_engine, text  # noqa: E402
 
-DB_DIR = Path(os.getenv("KAI_ADMIN_DB_DIR", _BACKEND / "data"))
+DB_DIR = Path(os.getenv("SHADOU_ADMIN_DB_DIR", _BACKEND / "data"))
 DB_PATH = DB_DIR / "admin.db"
 
 TENANT_DESCRIPTIONS: dict[str, str] = {
@@ -69,9 +69,9 @@ def discover_tenant_dirs(root: Path) -> list[tuple[str, Path]]:
     out: list[tuple[str, Path]] = []
     if not root.is_dir():
         return out
-    for p in sorted(root.glob("kai-tenant-*")):
+    for p in sorted(root.glob("shadou-tenant-*")):
         if p.is_dir():
-            slug = p.name.removeprefix("kai-tenant-")
+            slug = p.name.removeprefix("shadou-tenant-")
             out.append((slug, p.resolve()))
     return out
 
@@ -86,7 +86,7 @@ def seed(
     engine = create_engine(f"sqlite:///{DB_PATH}", connect_args={"check_same_thread": False})
     init_db()
 
-    root = kai_tenants_root()
+    root = shadou_tenants_root()
     discovered = discover_tenant_dirs(root)
     by_slug = {s: p for s, p in discovered}
 
@@ -94,14 +94,14 @@ def seed(
         pairs = []
         for slug in tenant_slugs:
             if slug not in by_slug:
-                print(f"Warning: no folder kai-tenant-{slug} under {root}", file=sys.stderr)
+                print(f"Warning: no folder shadou-tenant-{slug} under {root}", file=sys.stderr)
                 continue
             pairs.append((slug, by_slug[slug]))
     else:
         pairs = discovered
 
     if not pairs:
-        raise SystemExit(f"No kai-tenant-* directories under {root}")
+        raise SystemExit(f"No shadou-tenant-* directories under {root}")
 
     user_id = str(uuid.uuid4())
     pw_hash = hash_password(password)
@@ -194,16 +194,16 @@ def seed(
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Restore or seed Kai Studio admin.db")
+    p = argparse.ArgumentParser(description="Restore or seed Shadou Studio admin.db")
     p.add_argument("source", nargs="?", help="Path to admin.db backup to copy in")
-    p.add_argument("--seed", action="store_true", help="Seed from kai-tenant-* dirs")
+    p.add_argument("--seed", action="store_true", help="Seed from shadou-tenant-* dirs")
     p.add_argument("--email", default=os.getenv("STUDIO_SEED_EMAIL", "yuanting@kommu.ai"))
     p.add_argument("--name", default=os.getenv("STUDIO_SEED_NAME", "Yuanting"))
     p.add_argument("--password", default=os.getenv("STUDIO_SEED_PASSWORD"))
     p.add_argument(
         "--tenants",
         default=os.getenv("STUDIO_SEED_TENANTS", ""),
-        help="Comma-separated slugs (default: all kai-tenant-* under KAI_TENANTS_ROOT)",
+        help="Comma-separated slugs (default: all shadou-tenant-* under SHADOU_TENANTS_ROOT)",
     )
     p.add_argument("--no-backup", action="store_true", help="Skip backing up current admin.db")
     args = p.parse_args()

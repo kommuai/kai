@@ -6,18 +6,18 @@ import unittest
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
-from kai.lib.learning_events import (
+from shadou.lib.learning_events import (
     fetch_pending_events,
     init_learning_events_table,
     record_event,
     set_event_status,
 )
-from kai.lib.session_state import freeze, get_session, init_db, reset_memory
-from kai.services.kai_service import KaiService
+from shadou.lib.session_state import freeze, get_session, init_db, reset_memory
+from shadou.services.shadou_service import ShadouService
 
 
-def _svc() -> KaiService:
-    return KaiService()
+def _svc() -> ShadouService:
+    return ShadouService()
 
 
 def _uid(prefix: str = "admin") -> str:
@@ -30,13 +30,13 @@ NON_ADMIN_NUMBER = "+60188888888"
 
 def _patch_whitelist(whitelist: list[str]):
     """Patch get_admin_config to return a whitelist containing the given numbers."""
-    from kai.workspace.admin_config import AdminConfig, AdminLearningConfig
+    from shadou.workspace.admin_config import AdminConfig, AdminLearningConfig
 
     cfg = AdminConfig(
         whitelist_numbers=frozenset(whitelist),
         learning=AdminLearningConfig(enabled=True, min_confidence=0.6, max_items=10),
     )
-    return patch("kai.workspace.admin_config.get_admin_config", return_value=cfg)
+    return patch("shadou.workspace.admin_config.get_admin_config", return_value=cfg)
 
 
 class AdminModeCommandTests(unittest.TestCase):
@@ -80,7 +80,7 @@ class AdminModeCommandTests(unittest.TestCase):
         freeze(ADMIN_NUMBER, True)
         sess = get_session(ADMIN_NUMBER)
         sess["admin_mode"] = True
-        from kai.lib.session_state import save_session
+        from shadou.lib.session_state import save_session
         save_session(ADMIN_NUMBER, sess)
 
         with _patch_whitelist([ADMIN_NUMBER]):
@@ -92,7 +92,7 @@ class AdminModeCommandTests(unittest.TestCase):
 
     def test_test_clears_learning_state(self):
         svc = _svc()
-        from kai.lib.session_state import save_session
+        from shadou.lib.session_state import save_session
         sess = get_session(ADMIN_NUMBER)
         sess["admin_mode"] = True
         sess["learning_state"] = {"event_ids": ["x"], "index": 0, "current_event_id": "x"}
@@ -113,20 +113,20 @@ class AdminModeCommandTests(unittest.TestCase):
 
     def test_learning_while_admin_mode_no_events(self):
         svc = _svc()
-        from kai.lib.session_state import save_session
+        from shadou.lib.session_state import save_session
         sess = get_session(ADMIN_NUMBER)
         sess["admin_mode"] = True
         save_session(ADMIN_NUMBER, sess)
 
         with _patch_whitelist([ADMIN_NUMBER]):
-            with patch("kai.lib.learning_events.fetch_pending_events", return_value=[]):
+            with patch("shadou.lib.learning_events.fetch_pending_events", return_value=[]):
                 result = svc.pre_router(self._msg(ADMIN_NUMBER, "/learning"))
         self.assertIsNotNone(result)
         self.assertIn("No new", result["message"])
 
     def test_learning_with_events_presents_first_question(self):
         svc = _svc()
-        from kai.lib.session_state import save_session
+        from shadou.lib.session_state import save_session
         sess = get_session(ADMIN_NUMBER)
         sess["admin_mode"] = True
         save_session(ADMIN_NUMBER, sess)
@@ -143,7 +143,7 @@ class AdminModeCommandTests(unittest.TestCase):
             "status": "new",
         }
         with _patch_whitelist([ADMIN_NUMBER]):
-            with patch("kai.lib.learning_events.fetch_pending_events", return_value=[fake_event]):
+            with patch("shadou.lib.learning_events.fetch_pending_events", return_value=[fake_event]):
                 result = svc.pre_router(self._msg(ADMIN_NUMBER, "/learning"))
 
         self.assertIsNotNone(result)
@@ -154,7 +154,7 @@ class AdminModeCommandTests(unittest.TestCase):
 
     def test_learning_skip_advances_to_next(self):
         svc = _svc()
-        from kai.lib.session_state import save_session
+        from shadou.lib.session_state import save_session
         uid = ADMIN_NUMBER
         sess = get_session(uid)
         sess["admin_mode"] = True
@@ -177,8 +177,8 @@ class AdminModeCommandTests(unittest.TestCase):
             "status": "new",
         }
         with _patch_whitelist([ADMIN_NUMBER]):
-            with patch("kai.lib.learning_events.set_event_status"):
-                with patch("kai.lib.learning_events.fetch_pending_events", return_value=[fake_ev2]):
+            with patch("shadou.lib.learning_events.set_event_status"):
+                with patch("shadou.lib.learning_events.fetch_pending_events", return_value=[fake_ev2]):
                     result = svc.pre_router(self._msg(uid, "/learning skip"))
 
         self.assertIsNotNone(result)
@@ -186,7 +186,7 @@ class AdminModeCommandTests(unittest.TestCase):
 
     def test_learning_stop_clears_state(self):
         svc = _svc()
-        from kai.lib.session_state import save_session
+        from shadou.lib.session_state import save_session
         uid = ADMIN_NUMBER
         sess = get_session(uid)
         sess["admin_mode"] = True

@@ -13,6 +13,7 @@ import InboxPage from "./pages/InboxPage";
 import ConversationPage from "./pages/ConversationPage";
 import ContactsPage from "./pages/ContactsPage";
 import HitlReviewPage from "./pages/HitlReviewPage";
+import AgentTrainingPage from "./pages/AgentTrainingPage";
 import AppShell from "./components/AppShell";
 import TenantShell from "./components/TenantShell";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -48,6 +49,7 @@ export default function App() {
                 </Route>
                 <Route path="contacts" element={<ContactsPage />} />
                 <Route path="review" element={<HitlReviewPage />} />
+                <Route path="academy" element={<AgentTrainingPage />} />
               </Route>
             </Route>
           </Route>

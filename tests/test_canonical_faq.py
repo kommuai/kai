@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import unittest
 
-from kai.support_runtime.agent_tools import AgentToolRegistry
-from kai.support_runtime.canonical_faq import extract_answer_from_chunk, pick_best_canonical
-from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
+from shadou.support_runtime.agent_tools import AgentToolRegistry
+from shadou.support_runtime.canonical_faq import extract_answer_from_chunk, pick_best_canonical
+from shadou.support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 
 class CanonicalFaqUnitTests(unittest.TestCase):

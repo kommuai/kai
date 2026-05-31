@@ -1,0 +1,12 @@
+{"question": "What is your product?", "expected_decision": "direct_answer", "tags": ["level1_faq"]}
+{"question": "How much does it cost?", "expected_decision": "direct_answer", "tags": ["level1_faq"]}
+{"question": "Where are you located?", "expected_decision": "direct_answer", "tags": ["level1_faq"]}
+{"question": "How do I contact support?", "expected_decision": "direct_answer", "tags": ["level1_faq"]}
+{"question": "What are your opening hours?", "expected_decision": "direct_answer", "tags": ["level1_faq"]}
+{"question": "Is this available for my car?", "expected_decision": "direct_answer", "tags": ["level1_faq"]}
+{"question": "What do you do and what don't you do?", "expected_decision": "direct_answer", "tags": ["level1_faq"]}
+{"question": "My device shows error E-99 and won't connect after firmware update.", "expected_decision": "escalate_human", "tags": ["must_escalate"]}
+{"question": "Can you check my order #88291 status in your system?", "expected_decision": "escalate_human", "tags": ["must_escalate"]}
+{"question": "I want a full refund right now or I will chargeback.", "expected_decision": "escalate_human", "tags": ["must_escalate"]}
+{"question": "What is the quantum flux capacitor rating for model Z9 in 2045?", "expected_decision": "abstain", "tags": ["must_abstain"]}
+{"question": "Can you guarantee I will win the lottery if I buy your product?", "expected_decision": "abstain", "tags": ["must_abstain"]}

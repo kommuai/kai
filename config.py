@@ -1,10 +1,10 @@
-"""Backward-compatible config surface. Prefer kai.settings.get_settings() for new code."""
+"""Backward-compatible config surface. Prefer shadou.settings.get_settings() for new code."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from kai.settings.loader import (
+from shadou.settings.loader import (
     BASE_DIR,
     Settings,
     _manifest_rag_source,
@@ -16,11 +16,11 @@ from kai.settings.loader import (
 _EXPORT_NAMES: frozenset[str] = frozenset({
     "PORT", "TZ_REGION", "OFFICE_START", "OFFICE_END",
     "DEEPSEEK_API_KEY", "DEEPSEEK_BASE_URL", "DEEPSEEK_MODEL",
-    "KAI_LLM_PROVIDER", "KAI_LLM_MODEL", "KAI_LLM_BASE_URL", "KAI_LLM_API_KEY",
-    "KAI_QDRANT_ENABLED", "KAI_QDRANT_URL", "KAI_QDRANT_COLLECTION", "KAI_RERANKER_BACKEND",
-    "KAI_GUARDRAILS_ENABLED",
-    "KAI_SOP_WRITEBACK_ENABLED", "KAI_SOP_MERGE_SYNC_ENABLED",
-    "KAI_SOP_MERGE_SYNC_HOUR", "KAI_SOP_MERGE_SYNC_MINUTE",
+    "SHADOU_LLM_PROVIDER", "SHADOU_LLM_MODEL", "SHADOU_LLM_BASE_URL", "SHADOU_LLM_API_KEY",
+    "SHADOU_QDRANT_ENABLED", "SHADOU_QDRANT_URL", "SHADOU_QDRANT_COLLECTION", "SHADOU_RERANKER_BACKEND",
+    "SHADOU_GUARDRAILS_ENABLED",
+    "SHADOU_SOP_WRITEBACK_ENABLED", "SHADOU_SOP_MERGE_SYNC_ENABLED",
+    "SHADOU_SOP_MERGE_SYNC_HOUR", "SHADOU_SOP_MERGE_SYNC_MINUTE",
     "GOOGLE_DOCS_SOP_DOC_ID",
     "TECH_BACKLOG_SHEET_ID", "TECH_BACKLOG_TAB_NAME", "TECH_ACTIVE_TAB_NAME",
     "GITHUB_REPO", "GITHUB_BRANCH", "BUKAPILOT_REPO", "BUKAPILOT_BRANCH",
@@ -31,26 +31,26 @@ _EXPORT_NAMES: frozenset[str] = frozenset({
     "FAQ_LEARN_QUEUE_DIR", "WORKSPACE_MANIFEST_PATH", "CONTEXT_REGISTRY_YAML",
     "VEHICLE_SUPPORT_OFFICIAL_URL", "VEHICLE_SUPPORT_HTTP_TIMEOUT_SECONDS",
     "VEHICLE_SUPPORT_MIN_EVIDENCE_SCORE",
-    "KAI_ROUTE_AGENT_MAX_STEPS", "KAI_ROUTE_AGENT_DEBUG_ENABLED", "KAI_COMPILE_EXTRA_ARTIFACTS",
+    "SHADOU_ROUTE_AGENT_MAX_STEPS", "SHADOU_ROUTE_AGENT_DEBUG_ENABLED", "SHADOU_COMPILE_EXTRA_ARTIFACTS",
     "MIN_SUPPORTED_YEAR", "SESSION_IDLE_HOURS", "SESSION_MAX_HISTORY_MESSAGES", "MEMORY_DEPTH",
     "MEMORY_SUMMARY_MAX_CHARS", "MEMORY_TTL_PREFERENCES_DAYS",
     "MEMORY_TTL_DEVICE_ACCOUNT_DAYS", "MEMORY_TTL_TEMP_ISSUE_DAYS",
 })
 
 _BOOL_EXPORTS = frozenset({
-    "KAI_QDRANT_ENABLED", "KAI_GUARDRAILS_ENABLED",
-    "KAI_SOP_WRITEBACK_ENABLED", "KAI_SOP_MERGE_SYNC_ENABLED",
-    "KAI_ROUTE_AGENT_DEBUG_ENABLED", "KAI_COMPILE_EXTRA_ARTIFACTS",
+    "SHADOU_QDRANT_ENABLED", "SHADOU_GUARDRAILS_ENABLED",
+    "SHADOU_SOP_WRITEBACK_ENABLED", "SHADOU_SOP_MERGE_SYNC_ENABLED",
+    "SHADOU_ROUTE_AGENT_DEBUG_ENABLED", "SHADOU_COMPILE_EXTRA_ARTIFACTS",
 })
 
 
 def _export_value(name: str, s: Settings) -> Any:
     if name in _BOOL_EXPORTS:
         return "1" if getattr(s, name.lower()) else "0"
-    if name == "KAI_SOP_MERGE_SYNC_HOUR":
-        return s.kai_sop_merge_sync_hour
-    if name == "KAI_SOP_MERGE_SYNC_MINUTE":
-        return s.kai_sop_merge_sync_minute
+    if name == "SHADOU_SOP_MERGE_SYNC_HOUR":
+        return s.shadou_sop_merge_sync_hour
+    if name == "SHADOU_SOP_MERGE_SYNC_MINUTE":
+        return s.shadou_sop_merge_sync_minute
     if name in {"GITHUB_REPO", "BUKAPILOT_REPO"}:
         return s.github_repo or s.bukapilot_repo
     if name in {"GITHUB_BRANCH", "BUKAPILOT_BRANCH"}:

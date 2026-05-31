@@ -1,8 +1,8 @@
 import unittest
 
-from kai.support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
-from kai.support_runtime.agent_tools import AgentToolRegistry
-from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
+from shadou.support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
+from shadou.support_runtime.agent_tools import AgentToolRegistry
+from shadou.support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 
 class _DummyProvider:

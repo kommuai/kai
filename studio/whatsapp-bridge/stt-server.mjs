@@ -10,26 +10,26 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 /** @type {import('child_process').ChildProcess | null} */
 let proc = null;
 
-function kaiRepoRoot() {
-  if (process.env.KAI_REPO) return path.resolve(process.env.KAI_REPO);
+function shadouRepoRoot() {
+  if (process.env.SHADOU_REPO) return path.resolve(process.env.SHADOU_REPO);
   return path.resolve(__dirname, "../..");
 }
 
 function pythonBin() {
-  return process.env.KAI_PYTHON || "python3";
+  return process.env.SHADOU_PYTHON || "python3";
 }
 
 function sttPort() {
-  return Number(process.env.KAI_STT_SERVER_PORT || 18792);
+  return Number(process.env.SHADOU_STT_SERVER_PORT || 18792);
 }
 
 function sttServerUrl() {
-  return (process.env.KAI_STT_SERVER_URL || `http://127.0.0.1:${sttPort()}`).replace(/\/$/, "");
+  return (process.env.SHADOU_STT_SERVER_URL || `http://127.0.0.1:${sttPort()}`).replace(/\/$/, "");
 }
 
 export function sttServerEnv() {
   return {
-    KAI_STT_SERVER_URL: sttServerUrl(),
+    SHADOU_STT_SERVER_URL: sttServerUrl(),
   };
 }
 
@@ -60,13 +60,13 @@ export async function ensureSttServer(log = console) {
   }
 
   const port = sttPort();
-  const root = kaiRepoRoot();
+  const root = shadouRepoRoot();
   const env = {
     ...process.env,
     PYTHONPATH: [root, process.env.PYTHONPATH].filter(Boolean).join(path.delimiter),
   };
 
-  proc = spawn(pythonBin(), ["-m", "kai.media.stt_server", "--port", String(port)], {
+  proc = spawn(pythonBin(), ["-m", "shadou.media.stt_server", "--port", String(port)], {
     env,
     cwd: root,
     stdio: ["ignore", "pipe", "pipe"],

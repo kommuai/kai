@@ -1,10 +1,10 @@
 # Operator guide
 
-All tenant edits happen under **`KAI_HOME`** (default `~/.kai/`).
+All tenant edits happen under **`SHADOU_HOME`** (default `~/.shadou/`).
 
 ## What to edit
 
-| What | Path under `KAI_HOME` |
+| What | Path under `SHADOU_HOME` |
 |------|------------------------|
 | Tenant config (channels, copy, tools) | `workspace.yaml` |
 | AI support agent instructions | `system_prompt.md` |
@@ -16,10 +16,10 @@ All tenant edits happen under **`KAI_HOME`** (default `~/.kai/`).
 ## After edits
 
 ```bash
-kai compile
+shadou compile
 curl -X POST http://127.0.0.1:6090/admin/refresh-sop -H "x-admin-token: $ADMIN_TOKEN"
 # or
-kai doctor
+shadou doctor
 ```
 
 ## Admin mode and deliberate FAQ learning

@@ -1,6 +1,6 @@
 import unittest
 
-from kai.support_runtime.faq_grounding import (
+from shadou.support_runtime.faq_grounding import (
     FOOTNOTE_MARKER,
     apply_grounding_footnote_if_needed,
     is_answer_faq_grounded,
@@ -59,7 +59,7 @@ class FaqGroundingTests(unittest.TestCase):
         self.assertNotIn(FOOTNOTE_MARKER, out)
 
     def test_grounded_tool_from_workspace_yaml(self) -> None:
-        from kai.workspace.runtime_settings import reload_grounded_tools, reload_workspace_settings_yaml
+        from shadou.workspace.runtime_settings import reload_grounded_tools, reload_workspace_settings_yaml
 
         reload_workspace_settings_yaml()
         reload_grounded_tools()

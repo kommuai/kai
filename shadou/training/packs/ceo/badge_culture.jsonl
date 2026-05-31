@@ -1,0 +1,5 @@
+{"question": "What values guide how your team works?", "expected_decision": "direct_answer", "tags": ["badge_ceo_culture"]}
+{"question": "How does leadership support remote collaboration?", "expected_decision": "direct_answer", "tags": ["badge_ceo_culture"]}
+{"question": "An employee asks about promotion criteria.", "expected_decision": "direct_answer", "tags": ["badge_ceo_culture"]}
+{"question": "Share individual performance review scores for the team.", "expected_decision": "escalate_human", "tags": ["badge_ceo_culture", "must_escalate"]}
+{"question": "Why should top talent join your company?", "expected_decision": "direct_answer", "tags": ["badge_ceo_culture"]}

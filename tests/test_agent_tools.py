@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import Mock, patch
 
-from kai.support_runtime.agent_tools import AgentToolRegistry
-from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
-from kai.workspace.tools_config import reload_tools_config
+from shadou.support_runtime.agent_tools import AgentToolRegistry
+from shadou.support_runtime.retrieval import HybridRetriever, SimpleReranker
+from shadou.workspace.tools_config import reload_tools_config
 
 
 class AgentToolsTests(unittest.TestCase):
@@ -21,14 +21,14 @@ class AgentToolsTests(unittest.TestCase):
         self.assertFalse(out["ok"])
         self.assertIn("unknown_tool", out["error"])
 
-    @patch("kai.support_runtime.tools.registry.run_plugin_tool")
+    @patch("shadou.support_runtime.tools.registry.run_plugin_tool")
     def test_plugin_tool_dispatch(self, mock_plugin: Mock) -> None:
         from pathlib import Path
 
-        from tests.conftest import _apply_kai_home
+        from tests.conftest import _apply_shadou_home
 
         minimal = Path(__file__).resolve().parent / "fixtures" / "minimal_workspace"
-        _apply_kai_home(minimal)
+        _apply_shadou_home(minimal)
         reload_tools_config()
         mock_plugin.return_value = {"ok": True, "echo": "hello"}
         reg = AgentToolRegistry(HybridRetriever(provider=None), SimpleReranker(provider=None))

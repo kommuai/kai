@@ -7,17 +7,17 @@ import tempfile
 import unittest
 from uuid import uuid4
 
-from kai.content.faq import master_faq_system_block
-from kai.lib.session_search import index_message, search_user_messages
-from kai.lib.session_state import (
+from shadou.content.faq import master_faq_system_block
+from shadou.lib.session_search import index_message, search_user_messages
+from shadou.lib.session_state import (
     add_message_to_history,
     get_history,
     init_db,
     reset_memory,
 )
-from kai.support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
-from kai.support_runtime.agent_tools import AgentToolRegistry
-from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
+from shadou.support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
+from shadou.support_runtime.agent_tools import AgentToolRegistry
+from shadou.support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 
 class Phase1ContextTests(unittest.TestCase):

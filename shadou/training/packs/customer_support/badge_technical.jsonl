@@ -1,0 +1,6 @@
+{"question": "The app crashes on startup after the latest update.", "expected_decision": "direct_answer", "tags": ["badge_technical"], "expected_steps": ["version", "device", "reproduce"]}
+{"question": "Installation fails with error code E42.", "expected_decision": "direct_answer", "tags": ["badge_technical"], "expected_steps": ["os", "installer", "logs"]}
+{"question": "WiFi connects but sync never completes.", "expected_decision": "direct_answer", "tags": ["badge_technical"], "expected_steps": ["network", "firewall", "retry"]}
+{"question": "Is this a known bug with the March release?", "expected_decision": "direct_answer", "tags": ["badge_technical"]}
+{"question": "I need engineering to look at corrupted database files.", "expected_decision": "escalate_human", "tags": ["badge_technical", "must_escalate"], "expected_handoff_fields": ["version", "logs", "steps"]}
+{"question": "What is your return policy?", "expected_decision": "direct_answer", "tags": ["badge_technical"]}

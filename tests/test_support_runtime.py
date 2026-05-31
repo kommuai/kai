@@ -1,9 +1,9 @@
 import unittest
 from uuid import uuid4
 
-from kai.services.kai_service import strip_bold_markdown_wrapping_around_urls
-from kai.support_runtime.compiler import compile_canonical_knowledge
-from kai.support_runtime.service import SupportRuntimeService
+from shadou.services.shadou_service import strip_bold_markdown_wrapping_around_urls
+from shadou.support_runtime.compiler import compile_canonical_knowledge
+from shadou.support_runtime.service import SupportRuntimeService
 
 
 class SupportRuntimeTests(unittest.TestCase):

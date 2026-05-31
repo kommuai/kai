@@ -2,7 +2,7 @@
 
 import unittest
 
-from kai.core.outbound_delivery import WHATSAPP_MAX_BODY, prepare_outbound_reply
+from shadou.core.outbound_delivery import WHATSAPP_MAX_BODY, prepare_outbound_reply
 
 
 class OutboundDeliveryTests(unittest.TestCase):

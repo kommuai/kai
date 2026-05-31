@@ -1,12 +1,14 @@
 import axios from "axios";
 import type { AxiosError } from "axios";
 
-/** In dev, use same-origin + Vite proxy. In production, set VITE_API_URL. */
-export const API_BASE = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL
-  : import.meta.env.DEV
-    ? ""
-    : "http://localhost:8080";
+/** Dev: same-origin + Vite proxy. Prod behind nginx: leave VITE_API_URL unset (same-origin). */
+function resolveApiBase(): string {
+  const fromEnv = import.meta.env.VITE_API_URL as string | undefined;
+  if (fromEnv != null && String(fromEnv).trim() !== "") return fromEnv.trim();
+  return "";
+}
+
+export const API_BASE = resolveApiBase();
 
 /** Absolute or proxied path for fetch() — must match axios baseURL (upload/bootstrap use fetch). */
 export function apiUrl(path: string): string {
@@ -18,7 +20,7 @@ export function apiUrl(path: string): string {
 const api = axios.create({ baseURL: API_BASE });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("kai_token");
+  const token = localStorage.getItem("shadou_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   // Let the browser set multipart boundary (axios must not force application/json).
   if (typeof FormData !== "undefined" && config.data instanceof FormData) {
@@ -39,8 +41,8 @@ api.interceptors.response.use(
         path === "/terms" ||
         path === "/privacy";
       if (!isAuthRoute) {
-        localStorage.removeItem("kai_token");
-        localStorage.removeItem("kai_user");
+        localStorage.removeItem("shadou_token");
+        localStorage.removeItem("shadou_user");
         window.location.href = "/login";
       }
     }
@@ -67,6 +69,24 @@ export interface TokenResponse {
   user: User;
 }
 
+export interface TrainingJob {
+  id: string;
+  label: string;
+  description: string;
+}
+
+export interface AgentTrainingSummary {
+  agent_job: string;
+  agent_job_label: string;
+  current_level: number;
+  current_level_title: string;
+  current_level_emoji: string;
+  next_level: number | null;
+  progress_to_next: number;
+  last_assessed_at: string | null;
+  earned_badges?: string[];
+}
+
 export interface Tenant {
   id: string;
   owner_id: string;
@@ -76,6 +96,91 @@ export interface Tenant {
   workspace_home: string;
   created_at: string;
   updated_at: string;
+  training_summary?: AgentTrainingSummary | null;
+}
+
+export interface TrainingLevelDef {
+  id: string;
+  number: number;
+  title: string;
+  tagline: string;
+  emoji: string;
+  color: string;
+  meaning: string;
+  requirements: { id: string; text: string }[];
+}
+
+export interface TrainingGate {
+  name: string;
+  value: number | null;
+  threshold: number;
+  ok: boolean;
+}
+
+export interface TrainingQuest {
+  id: string;
+  text: string;
+  done: boolean;
+}
+
+export interface TrainingLevelResult {
+  level_number: number;
+  title: string;
+  passed: boolean;
+  score_pct: number;
+  gates: TrainingGate[];
+  quests: TrainingQuest[];
+}
+
+export interface TrainingSpecializationDef {
+  id: string;
+  branch: string;
+  title: string;
+  tagline: string;
+  emoji: string;
+  color: string;
+  prereq_level: number;
+  meaning: string;
+  requirements: { id: string; text: string }[];
+}
+
+export interface TrainingBadgeResult {
+  specialization_id: string;
+  branch: string;
+  title: string;
+  passed: boolean;
+  score_pct: number;
+  locked: boolean;
+  lock_reason: string;
+  gates: TrainingGate[];
+  quests: TrainingQuest[];
+}
+
+export interface TrainingStatus {
+  agent_job: string;
+  agent_job_label: string;
+  levels: TrainingLevelDef[];
+  specializations: TrainingSpecializationDef[];
+  current_level: number;
+  current_level_title: string;
+  current_level_emoji: string;
+  next_level: number | null;
+  progress_to_next: number;
+  last_assessed_at: string | null;
+  level_results: Record<number, TrainingLevelResult>;
+  badge_results: Record<string, TrainingBadgeResult>;
+  earned_badges: string[];
+  quests_next: TrainingQuest[];
+}
+
+export interface TrainingRun {
+  id: string;
+  tenant_id: string;
+  level_number: number;
+  passed: boolean;
+  duration_ms: number;
+  created_at: string;
+  summary: Record<string, unknown>;
 }
 
 export interface SkillCapabilityOut {
@@ -381,8 +486,11 @@ export const tenantsApi = {
     fallback_behavior?: string;
     onboarding_session_id?: string | null;
     channel_type?: "none" | "telegram" | "whatsapp_cloud" | "whatsapp_baileys";
+    agent_job?: string;
   }) =>
     api.post<Tenant>("/tenants", data).then((r) => r.data),
+
+  trainingJobs: () => api.get<TrainingJob[]>("/tenants/training-jobs").then((r) => r.data),
 
   get: (id: string) => api.get<Tenant>(`/tenants/${id}`).then((r) => r.data),
   getBySlug: (slug: string) => api.get<Tenant>(`/tenants/by-slug/${slug}`).then((r) => r.data),
@@ -454,6 +562,33 @@ export const tenantsApi = {
       .then((r) => r.data),
 };
 
+export const trainingApi = {
+  status: (tenantId: string) =>
+    api.get<TrainingStatus>(`/tenants/${tenantId}/training`).then((r) => r.data),
+
+  assess: (tenantId: string, opts?: { level?: number; specialization?: string }) =>
+    api
+      .post<{ run_id: string; status: string; summary: Record<string, unknown> }>(
+        `/tenants/${tenantId}/training/assess`,
+        {
+          level: opts?.level ?? null,
+          specialization: opts?.specialization ?? null,
+        },
+        { timeout: 600000 },
+      )
+      .then((r) => r.data),
+
+  runs: (tenantId: string, limit = 20) =>
+    api.get<TrainingRun[]>(`/tenants/${tenantId}/training/runs`, { params: { limit } }).then((r) => r.data),
+
+  runDetail: (tenantId: string, runId: string) =>
+    api
+      .get<{ id: string; failures: Array<Record<string, unknown>>; summary: Record<string, unknown> }>(
+        `/tenants/${tenantId}/training/runs/${runId}`,
+      )
+      .then((r) => r.data),
+};
+
 export interface AiAssistPatch {
   file: string;
   path: string;
@@ -492,7 +627,7 @@ export const onboardingApi = {
       throw new Error("No files selected.");
     }
     const path = `/tenants/onboarding/sessions/${sessionId}/documents`;
-    const token = localStorage.getItem("kai_token");
+    const token = localStorage.getItem("shadou_token");
     const headers: Record<string, string> = {};
     if (token) headers.Authorization = `Bearer ${token}`;
 
@@ -544,7 +679,7 @@ export const onboardingApi = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("kai_token") ?? ""}`,
+        Authorization: `Bearer ${localStorage.getItem("shadou_token") ?? ""}`,
       },
       body: JSON.stringify({ questionnaire }),
     }),
@@ -595,7 +730,7 @@ export const aiAssistApi = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("kai_token") ?? ""}`,
+        Authorization: `Bearer ${localStorage.getItem("shadou_token") ?? ""}`,
       },
       body: JSON.stringify({ messages }),
     }),
@@ -608,7 +743,7 @@ export const aiAssistApi = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("kai_token") ?? ""}`,
+        Authorization: `Bearer ${localStorage.getItem("shadou_token") ?? ""}`,
       },
       body: JSON.stringify({ messages, apply_patches: true }),
     }).then((r) => r.json()),

@@ -1,0 +1,13 @@
+# Local edge for shadou.io — binds 127.0.0.1:8780 (Cloudflare Tunnel origin).
+services:
+  shadou-web:
+    image: nginx:alpine
+    container_name: shadou-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8780:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../../frontend/dist:/usr/share/nginx/html:ro

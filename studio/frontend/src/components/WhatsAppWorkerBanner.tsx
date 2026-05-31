@@ -29,7 +29,7 @@ export default function WhatsAppWorkerBanner() {
           <p className="font-medium">WhatsApp bridge is not running</p>
           <p className="text-red-800/90 mt-1 text-xs">
             {detail ||
-              "Start it with: systemctl --user start kai-whatsapp-bridge.service (see studio/deploy/systemd-user/)."}
+              "Start it with: systemctl --user start shadou-whatsapp-bridge.service (see studio/deploy/systemd-user/)."}
           </p>
         </div>
       </div>

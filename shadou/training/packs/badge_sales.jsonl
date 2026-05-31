@@ -1,0 +1,6 @@
+{"question": "What packages do you offer and which fits a small team?", "expected_decision": "direct_answer", "tags": ["badge_sales"]}
+{"question": "How much does the premium plan cost?", "expected_decision": "direct_answer", "tags": ["badge_sales"]}
+{"question": "Your product seems expensive compared to competitors.", "expected_decision": "direct_answer", "tags": ["badge_sales"]}
+{"question": "I'm not ready to buy yet — what should I consider?", "expected_decision": "direct_answer", "tags": ["badge_sales"]}
+{"question": "Can you recommend the right plan for 50 users?", "expected_decision": "direct_answer", "tags": ["badge_sales"]}
+{"question": "I want a refund on my subscription.", "expected_decision": "escalate_human", "tags": ["badge_sales", "must_escalate"]}

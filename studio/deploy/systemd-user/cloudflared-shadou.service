@@ -1,0 +1,15 @@
+[Unit]
+Description=Cloudflare Tunnel for shadou.io
+After=network-online.target shadou-edge.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/cloudflared tunnel --config %h/.config/cloudflared/shadou.yml run
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

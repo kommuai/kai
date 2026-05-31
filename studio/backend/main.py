@@ -1,13 +1,13 @@
-"""Kai Admin UI — FastAPI backend."""
+"""Shadou Admin UI — FastAPI backend."""
 from __future__ import annotations
 
 import os
 import sys
 from pathlib import Path
 
-# Monorepo root so `import kai` works for compile/capabilities helpers.
+# Monorepo root so `import shadou` works for compile/capabilities helpers.
 _repo = Path(__file__).resolve().parents[2]
-if (_repo / "kai").is_dir() and str(_repo) not in sys.path:
+if (_repo / "shadou").is_dir() and str(_repo) not in sys.path:
     sys.path.insert(0, str(_repo))
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -24,13 +24,14 @@ from routers.hitl_router import router as hitl_router
 from routers.inbox_router import router as inbox_router
 from routers.onboarding_router import router as onboarding_router
 from routers.tenants_router import router as tenants_router
+from routers.training_router import router as training_router
 from routers.usage_router import router as usage_router
 from routers.whatsapp_router import router as whatsapp_router
 from schemas import UserOut
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
-app = FastAPI(title="Kai Admin API", version="1.0.0", docs_url="/api/docs", redoc_url=None)
+app = FastAPI(title="Shadou Admin API", version="1.0.0", docs_url="/api/docs", redoc_url=None)
 
 _cors_origins = {
     FRONTEND_URL,
@@ -59,12 +60,13 @@ app.include_router(ai_assist_router)
 app.include_router(hitl_router)
 app.include_router(inbox_router)
 app.include_router(usage_router)
+app.include_router(training_router)
 
 
 @app.on_event("startup")
 def on_startup():
-    if not os.getenv("KAI_ADMIN_DB_DIR"):
-        os.environ["KAI_ADMIN_DB_DIR"] = str(DB_DIR)
+    if not os.getenv("SHADOU_ADMIN_DB_DIR"):
+        os.environ["SHADOU_ADMIN_DB_DIR"] = str(DB_DIR)
     init_db()
 
 

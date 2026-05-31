@@ -1,4 +1,4 @@
-# Kai — single dependency lockfile (runtime, integrations, dev/CI)
+# Shadou — single dependency lockfile (runtime, integrations, dev/CI)
 
 # --- Media (local Whisper STT) ---
 faster-whisper>=1.0.0

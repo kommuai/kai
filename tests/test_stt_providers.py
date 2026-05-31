@@ -5,13 +5,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from kai.media.stt import SttResult, transcribe_audio
+from shadou.media.stt import SttResult, transcribe_audio
 
 
 class SttProviderTests(unittest.TestCase):
-    @patch("kai.media.stt.get_media_config")
-    @patch("kai.media.stt._server_health_ok", return_value=False)
-    @patch("kai.media.stt_local.transcribe_local")
+    @patch("shadou.media.stt.get_media_config")
+    @patch("shadou.media.stt._server_health_ok", return_value=False)
+    @patch("shadou.media.stt_local.transcribe_local")
     def test_faster_whisper_uses_local_when_no_server(self, mock_local, _health, mock_cfg):
         mock_cfg.return_value.stt_provider = "faster_whisper"
         mock_local.return_value = SttResult(transcript="hello", confidence=0.9)
@@ -19,9 +19,9 @@ class SttProviderTests(unittest.TestCase):
         self.assertEqual(result.transcript, "hello")
         mock_local.assert_called_once()
 
-    @patch("kai.media.stt.get_media_config")
-    @patch("kai.media.stt._server_health_ok", return_value=True)
-    @patch("kai.media.stt._transcribe_via_server")
+    @patch("shadou.media.stt.get_media_config")
+    @patch("shadou.media.stt._server_health_ok", return_value=True)
+    @patch("shadou.media.stt._transcribe_via_server")
     def test_faster_whisper_uses_sidecar_when_healthy(self, mock_server, _health, mock_cfg):
         mock_cfg.return_value.stt_provider = "faster_whisper"
         mock_server.return_value = SttResult(transcript="from sidecar", confidence=0.88)

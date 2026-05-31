@@ -8,7 +8,7 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
-from kai.lib.session_state import (
+from shadou.lib.session_state import (
     add_message_to_history,
     ensure_active_session,
     get_history,

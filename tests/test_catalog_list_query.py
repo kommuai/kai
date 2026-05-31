@@ -1,12 +1,12 @@
 import unittest
 from unittest.mock import patch
 
-from kai.support_runtime.tools.site_search import catalog_list_result, is_catalog_list_query
+from shadou.support_runtime.tools.site_search import catalog_list_result, is_catalog_list_query
 
 
 class CatalogListQueryTests(unittest.TestCase):
     @patch(
-        "kai.support_runtime.tools.site_search._load_vehicle_catalog",
+        "shadou.support_runtime.tools.site_search._load_vehicle_catalog",
         return_value=[
             {"name": "Proton S70", "years": {2023, 2024}, "search_words": set(), "model_words": set()},
             {"name": "Toyota Alphard", "years": {2020}, "search_words": set(), "model_words": set()},

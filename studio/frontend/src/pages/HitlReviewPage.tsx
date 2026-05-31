@@ -191,7 +191,7 @@ function TicketDetail({
                 </button>
                 {expandedDiffs.has(i) && patch.diff && (
                   <div className="border-t border-gray-100 p-2">
-                    <FileDiffViewer diff={patch.diff} />
+                    <FileDiffViewer diff={patch.diff} filename={patch.path || patch.file || "faq"} />
                   </div>
                 )}
               </div>

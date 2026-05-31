@@ -7,7 +7,7 @@ import sys
 
 
 def persist_contact_meta(user_id: str, meta: dict) -> None:
-    from kai.lib.session_state import init_db, upsert_memory_fact
+    from shadou.lib.session_state import init_db, upsert_memory_fact
 
     init_db()
     push = (meta.get("pushName") or meta.get("push_name") or meta.get("notify") or "").strip()
@@ -37,9 +37,9 @@ def persist_contact_meta(user_id: str, meta: dict) -> None:
 
 def main() -> int:
     if len(sys.argv) < 4:
-        print(json.dumps({"ok": False, "error": "usage: store_contact_meta.py KAI_HOME user_id JSON"}))
+        print(json.dumps({"ok": False, "error": "usage: store_contact_meta.py SHADOU_HOME user_id JSON"}))
         return 1
-    os.environ["KAI_HOME"] = sys.argv[1]
+    os.environ["SHADOU_HOME"] = sys.argv[1]
     user_id = (sys.argv[2] or "").strip()
     if not user_id:
         return 1

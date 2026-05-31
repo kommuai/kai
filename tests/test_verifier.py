@@ -4,8 +4,8 @@ from __future__ import annotations
 import unittest
 from dataclasses import replace
 
-from kai.support_runtime.models import EvidenceItem, RuntimeResult
-from kai.support_runtime.verifier import VerifierOutcome, _rules_verify, verify_result
+from shadou.support_runtime.models import EvidenceItem, RuntimeResult
+from shadou.support_runtime.verifier import VerifierOutcome, _rules_verify, verify_result
 
 
 def _make_result(
@@ -107,13 +107,13 @@ class VerifierOnFailAbstainTests(unittest.TestCase):
     """Test the abstain-on-fail policy by patching workspace config."""
 
     def _patch_eval_block(self, block: dict):
-        import kai.support_runtime.verifier as vm
+        import shadou.support_runtime.verifier as vm
         original = vm._eval_block
         vm._eval_block = lambda: block
         return original
 
     def test_on_fail_abstain_forces_decision(self):
-        import kai.support_runtime.verifier as vm
+        import shadou.support_runtime.verifier as vm
         original = vm._eval_block
         vm._eval_block = lambda: {"verifier_mode": "rules", "verifier_on_fail": "abstain"}
         try:
@@ -125,7 +125,7 @@ class VerifierOnFailAbstainTests(unittest.TestCase):
             vm._eval_block = original
 
     def test_on_fail_flag_keeps_direct_answer(self):
-        import kai.support_runtime.verifier as vm
+        import shadou.support_runtime.verifier as vm
         original = vm._eval_block
         vm._eval_block = lambda: {"verifier_mode": "rules", "verifier_on_fail": "flag"}
         try:

@@ -1,4 +1,4 @@
-# Kai security model
+# Shadou security model
 
 ## Chat API (open by design)
 
@@ -17,21 +17,21 @@ Do **not** expose the service directly on `0.0.0.0` without network controls.
 Routes under `/admin/*` require header `x-admin-token` matching `ADMIN_TOKEN` in `.env` (constant-time compare).
 
 - Set a long random `ADMIN_TOKEN` before production.
-- Enable `KAI_STRICT_STARTUP=1` or `KAI_REQUIRE_STRONG_ADMIN_TOKEN=1` to fail boot when the token is weak.
+- Enable `SHADOU_STRICT_STARTUP=1` or `SHADOU_REQUIRE_STRONG_ADMIN_TOKEN=1` to fail boot when the token is weak.
 - `/ready` reports `admin_token_weak` and marks not ready when strong token is required.
 
 ## Debug fields
 
 Agent debug metadata (`debug_route_agent` in the JSON body) is returned only when:
 
-1. `KAI_ROUTE_AGENT_DEBUG_ENABLED=1`, **and**
+1. `SHADOU_ROUTE_AGENT_DEBUG_ENABLED=1`, **and**
 2. The request includes a valid `x-admin-token`.
 
 Otherwise debug is omitted even if the client sends `debug_route_agent`.
 
 ## Service API
 
-`POST /v2/agent/query` and `/v2/agent/search` require `KAI_SERVICE_KEYS` (see `kai/core/authz/service_auth.py`).
+`POST /v2/agent/query` and `/v2/agent/search` require `SHADOU_SERVICE_KEYS` (see `shadou/core/authz/service_auth.py`).
 
 ## Secrets
 
@@ -41,7 +41,7 @@ Otherwise debug is omitted even if the client sends `debug_route_agent`.
 
 ## Media
 
-Static files under `/media` are mounted only when `KAI_MEDIA_PUBLIC=1` (serves `KAI_HOME/data/media/`). Leave unset in production unless you intend public media URLs.
+Static files under `/media` are mounted only when `SHADOU_MEDIA_PUBLIC=1` (serves `SHADOU_HOME/data/media/`). Leave unset in production unless you intend public media URLs.
 
 ## Plugins
 

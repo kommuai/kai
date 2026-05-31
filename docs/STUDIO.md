@@ -1,22 +1,22 @@
-# Kai Studio (monorepo)
+# Shadou Studio (monorepo)
 
-Kai Studio is the operator UI for tenant workspaces. It ships inside the Kai repository under **`studio/`**, separate from the message **engine** image and `docker-compose.yml` at the repo root.
+Shadou Studio is the operator UI for tenant workspaces. It ships inside the Shadou repository under **`studio/`**, separate from the message **engine** image and `docker-compose.yml` at the repo root.
 
 ## Two stacks
 
 | Stack | Command | Purpose |
 |-------|---------|---------|
-| **Engine** | `docker compose up -d --build` (repo root) | WhatsApp/agent runtime, `KAI_HOME` volume |
+| **Engine** | `docker compose up -d --build` (repo root) | WhatsApp/agent runtime, `SHADOU_HOME` volume |
 | **Studio** | `cd studio && docker compose up -d --build` | Admin UI API + static frontend |
 
-They share no container. Studio calls the engine via subprocess (`kai compile`, `kai_reply`, `kai_inbound`) using `KAI_REPO` pointing at the monorepo root.
+They share no container. Studio calls the engine via subprocess (`shadou compile`, `shadou_reply`, `shadou_inbound`) using `SHADOU_REPO` pointing at the monorepo root.
 
 ## Paths
 
 | Variable | Default (dev) | Description |
 |----------|---------------|-------------|
-| `KAI_REPO` | Monorepo root (`kai/` clone) | Engine source for compile & inbox tools |
-| `KAI_TENANTS_ROOT` | `~/workspace` | Where `kai-tenant-*` dirs are created |
+| `SHADOU_REPO` | Monorepo root (`shadou/` clone) | Engine source for compile & inbox tools |
+| `SHADOU_TENANTS_ROOT` | `~/workspace` | Where `shadou-tenant-*` dirs are created |
 | `FRONTEND_URL` | `http://localhost:5173` | CORS + OAuth redirects |
 
 ## Google OAuth
@@ -38,7 +38,7 @@ Production requires HTTPS callback URLs.
 When a tenant is created in Studio:
 
 ```
-${KAI_TENANTS_ROOT}/kai-tenant-<slug>/
+${SHADOU_TENANTS_ROOT}/shadou-tenant-<slug>/
   workspace.yaml
   system_prompt.md
   knowledge/master_faq.md
@@ -52,8 +52,8 @@ ${KAI_TENANTS_ROOT}/kai-tenant-<slug>/
 ```
 studio/backend/
   main.py
-  kai_paths.py          # monorepo-aware KAI_REPO default
-  kai_reply.py
-  kai_inbound.py
+  shadou_paths.py          # monorepo-aware SHADOU_REPO default
+  shadou_reply.py
+  shadou_inbound.py
   routers/
 ```

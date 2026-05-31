@@ -5,7 +5,7 @@ export default function TermsPage() {
   return (
     <LegalLayout
       title="Terms of Service"
-      subtitle="Please read these terms carefully before using Kai Studio."
+      subtitle="Please read these terms carefully before using Shadou Studio."
       sections={TERMS_SECTIONS}
     />
   );

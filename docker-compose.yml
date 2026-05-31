@@ -1,19 +1,19 @@
 services:
-  kai:
+  shadou:
     build:
       context: .
-    container_name: kai
+    container_name: shadou
     restart: unless-stopped
     ports:
       - "6090:8000"
     env_file:
-      - ${KAI_ENV_FILE:-${KAI_HOME:-~/.kai}/.env}
+      - ${SHADOU_ENV_FILE:-${SHADOU_HOME:-~/.shadou}/.env}
     volumes:
-      - ${KAI_HOME:-~/.kai}:/kai-home
+      - ${SHADOU_HOME:-~/.shadou}:/shadou-home
     environment:
       - TZ=Asia/Kuala_Lumpur
       - TZ_REGION=Asia/Kuala_Lumpur
-      - KAI_HOME=/kai-home
-      - KAI_ENV_FILE=/kai-home/.env
-      - SESSION_DB_PATH=/kai-home/data/sessions.db
-      - DB_PATH=/kai-home/data/sessions.db
+      - SHADOU_HOME=/shadou-home
+      - SHADOU_ENV_FILE=/shadou-home/.env
+      - SESSION_DB_PATH=/shadou-home/data/sessions.db
+      - DB_PATH=/shadou-home/data/sessions.db

@@ -1,8 +1,8 @@
-# Kai Studio
+# Shadou Studio
 
-Web admin for multi-tenant Kai configuration: auth, tenant workspaces, Monaco editor, inbox, contacts, and channel setup (e.g. WhatsApp Baileys).
+Web admin for multi-tenant Shadou configuration: auth, tenant workspaces, Monaco editor, inbox, contacts, and channel setup (e.g. WhatsApp Baileys).
 
-Lives in the **Kai monorepo** at `studio/` (sibling to the Python engine package `kai/` and root `docker-compose.yml` for the runtime).
+Lives in the **Shadou monorepo** at `studio/` (sibling to the Python engine package `shadou/` and root `docker-compose.yml` for the runtime).
 
 ## Quick start (development)
 
@@ -23,7 +23,7 @@ cd studio/frontend && npm install && npm run dev
 - Frontend: http://localhost:5173  
 - API: http://localhost:8080  
 
-`KAI_REPO` defaults to the monorepo root (parent of `studio/`). Override in `backend/.env` if needed.
+`SHADOU_REPO` defaults to the monorepo root (parent of `studio/`). Override in `backend/.env` if needed.
 
 ## WhatsApp bridge + message worker (production)
 
@@ -34,11 +34,11 @@ QR linking and **live inbound/outbound WhatsApp** use the Node service in `studi
 ```bash
 cd studio/deploy/systemd-user
 ./install.sh
-systemctl --user start kai-whatsapp-bridge.service
-systemctl --user status kai-whatsapp-bridge.service
+systemctl --user start shadou-whatsapp-bridge.service
+systemctl --user status shadou-whatsapp-bridge.service
 ```
 
-Config: `~/.config/kai/whatsapp-bridge.env` (created from `whatsapp-bridge.env.example`).
+Config: `~/.config/shadou/whatsapp-bridge.env` (created from `whatsapp-bridge.env.example`).
 
 Studio UI shows **WhatsApp live** vs **linked only** on Dashboard, Configuration, and Inbox. API: `GET /tenants/whatsapp-worker` and per-tenant `GET /tenants/{id}/channels`.
 
@@ -46,7 +46,7 @@ Set `WHATSAPP_BRIDGE_URL=http://127.0.0.1:18791` in `studio/backend/.env` if the
 
 ## Docker (Studio only)
 
-Does **not** start the Kai message engine — use the root compose for that.
+Does **not** start the Shadou message engine — use the root compose for that.
 
 ```bash
 cd studio
@@ -65,15 +65,15 @@ Environment (optional):
 |----------|---------|
 | `STUDIO_API_PORT` | Host port for API |
 | `STUDIO_WEB_PORT` | Host port for UI |
-| `KAI_REPO_HOST` | Host path mounted as `/kai-engine` (default: repo root `..`) |
-| `KAI_TENANTS_ROOT` | Host path for tenant workspaces (default: `~/workspace`) |
+| `SHADOU_REPO_HOST` | Host path mounted as `/shadou-engine` (default: repo root `..`) |
+| `SHADOU_TENANTS_ROOT` | Host path for tenant workspaces (default: `~/workspace`) |
 | `VITE_API_URL` | API URL baked into frontend build (default: `http://localhost:8080`) |
 
 ## Layout
 
 ```
 studio/
-  backend/          FastAPI, SQLite admin DB, Kai subprocess helpers
+  backend/          FastAPI, SQLite admin DB, Shadou subprocess helpers
   frontend/         React + Vite + Tailwind
   docker-compose.yml
   Dockerfile.backend

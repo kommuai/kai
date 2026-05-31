@@ -8,11 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **Refactor migration:** merged `origin/refactor` (workspace v2 / `KAI_HOME`); `docker-compose.kommu.yml` for Kommu production; `docker-compose.staging.yml` + `migration/` scripts (baseline, validate, rollback).
+- **Refactor migration:** merged `origin/refactor` (workspace v2 / `SHADOU_HOME`); `docker-compose.kommu.yml` for Kommu production; `docker-compose.staging.yml` + `migration/` scripts (baseline, validate, rollback).
 - **Compat:** pre-router uses `freeze()` and handoff segments; n8n `message_type` media guard; `MASTER_FAQ_PATH` keeps legacy `agent_workspace/02_knowledge/faq/master_faq.md`.
-- **Kommu tenant restore:** runtime now uses host `~/.kai` (`workspace.yaml` + `system_prompt.md`) mounted into `/kai-home` so refactor loads Kommu tone/rules and full tools profile (vehicle support, warranty, backlog, visitor pass).
+- **Kommu tenant restore:** runtime now uses host `~/.shadou` (`workspace.yaml` + `system_prompt.md`) mounted into `/shadou-home` so refactor loads Kommu tone/rules and full tools profile (vehicle support, warranty, backlog, visitor pass).
 - **Admin whitelist:** added `+60173611088` / `0173611088` to `workspace.yaml` `admin.whitelist_numbers` for `/admin` and `/learning` commands.
-- **KAI_HOME migration:** moved runtime tenant state to host `~/.kai` and updated compose to mount `~/.kai:/kai-home` (includes `.env`, `workspace.yaml`, `system_prompt.md`, `knowledge/master_faq.md`, and `data/sessions.db`).
+- **SHADOU_HOME migration:** moved runtime tenant state to host `~/.shadou` and updated compose to mount `~/.shadou:/shadou-home` (includes `.env`, `workspace.yaml`, `system_prompt.md`, `knowledge/master_faq.md`, and `data/sessions.db`).
 
 ### Added
 
@@ -49,16 +49,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- `kai/` Python package: consolidated `api`, `core`, `support_runtime`, `services`, `integrations`, `rag`, and shared `lib/` modules.
+- `shadou/` Python package: consolidated `api`, `core`, `support_runtime`, `services`, `integrations`, `rag`, and shared `lib/` modules.
 - `pytest.ini` — `pythonpath = .` for tests after package layout change.
-- `kai/core/outbound_delivery.py` — WhatsApp 4096-char safe replies.
+- `shadou/core/outbound_delivery.py` — WhatsApp 4096-char safe replies.
 
 ### Changed
 
-- **Repo layout:** application code lives under `kai/`; root keeps `app.py`, `config.py`, `.env`, Docker, and runtime data dirs (`agent_workspace`, `data`, `logs`, `media`, `secrets`).
-- `config.SOP_SYNC_STATE_PATH` → `data/sop/sop_sync_state.json` (moved out of removed `kai/rag/`).
+- **Repo layout:** application code lives under `shadou/`; root keeps `app.py`, `config.py`, `.env`, Docker, and runtime data dirs (`agent_workspace`, `data`, `logs`, `media`, `secrets`).
+- `config.SOP_SYNC_STATE_PATH` → `data/sop/sop_sync_state.json` (moved out of removed `shadou/rag/`).
 - `debug_check.py` → `tools/debug_check.py`; `AGENT_CONTEXT.md` → `docs/AGENT_CONTEXT.md`.
-- All Python imports updated to `kai.*` namespace.
+- All Python imports updated to `shadou.*` namespace.
 - `.env.example` and `secrets/README.md` documenting warranty Google Sheets credentials (when present).
 
 ### Fixed
@@ -71,21 +71,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- **v2-only HTTP surface:** removed `api/v1`; `POST /agent/message`, `POST /admin/*`, and `POST /v2/agent/message` are registered from [`kai/api/v2/agent_message.py`](kai/api/v2/agent_message.py).
-- **Chat pipeline:** `pre_router` → `SupportRuntimeService.execute` only (FAQ-first + ReAct loop); `KAI_ROUTE_MODE` is a trace label.
-- **LLM default:** `deepseek-v4-flash` via `KAI_LLM_MODEL` / `DEEPSEEK_MODEL`.
+- **v2-only HTTP surface:** removed `api/v1`; `POST /agent/message`, `POST /admin/*`, and `POST /v2/agent/message` are registered from [`shadou/api/v2/agent_message.py`](shadou/api/v2/agent_message.py).
+- **Chat pipeline:** `pre_router` → `SupportRuntimeService.execute` only (FAQ-first + ReAct loop); `SHADOU_ROUTE_MODE` is a trace label.
+- **LLM default:** `deepseek-v4-flash` via `SHADOU_LLM_MODEL` / `DEEPSEEK_MODEL`.
 - **Language:** message routes auto-adapt to the user.
 - **Docs:** `README.md`, `AGENTS.md`, `docs/architecture/*` aligned with current runtime.
 - `tests/test_pre_router.py` — exercises `pre_router` and support runtime continuation.
-- `kai/services/kai_service.py` — slim module: session gates, footers, outbound prep, admin reset.
+- `shadou/services/shadou_service.py` — slim module: session gates, footers, outbound prep, admin reset.
 
 ### Removed
 
-- **Legacy FAISS RAG:** `kai/rag/` (`RAGEngine`, `build_index.py`, `sop_data.json`, test fixtures); `faiss-cpu`, `sentence-transformers`, `fastembed`, `onnxruntime` from `requirements.txt`.
-- `kai/core/sop_ingest.py` (unused; FAQ ingest is `master_faq.md` + `compile_canonical_knowledge()`).
+- **Legacy FAISS RAG:** `shadou/rag/` (`RAGEngine`, `build_index.py`, `sop_data.json`, test fixtures); `faiss-cpu`, `sentence-transformers`, `fastembed`, `onnxruntime` from `requirements.txt`.
+- `shadou/core/sop_ingest.py` (unused; FAQ ingest is `master_faq.md` + `compile_canonical_knowledge()`).
 - [`api/v1/agent_message.py`](api/v1/agent_message.py) (superseded by v2 router).
 - `archive_legacy/`, `ARCHIVE_LEGACY.md`, `templates.py`, `workers/skill_worker.py`.
-- Legacy chat paths: `KaiService.main_conversation`, `run_rag_dual`, `handle_agent_message`.
+- Legacy chat paths: `ShadouService.main_conversation`, `run_rag_dual`, `handle_agent_message`.
 - `support_runtime/router.py`, `support_runtime/tools.py`, `support_runtime/warranty.py`.
 - Unused workspace skill handlers under `agent_workspace/03_skills/*/handler.py`.
 - `build_rag_system_prompt()` from `core/prompt_loader.py`.

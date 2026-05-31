@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import unittest
 
-from kai.support_runtime.models import EvidenceItem, RuntimeResult
-from kai.support_runtime.verifier import detect_conflicts, verify_result
+from shadou.support_runtime.models import EvidenceItem, RuntimeResult
+from shadou.support_runtime.verifier import detect_conflicts, verify_result
 
 
 def _ev(source_id: str, snippet: str = "", score: float = 0.8, status: str = "supported") -> EvidenceItem:
@@ -80,7 +80,7 @@ class VerifierConflictIntegrationTests(unittest.TestCase):
         self.assertEqual(conflicts, [])
 
     def test_abstain_on_fail_with_contradiction(self):
-        import kai.support_runtime.verifier as vm
+        import shadou.support_runtime.verifier as vm
         original = vm._eval_block
         vm._eval_block = lambda: {"verifier_on_fail": "abstain", "contradiction_token_overlap": 0.3}
         try:

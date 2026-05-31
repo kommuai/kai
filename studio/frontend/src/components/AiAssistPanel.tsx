@@ -42,9 +42,9 @@ function patchLabel(patch: AiAssistPatch): string {
   return FILE_LABELS[patch.file] ?? patch.path;
 }
 
-/** Hide raw kai-patch JSON from the chat bubble; diff card shows changes. */
+/** Hide raw shadou-patch JSON from the chat bubble; diff card shows changes. */
 function assistantDisplayContent(content: string): string {
-  const stripped = content.replace(/```kai-patch[\s\S]*?```/g, "").trim();
+  const stripped = content.replace(/```shadou-patch[\s\S]*?```/g, "").trim();
   return stripped || content;
 }
 

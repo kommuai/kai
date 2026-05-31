@@ -17,15 +17,15 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       setAuth: (token, user) => {
-        localStorage.setItem("kai_token", token);
+        localStorage.setItem("shadou_token", token);
         set({ token, user, isAuthenticated: true });
       },
       logout: () => {
-        localStorage.removeItem("kai_token");
-        localStorage.removeItem("kai_user");
+        localStorage.removeItem("shadou_token");
+        localStorage.removeItem("shadou_user");
         set({ token: null, user: null, isAuthenticated: false });
       },
     }),
-    { name: "kai_auth" },
+    { name: "shadou_auth" },
   ),
 );

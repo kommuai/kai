@@ -1,0 +1,7 @@
+{"question": "I bought the device, installed it, but the app cannot connect.", "expected_decision": "clarifying_question", "tags": ["ticket_type_install", "workflow"], "expected_steps": ["power", "bluetooth", "wifi", "app version", "account"], "expected_ticket_type": "connectivity"}
+{"question": "I need help with installation step 3.", "expected_decision": "direct_answer", "tags": ["ticket_type_install", "workflow"]}
+{"question": "Is this a warranty claim or a setup question?", "expected_decision": "clarifying_question", "tags": ["ticket_type_policy"]}
+{"question": "The device may be defective, it overheats.", "expected_decision": "escalate_human", "tags": ["must_escalate", "handoff"], "expected_handoff_fields": ["symptom", "model", "safety"]}
+{"question": "App cannot connect", "expected_decision": "clarifying_question", "tags": ["paraphrase_group_a"], "variant_group": "connect_issue"}
+{"question": "My app won't pair with the device", "expected_decision": "clarifying_question", "tags": ["paraphrase_group_a"], "variant_group": "connect_issue"}
+{"question": "Bluetooth pairing fails every time", "expected_decision": "clarifying_question", "tags": ["paraphrase_group_a"], "variant_group": "connect_issue"}

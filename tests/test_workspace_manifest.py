@@ -2,18 +2,18 @@ import os
 import unittest
 from pathlib import Path
 
-from kai.settings import get_settings
-from kai.workspace.manifest import load_workspace_manifest, reload_workspace_manifest
-from kai.workspace.tools_config import load_tools_config, reload_tools_config
-from kai.workspace.validate import validate_workspace, workspace_is_healthy
+from shadou.settings import get_settings
+from shadou.workspace.manifest import load_workspace_manifest, reload_workspace_manifest
+from shadou.workspace.tools_config import load_tools_config, reload_tools_config
+from shadou.workspace.validate import validate_workspace, workspace_is_healthy
 
 
 class WorkspaceManifestTests(unittest.TestCase):
     def setUp(self):
         minimal = Path(__file__).resolve().parent / "fixtures" / "minimal_workspace"
-        os.environ["KAI_HOME"] = str(minimal)
+        os.environ["SHADOU_HOME"] = str(minimal)
         os.environ.pop("AGENT_WORKSPACE", None)
-        from kai.settings import reload_settings
+        from shadou.settings import reload_settings
 
         reload_settings()
         reload_workspace_manifest()
@@ -38,7 +38,7 @@ class WorkspaceManifestTests(unittest.TestCase):
 
     def test_manifest_resolves_paths_under_workspace(self):
         m = load_workspace_manifest()
-        home = get_settings().kai_home
+        home = get_settings().shadou_home
         prompt = m.resolve(m.paths.system_prompt)
         self.assertTrue(prompt.is_file())
         self.assertEqual(prompt.parent, home)

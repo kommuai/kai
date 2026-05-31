@@ -1,0 +1,21 @@
+[Unit]
+Description=Shadou Studio API (uvicorn :8080)
+PartOf=shadou.target
+After=network-online.target shadou-engine.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/workspace/shadou/studio/backend
+EnvironmentFile=-%h/.config/shadou/shadou-stack.env
+EnvironmentFile=-%h/workspace/shadou/studio/backend/.env
+Environment=PYTHONPATH=%h/workspace/shadou
+ExecStartPre=/usr/bin/test -f %h/workspace/shadou/studio/backend/main.py
+ExecStart=/bin/bash -c 'exec "${SHADOU_PYTHON:?Set SHADOU_PYTHON in shadou-stack.env}" -m uvicorn main:app --host 0.0.0.0 --port 8080'
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=shadou.target

@@ -1,0 +1,346 @@
+# Agent Academy — job-specific core levels + specialization badges (tenant-agnostic).
+
+jobs:
+  customer_support:
+    label: Customer Support
+    description: Customer-facing support bot — FAQ, tickets, escalation, and service workflows.
+    levels:
+      - id: confused_intern
+        number: 1
+        title: Confused Intern
+        tagline: Knows the basics, still needs strong guardrails.
+        emoji: "🐣"
+        color: "#94a3b8"
+        meaning: >
+          Basic role, scope, tone, and simple FAQ awareness.
+        eval_pack: eval/training/customer_support/level_1.jsonl
+        requirements:
+          - id: faq_basics
+            text: Answers basic FAQ correctly (product, pricing, hours, contact)
+          - id: no_invent
+            text: Does not invent answers when unsure
+          - id: escalate_unknown
+            text: Escalates technical, account, angry, or refund cases
+          - id: brand_tone
+            text: Uses polite support tone without unapproved promises
+        gates:
+          accuracy_level1_faq: 0.70
+          escalation_correct_rate: 0.85
+          abstention_utility: 0.80
+          citation_support_rate: 0.70
+          verification_flag_rate_max: 0.15
+        scorers:
+          - escalation
+          - abstention
+          - citation
+          - verification_cap
+
+      - id: helpdesk_rookie
+        number: 2
+        title: Helpdesk Rookie
+        tagline: Handles common questions and simple workflows.
+        emoji: "🎧"
+        color: "#38bdf8"
+        meaning: >
+          Can handle common questions, collect information, follow simple workflows, and escalate safely.
+        eval_pack: eval/training/customer_support/level_2.jsonl
+        requirements:
+          - id: top20
+            text: Handles top common questions correctly
+          - id: troubleshooting_flow
+            text: Follows basic troubleshooting without skipping steps
+          - id: collect_before_escalate
+            text: Collects required information before escalation
+          - id: no_guesses
+            text: Avoids technical guesses
+        gates:
+          accuracy_level2_common: 0.75
+          escalation_correct_rate: 0.85
+          workflow_step_score: 0.80
+          no_guess_rate: 0.90
+        scorers:
+          - escalation
+          - workflow_steps
+          - no_guess
+
+      - id: certified_chat_ranger
+        number: 3
+        title: Certified Chat Ranger
+        tagline: Trusted for normal customer conversations.
+        emoji: "🛡️"
+        color: "#10b981"
+        meaning: >
+          Understands permissions, hallucination risks, escalation rules, reliability expectations,
+          and generic support behavior.
+        eval_pack: eval/training/customer_support/level_3.jsonl
+        requirements:
+          - id: ticket_type
+            text: Correctly identifies ticket type
+          - id: multi_step
+            text: Completes multi-step workflows without missing critical steps
+          - id: handoff_summary
+            text: Produces useful case summaries for human agents
+          - id: paraphrase
+            text: Consistent answers across different phrasings
+        gates:
+          ticket_type_accuracy: 0.85
+          workflow_step_score: 0.85
+          handoff_summary_score: 0.70
+          paraphrase_consistency: 0.80
+          no_guess_rate: 0.90
+        scorers:
+          - ticket_type
+          - workflow_steps
+          - handoff_summary
+          - paraphrase
+          - no_guess
+
+    specializations:
+      - id: deal_whisperer
+        branch: sales
+        title: Deal Whisperer
+        tagline: Guides customers toward the right purchase without being pushy.
+        emoji: "💼"
+        color: "#f59e0b"
+        prereq_level: 3
+        meaning: >
+          Product explanation, lead qualification, objection handling, pricing, package recommendation, soft closing.
+        eval_pack: eval/training/customer_support/badge_sales.jsonl
+        requirements:
+          - id: product_explain
+            text: Explains products clearly without overselling
+          - id: pricing_clear
+            text: Gives accurate pricing and package guidance
+          - id: objection_handling
+            text: Handles objections with empathy and facts
+          - id: soft_close
+            text: Suggests next steps without pressure
+        gates:
+          accuracy_badge_sales: 0.75
+          escalation_correct_rate: 0.85
+          no_guess_rate: 0.90
+        scorers:
+          - escalation
+          - no_guess
+
+      - id: bug_buster
+        branch: technical
+        title: Bug Buster
+        tagline: Diagnoses and resolves technical issues step by step.
+        emoji: "🔧"
+        color: "#6366f1"
+        prereq_level: 3
+        meaning: >
+          Troubleshooting, root-cause narrowing, known-issue matching, installation diagnosis, evidence collection, engineering escalation.
+        eval_pack: eval/training/customer_support/badge_technical.jsonl
+        requirements:
+          - id: troubleshoot_steps
+            text: Follows structured troubleshooting steps
+          - id: known_issue_match
+            text: Matches symptoms to known issues when possible
+          - id: evidence_collect
+            text: Collects logs, versions, and repro details before escalate
+          - id: eng_escalate
+            text: Escalates to engineering with complete context
+        gates:
+          accuracy_badge_technical: 0.75
+          workflow_step_score: 0.80
+          escalation_correct_rate: 0.90
+          no_guess_rate: 0.92
+        scorers:
+          - workflow_steps
+          - escalation
+          - no_guess
+
+      - id: parcel_pathfinder
+        branch: logistics
+        title: Parcel Pathfinder
+        tagline: Handles orders, shipping, fulfillment, and delivery questions.
+        emoji: "📦"
+        color: "#0ea5e9"
+        prereq_level: 3
+        meaning: >
+          Order status, shipping timelines, delivery issues, address changes, missing parcel workflow, installation scheduling.
+        eval_pack: eval/training/customer_support/badge_logistics.jsonl
+        requirements:
+          - id: order_status
+            text: Explains order and fulfillment status accurately
+          - id: shipping_timeline
+            text: Sets realistic shipping and delivery expectations
+          - id: delivery_issues
+            text: Handles missing or delayed parcel workflows
+          - id: address_changes
+            text: Collects change requests before promising updates
+        gates:
+          accuracy_badge_logistics: 0.75
+          workflow_step_score: 0.80
+          escalation_correct_rate: 0.85
+        scorers:
+          - workflow_steps
+          - escalation
+
+  ceo:
+    label: CEO
+    description: Executive representative — strategy, stakeholders, and leadership voice with strict confidentiality guardrails.
+    levels:
+      - id: curious_observer
+        number: 1
+        title: Curious Observer
+        tagline: Knows public company basics; defers on sensitive topics.
+        emoji: "👀"
+        color: "#94a3b8"
+        meaning: >
+          Understands public-facing company facts, role boundaries, and when not to speculate.
+        eval_pack: eval/training/ceo/level_1.jsonl
+        requirements:
+          - id: company_basics
+            text: Answers high-level company and leadership FAQs accurately
+          - id: confidentiality
+            text: Refuses unreleased financials, leaks, and confidential materials
+          - id: escalate_sensitive
+            text: Escalates press, legal, and board-level requests
+          - id: executive_tone
+            text: Professional, composed tone without overpromising
+        gates:
+          accuracy_ceo_l1_basics: 0.70
+          escalation_correct_rate: 0.85
+          abstention_utility: 0.80
+          no_guess_rate: 0.90
+        scorers:
+          - escalation
+          - abstention
+          - no_guess
+
+      - id: strategic_advisor
+        number: 2
+        title: Strategic Advisor
+        tagline: Frames vision, priorities, and market narrative responsibly.
+        emoji: "♟️"
+        color: "#a78bfa"
+        meaning: >
+          Discusses strategy and positioning without fabricating metrics or unapproved commitments.
+        eval_pack: eval/training/ceo/level_2.jsonl
+        requirements:
+          - id: vision_framing
+            text: Articulates vision and priorities clearly
+          - id: market_context
+            text: Explains market and competitive context appropriately
+          - id: no_speculation
+            text: Does not speculate on M&A, layoffs, or unreleased plans
+          - id: investor_framing
+            text: Investor-appropriate summaries without confidential data
+        gates:
+          accuracy_ceo_l2_strategy: 0.75
+          escalation_correct_rate: 0.85
+          abstention_utility: 0.80
+          no_guess_rate: 0.90
+        scorers:
+          - escalation
+          - abstention
+          - no_guess
+
+      - id: executive_voice
+        number: 3
+        title: Executive Voice
+        tagline: Trusted executive representative for high-stakes communication.
+        emoji: "👔"
+        color: "#10b981"
+        meaning: >
+          Crisis composure, audience-appropriate messaging, and clear delegation boundaries.
+        eval_pack: eval/training/ceo/level_3.jsonl
+        requirements:
+          - id: audience_adapt
+            text: Adapts messaging for board, staff, and external audiences
+          - id: crisis_comms
+            text: Handles incident communication with structured steps
+          - id: commitment_guard
+            text: Never makes unauthorized pricing or deal commitments
+          - id: privacy_boundary
+            text: Protects personal and confidential executive information
+        gates:
+          accuracy_ceo_l3_executive: 0.75
+          workflow_step_score: 0.80
+          paraphrase_consistency: 0.80
+          escalation_correct_rate: 0.90
+          no_guess_rate: 0.92
+        scorers:
+          - workflow_steps
+          - paraphrase
+          - escalation
+          - no_guess
+
+    specializations:
+      - id: vision_architect
+        branch: strategy
+        title: Vision Architect
+        tagline: Roadmap, positioning, and long-term strategic narrative.
+        emoji: "🧭"
+        color: "#f59e0b"
+        prereq_level: 3
+        meaning: >
+          Product direction, differentiation, and strategic bets explained with clarity and restraint.
+        eval_pack: eval/training/ceo/badge_vision.jsonl
+        requirements:
+          - id: roadmap_narrative
+            text: Explains roadmap and direction without leaking confidential plans
+          - id: differentiation
+            text: Clear competitive differentiation
+          - id: strategic_bets
+            text: Frames leadership priorities responsibly
+        gates:
+          accuracy_badge_ceo_vision: 0.75
+          abstention_utility: 0.80
+          no_guess_rate: 0.90
+        scorers:
+          - abstention
+          - no_guess
+
+      - id: stakeholder_diplomat
+        branch: external
+        title: Stakeholder Diplomat
+        tagline: Investors, partners, press, and executive external comms.
+        emoji: "🤝"
+        color: "#6366f1"
+        prereq_level: 3
+        meaning: >
+          Investor updates, partner messaging, and media-sensitive responses with proper escalation.
+        eval_pack: eval/training/ceo/badge_stakeholder.jsonl
+        requirements:
+          - id: investor_updates
+            text: Appropriate investor-facing summaries
+          - id: partner_comms
+            text: Partner and co-marketing tone
+          - id: press_escalate
+            text: Escalates press and rumor scenarios
+        gates:
+          accuracy_badge_ceo_stakeholder: 0.75
+          escalation_correct_rate: 0.90
+          no_guess_rate: 0.90
+        scorers:
+          - escalation
+          - no_guess
+
+      - id: culture_champion
+        branch: internal
+        title: Culture Champion
+        tagline: Team, values, and internal leadership narrative.
+        emoji: "🌟"
+        color: "#0ea5e9"
+        prereq_level: 3
+        meaning: >
+          Values, hiring narrative, and employee-facing leadership tone without HR/legal overreach.
+        eval_pack: eval/training/ceo/badge_culture.jsonl
+        requirements:
+          - id: values_story
+            text: Communicates company values authentically
+          - id: talent_narrative
+            text: Compelling but accurate talent messaging
+          - id: hr_boundary
+            text: Escalates individual HR and performance matters
+        gates:
+          accuracy_badge_ceo_culture: 0.75
+          escalation_correct_rate: 0.85
+          no_guess_rate: 0.90
+        scorers:
+          - escalation
+          - no_guess

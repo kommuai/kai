@@ -125,7 +125,10 @@ export default function AuthPage() {
           <div className="absolute -bottom-24 left-1/3 h-64 w-64 rounded-full bg-white/5 blur-3xl" />
         </div>
 
-        <Logo size="md" className="relative z-10 [&_span]:text-white [&_.text-brand-600]:text-brand-200 [&_div]:bg-white/20" />
+        <Logo
+          size="md"
+          className="relative z-10 [&_span]:text-white [&_.text-brand-600]:text-brand-200 [&_img]:brightness-0 [&_img]:invert"
+        />
 
         <div className="relative z-10 max-w-md">
           <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-sm text-brand-100">
@@ -179,7 +182,7 @@ export default function AuthPage() {
             </h2>
             <p className="mt-1 text-sm text-gray-500">
               {tab === "signin"
-                ? "Sign in to your Kai Studio account"
+                ? "Sign in to your Shadou Studio account"
                 : "Create your account and start building"}
             </p>
           </div>

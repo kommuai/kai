@@ -31,11 +31,12 @@ from schemas import (
     TenantCapabilitiesOut,
     TenantCreate,
     TenantOut,
+    TrainingJobOut,
     SkillToggleIn,
 )
-from kai_paths import kai_repo_root, kai_tenants_root
+from shadou_paths import shadou_repo_root, shadou_tenants_root
 from tenant_compile import run_tenant_compile
-from kai_capabilities import get_capabilities
+from shadou_capabilities import get_capabilities
 from skill_toggle import set_document_skill_enabled, set_profile_skill_enabled
 from invite_service import _invite_expired, redeem_invite_token
 from channel_config import apply_channel_to_workspace
@@ -44,8 +45,8 @@ from onboarding_service import move_onboarding_whatsapp_to_tenant
 
 router = APIRouter(prefix="/tenants", tags=["tenants"])
 
-KAI_TENANTS_ROOT = kai_tenants_root()
-KAI_REPO = kai_repo_root()
+SHADOU_TENANTS_ROOT = shadou_tenants_root()
+SHADOU_REPO = shadou_repo_root()
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
 
@@ -66,7 +67,9 @@ _EDITABLE_FILES = {
 
 
 def _tenant_home(slug: str) -> Path:
-    return KAI_TENANTS_ROOT / f"kai-tenant-{slug}"
+    from shadou_paths import tenant_workspace_dir
+
+    return tenant_workspace_dir(slug)
 
 
 def _assert_tenant_member(tenant_id: str, user: User, db: Session) -> Tenant:
@@ -99,8 +102,8 @@ def _assert_tenant_owner(tenant_id: str, user: User, db: Session) -> Tenant:
 
 
 def _safe_remove_workspace(slug: str, workspace_home: str) -> None:
-    """Remove tenant directory only when it matches the expected path under KAI_TENANTS_ROOT."""
-    root = KAI_TENANTS_ROOT.resolve()
+    """Remove tenant directory only when it matches the expected path under SHADOU_TENANTS_ROOT."""
+    root = SHADOU_TENANTS_ROOT.resolve()
     expected = _tenant_home(slug).resolve()
     home = Path(workspace_home).resolve()
     if home != expected:
@@ -123,13 +126,25 @@ def _safe_remove_workspace(slug: str, workspace_home: str) -> None:
 
 @router.get("", response_model=list[TenantOut])
 def list_tenants(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return (
+    from training_service import enrich_tenant_out
+
+    rows = (
         db.query(Tenant)
         .join(TenantMembership, TenantMembership.tenant_id == Tenant.id)
         .filter(TenantMembership.user_id == user.id)
         .order_by(Tenant.created_at)
         .all()
     )
+    return [TenantOut(**enrich_tenant_out(t)) for t in rows]
+
+
+# ── Training jobs catalog ─────────────────────────────────────────────────────
+
+@router.get("/training-jobs", response_model=list[TrainingJobOut])
+def list_training_jobs():
+    from shadou.training.levels import jobs_dict_for_api
+
+    return [TrainingJobOut(**row) for row in jobs_dict_for_api()]
 
 
 # ── Create ────────────────────────────────────────────────────────────────────
@@ -143,13 +158,14 @@ def create_tenant(body: TenantCreate, user: User = Depends(get_current_user), db
     if home.exists():
         raise HTTPException(status_code=409, detail=f"Directory already exists: {home}")
 
-    # Scaffold from kai template
+    # Scaffold from shadou template
     (home / "knowledge").mkdir(parents=True, exist_ok=True)
     (home / "compiled").mkdir(parents=True, exist_ok=True)
     (home / "data").mkdir(parents=True, exist_ok=True)
     (home / "tools" / "plugins").mkdir(parents=True, exist_ok=True)
 
-    workspace_content = _default_workspace(body.slug, body.display_name)
+    agent_job = body.agent_job or "customer_support"
+    workspace_content = _default_workspace(body.slug, body.display_name, agent_job=agent_job)
     (home / "workspace.yaml").write_text(workspace_content, encoding="utf-8")
 
     system_prompt_content = _default_system_prompt(
@@ -211,14 +227,26 @@ def create_tenant(body: TenantCreate, user: User = Depends(get_current_user), db
     if channel_type != "none":
         apply_channel_to_workspace(home, channel_type, whatsapp_phone=wa_phone)
 
-    return tenant
+    try:
+        from shadou.training.packs import ensure_tenant_training_packs
+
+        ensure_tenant_training_packs(home, agent_job)
+    except Exception:
+        pass
+
+    from training_service import enrich_tenant_out
+
+    return TenantOut(**enrich_tenant_out(tenant))
 
 
 # ── Get ───────────────────────────────────────────────────────────────────────
 
 @router.get("/by-slug/{slug}", response_model=TenantOut)
 def get_tenant_by_slug(slug: str, user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    return _assert_tenant_member_by_slug(slug, user, db)
+    from training_service import enrich_tenant_out
+
+    tenant = _assert_tenant_member_by_slug(slug, user, db)
+    return TenantOut(**enrich_tenant_out(tenant))
 
 
 @router.get("/whatsapp-worker")
@@ -417,7 +445,7 @@ def revoke_invite(tenant_id: str, invite_id: str, user: User = Depends(get_curre
 
 # ── Scaffold helpers ──────────────────────────────────────────────────────────
 
-def _default_workspace(slug: str, name: str) -> str:
+def _default_workspace(slug: str, name: str, *, agent_job: str = "customer_support") -> str:
     return f"""version: '2'
 tenant:
   id: {slug}
@@ -493,6 +521,13 @@ agent:
   footer_history_threshold: 10
 compile:
   extra_artifacts: false
+training:
+  agent_job: {agent_job}
+  current_level: 0
+  current_level_title: ""
+  current_level_emoji: ""
+  earned_badges: []
+  last_assessed_at: null
 copy:
   keywords:
     live_agent: [LA]
@@ -558,7 +593,7 @@ def _default_system_prompt(
     }
     legacy = {"premium": "professional", "empathetic": "friendly"}
     persona_block = blocks.get(legacy.get(personality, personality), blocks["friendly"])
-    bot = (bot_name or "").strip() or "Kai"
+    bot = (bot_name or "").strip() or "Shadou"
     company = (company_name or "").strip() or name
     product = (product_summary or "").strip()
     cannot_answer_list = _effective_scope_cannot_answer(scope_cannot_answer)

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kai.tools.eval_generator import generate_eval_pack, _load_corpus_map, _load_chunks
+from shadou.tools.eval_generator import generate_eval_pack, _load_corpus_map, _load_chunks
 
 
 def _write_corpus_map(path: Path, intents: list[dict]) -> None:

@@ -1,6 +1,6 @@
 import unittest
 
-from kai.tools_plugins.contract import (
+from shadou.tools_plugins.contract import (
     normalize_tool_result,
     tool_failure_observation_message,
     validate_plugin_source,

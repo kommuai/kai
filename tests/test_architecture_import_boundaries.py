@@ -4,21 +4,21 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 ACTIVE_DIRS = (
-    "kai/api",
-    "kai/support_runtime",
-    "kai/services",
-    "kai/core",
-    "kai/lib",
-    "kai/content",
-    "kai/settings",
+    "shadou/api",
+    "shadou/support_runtime",
+    "shadou/services",
+    "shadou/core",
+    "shadou/lib",
+    "shadou/content",
+    "shadou/settings",
 )
 # context/registry.py removed — YAML edited via tools/new_context.py only
 DISALLOWED_IMPORT_SNIPPETS = (
     "archive_legacy.",
     "from archive_legacy",
     "import archive_legacy",
-    "from kai.core.policy.tool_adapter",
-    "from kai.core.skills.registry",
+    "from shadou.core.policy.tool_adapter",
+    "from shadou.core.skills.registry",
 )
 
 

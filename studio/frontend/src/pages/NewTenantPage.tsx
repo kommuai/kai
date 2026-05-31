@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
-  Building2,
   CheckCircle2,
   FileUp,
   Smile,
@@ -13,8 +12,10 @@ import {
   MessageCircle,
   Send,
   Cloud,
+  Headphones,
+  Crown,
 } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import clsx from "clsx";
 import {
@@ -25,6 +26,7 @@ import {
 } from "../lib/api";
 import { formatApiError } from "../lib/apiErrors";
 import Spinner from "../components/Spinner";
+import Logo from "../components/Logo";
 import WhatsAppBaileysLink from "../components/WhatsAppBaileysLink";
 
 type WizardStep = 1 | 2 | 3;
@@ -100,6 +102,12 @@ export default function NewTenantPage() {
   const [whatsappConnected, setWhatsappConnected] = useState(false);
   const [whatsappPhone, setWhatsappPhone] = useState<string | null>(null);
   const [createdTenant, setCreatedTenant] = useState<{ slug: string; display_name: string } | null>(null);
+  const [agentJob, setAgentJob] = useState("customer_support");
+
+  const { data: trainingJobs } = useQuery({
+    queryKey: ["training-jobs"],
+    queryFn: () => tenantsApi.trainingJobs(),
+  });
 
   const displayName = companyName.trim();
   const description = productSummary.trim();
@@ -165,6 +173,7 @@ export default function NewTenantPage() {
         fallback_behavior: fallbackBehavior,
         onboarding_session_id: onboardingSessionRef.current ?? onboardingSessionId,
         channel_type: channelType,
+        agent_job: agentJob,
       });
 
       if (uploadedDocs.length > 0) {
@@ -312,11 +321,9 @@ export default function NewTenantPage() {
       </button>
 
       <div className="flex items-start gap-3 sm:gap-4 mb-6 sm:mb-8">
-        <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-2xl bg-brand-50 flex items-center justify-center shrink-0">
-          <Building2 size={24} className="text-brand-600" />
-        </div>
+        <Logo size="sm" markOnly className="shrink-0" />
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-xl font-bold text-gray-900">New Support Agent Creation</h1>
+          <h1 className="text-lg sm:text-xl font-bold text-gray-900">New Agent</h1>
           <p className="text-sm text-gray-500">
             {step === 1
               ? "Fill what you know. You can refine later in Configuration."
@@ -420,6 +427,53 @@ export default function NewTenantPage() {
 
         {step === 1 && (
           <>
+        <div>
+          <label className="label">Agent job</label>
+          <p className="text-xs text-gray-500 mb-3">
+            Sets certification tracks and specialization badges. Cannot be changed after creation.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {(trainingJobs ?? [
+              { id: "customer_support", label: "Customer Support", description: "" },
+              { id: "ceo", label: "CEO", description: "" },
+            ]).map((job) => {
+              const active = agentJob === job.id;
+              const Icon = job.id === "ceo" ? Crown : Headphones;
+              return (
+                <button
+                  key={job.id}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => setAgentJob(job.id)}
+                  className={clsx(
+                    "rounded-xl border p-4 text-left transition-all",
+                    active
+                      ? "border-brand-400 bg-brand-50 ring-2 ring-brand-200"
+                      : "border-gray-200 hover:border-gray-300 bg-white",
+                  )}
+                >
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={clsx(
+                        "h-9 w-9 rounded-lg flex items-center justify-center shrink-0",
+                        active ? "bg-brand-100" : "bg-gray-100",
+                      )}
+                    >
+                      <Icon size={18} className={active ? "text-brand-700" : "text-gray-500"} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-semibold text-sm text-gray-900">{job.label}</div>
+                      {job.description ? (
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{job.description}</p>
+                      ) : null}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Optional document upload */}
         <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50/80 p-4 space-y-3">
           <div className="flex items-start gap-3">
@@ -510,7 +564,7 @@ export default function NewTenantPage() {
               type="text"
               value={botName}
               onChange={(e) => setBotName(e.target.value)}
-              placeholder="Kai"
+              placeholder="Shadou"
               maxLength={40}
             />
           </div>

@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "studio" / "backend"))
 
-from kai_capabilities import get_capabilities  # noqa: E402
+from shadou_capabilities import get_capabilities  # noqa: E402
 from skill_toggle import set_profile_skill_enabled  # noqa: E402
 
 
@@ -38,9 +38,9 @@ class StudioSkillToggleTests(unittest.TestCase):
     def test_disabled_skill_excluded_from_runtime_config(self) -> None:
         import os
 
-        os.environ["KAI_HOME"] = str(self.home)
-        from kai.settings import reload_settings
-        from kai.workspace.tools_config import reload_tools_config
+        os.environ["SHADOU_HOME"] = str(self.home)
+        from shadou.settings import reload_settings
+        from shadou.workspace.tools_config import reload_tools_config
 
         reload_settings()
         reload_tools_config()

@@ -4,7 +4,7 @@ import hashlib
 import unittest
 from unittest.mock import patch
 
-from kai.content.prompts import build_system_prompt
+from shadou.content.prompts import build_system_prompt
 
 _FIXTURE_FAQ_BLOCK = (
     "## Authoritative FAQ (master_faq.md)\n\n"
@@ -19,7 +19,7 @@ _FIXTURE_SETTINGS = (
     "- Knowledge inject mode: `full_context`\n"
 )
 
-_FIXTURE_BODY = "You are Kai test agent.\n"
+_FIXTURE_BODY = "You are Shadou test agent.\n"
 
 
 def _sha256(text: str) -> str:
@@ -27,13 +27,13 @@ def _sha256(text: str) -> str:
 
 
 class PromptAssemblySnapshotTests(unittest.TestCase):
-    @patch("kai.support_runtime.agent_context.workspace_settings_block", return_value=_FIXTURE_SETTINGS)
-    @patch("kai.support_runtime.agent_context.master_faq_system_block", return_value=_FIXTURE_FAQ_BLOCK)
-    @patch("kai.support_runtime.agent_context.load_system_prompt_body", return_value=_FIXTURE_BODY)
+    @patch("shadou.support_runtime.agent_context.workspace_settings_block", return_value=_FIXTURE_SETTINGS)
+    @patch("shadou.support_runtime.agent_context.master_faq_system_block", return_value=_FIXTURE_FAQ_BLOCK)
+    @patch("shadou.support_runtime.agent_context.load_system_prompt_body", return_value=_FIXTURE_BODY)
     def test_build_system_prompt_structure(self, _body, _faq, _settings):
         prompt = build_system_prompt([{"name": "search_faq", "description": "Search FAQ."}])
         self.assertIn("Agent source policy", prompt)
-        self.assertIn("You are Kai test agent", prompt)
+        self.assertIn("You are Shadou test agent", prompt)
         self.assertIn("snapshot_test", prompt)
         self.assertIn("search_faq", prompt)
         self.assertIn("ok: false", prompt.lower())

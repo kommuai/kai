@@ -5,8 +5,8 @@ from __future__ import annotations
 import unittest
 from uuid import uuid4
 
-from kai.lib.session_state import add_message_to_history, init_db, reset_memory
-from kai.support_runtime.service import SupportRuntimeService
+from shadou.lib.session_state import add_message_to_history, init_db, reset_memory
+from shadou.support_runtime.service import SupportRuntimeService
 
 
 class SessionReactContextTests(unittest.TestCase):

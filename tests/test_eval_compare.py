@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kai.tools.eval_compare import compare
+from shadou.tools.eval_compare import compare
 
 
 def _results(
@@ -90,7 +90,7 @@ class CompareTests(unittest.TestCase):
         self.assertEqual(diff["summary"]["fixed_items_count"], 1)
 
     def test_no_critical_regression_exit_code_0(self):
-        from kai.tools.eval_compare import main
+        from shadou.tools.eval_compare import main
         tmp = Path(tempfile.mkdtemp())
         b = tmp / "baseline.json"
         c = tmp / "candidate.json"
@@ -100,7 +100,7 @@ class CompareTests(unittest.TestCase):
         self.assertEqual(code, 0)
 
     def test_critical_regression_exit_code_1(self):
-        from kai.tools.eval_compare import main
+        from shadou.tools.eval_compare import main
         tmp = Path(tempfile.mkdtemp())
         b = tmp / "baseline.json"
         c = tmp / "candidate.json"
@@ -110,7 +110,7 @@ class CompareTests(unittest.TestCase):
         self.assertEqual(code, 1)
 
     def test_missing_file_exit_code_2(self):
-        from kai.tools.eval_compare import main
+        from shadou.tools.eval_compare import main
         code = main(["--baseline", "/nonexistent/file.json", "--candidate", "/also/missing.json"])
         self.assertEqual(code, 2)
 

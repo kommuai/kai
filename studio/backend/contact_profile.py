@@ -105,7 +105,7 @@ def correspondent_profile(
             if p and not is_internal_whatsapp_id(f.fact_value):
                 phone = p
         elif f.fact_type == "device_account" and fk == "phone_number":
-            # Kai stores session key here; skip @lid internal ids.
+            # Shadou stores session key here; skip @lid internal ids.
             if not is_internal_whatsapp_id(f.fact_value):
                 p = format_phone_display(f.fact_value)
                 if p:

@@ -259,6 +259,6 @@ export function createTenantGuard({ home, slug, log }) {
     getStats: () => antiban.getStats(),
     isOutboundPaused: () => antiban.health.isPaused(),
     classifyDisconnectCode: (code) => classifyDisconnect(Number(code) || 0),
-    stealthSocketConfig: () => getStealthSocketConfig({ os: "Kai Studio" }),
+    stealthSocketConfig: () => getStealthSocketConfig({ os: "Shadou Studio" }),
   };
 }

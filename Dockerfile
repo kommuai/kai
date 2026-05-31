@@ -1,4 +1,4 @@
-# -------- Kai engine (tenant content via KAI_HOME volume) --------
+# -------- Shadou engine (tenant content via SHADOU_HOME volume) --------
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -15,9 +15,9 @@ RUN pip install --no-cache-dir --default-timeout=1000 -r requirements.txt
 
 COPY . .
 
-ENV KAI_STARTUP_COMPILE=auto
-ENV KAI_HOME=/kai-home
-ENV SESSION_DB_PATH=/kai-home/data/sessions.db
+ENV SHADOU_STARTUP_COMPILE=auto
+ENV SHADOU_HOME=/shadou-home
+ENV SESSION_DB_PATH=/shadou-home/data/sessions.db
 
 RUN chmod +x /app/scripts/docker-entrypoint.sh
 

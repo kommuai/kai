@@ -1,6 +1,6 @@
 import unittest
 
-from kai.support_runtime.agent_context import (
+from shadou.support_runtime.agent_context import (
     ALLOWED_CONTEXT_SOURCES,
     SOURCE_POLICY_PREAMBLE,
     build_agent_system_prompt,

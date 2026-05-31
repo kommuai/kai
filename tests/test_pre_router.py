@@ -1,7 +1,7 @@
 import unittest
 
-from kai.services.container import kai_service, support_runtime_service
-from kai.lib.session_state import reset_memory
+from shadou.services.container import shadou_service, support_runtime_service
+from shadou.lib.session_state import reset_memory
 
 
 class PreRouterTests(unittest.TestCase):
@@ -9,7 +9,7 @@ class PreRouterTests(unittest.TestCase):
         uid = "test_pre_la"
         reset_memory(uid)
         data = {"content": "LA", "phone_number": uid}
-        early = kai_service.pre_router(dict(data))
+        early = shadou_service.pre_router(dict(data))
         self.assertIsNotNone(early)
         self.assertEqual(early.get("type"), "handover")
         self.assertEqual(early.get("next_state"), "human")
@@ -18,7 +18,7 @@ class PreRouterTests(unittest.TestCase):
         uid = "test_pre_continue"
         reset_memory(uid)
         data = {"content": "what is the price?", "phone_number": uid}
-        early = kai_service.pre_router(dict(data))
+        early = shadou_service.pre_router(dict(data))
         self.assertIsNone(early)
         support_runtime_service.startup()
         out = support_runtime_service.execute(text=data["content"], lang="EN", user_id=uid)

@@ -1,6 +1,6 @@
 import unittest
 
-from kai.core.faq_markdown import (
+from shadou.core.faq_markdown import (
     normalize_intent_block,
     parse_faq_markdown,
     parse_master_faq_schema,

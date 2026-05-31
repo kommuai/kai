@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kai.tools.eval_run import _load_eval_items, _load_gates, _check_gates, run_eval
+from shadou.tools.eval_run import _load_eval_items, _load_gates, _check_gates, run_eval
 
 
 def _write_jsonl(path: Path, items: list[dict]) -> None:

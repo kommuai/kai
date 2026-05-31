@@ -11,8 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ ./
 
-ENV KAI_REPO=/kai-engine
-ENV KAI_TENANTS_ROOT=/tenants
+ENV SHADOU_REPO=/shadou-engine
+ENV SHADOU_TENANTS_ROOT=/tenants
 
 EXPOSE 8080
 

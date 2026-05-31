@@ -27,7 +27,7 @@ from models import User
 from routers.tenants_router import _assert_tenant_member
 from tenant_compile import patch_list_touches_faq, run_tenant_compile
 
-log = logging.getLogger("kai.ai_assist")
+log = logging.getLogger("shadou.ai_assist")
 
 router = APIRouter(prefix="/tenants", tags=["ai-assist"])
 

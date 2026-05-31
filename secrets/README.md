@@ -1,6 +1,6 @@
 # Google service account (warranty sheets)
 
-Kai reads warranty data from Google Sheets when credentials are valid.
+Shadou reads warranty data from Google Sheets when credentials are valid.
 
 1. Create a Google Cloud service account with **Spreadsheets read** access.
 2. Download the JSON key and save it here as:

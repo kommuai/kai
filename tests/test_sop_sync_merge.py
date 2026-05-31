@@ -2,8 +2,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from kai.core.faq_markdown import parse_master_faq_schema
-from kai.core.sop_sync_merge import merge_schemas, render_merged_schema_to_markdown, sync_sop_regions
+from shadou.core.faq_markdown import parse_master_faq_schema
+from shadou.core.sop_sync_merge import merge_schemas, render_merged_schema_to_markdown, sync_sop_regions
 
 
 class SopSyncMergeTests(unittest.TestCase):
@@ -59,9 +59,9 @@ class SopSyncMergeTests(unittest.TestCase):
         self.assertEqual(parsed["data"][0]["name"], "bank")
         self.assertEqual(parsed["dynamic"][0]["name"], "batch_status")
 
-    @patch("kai.core.sop_sync_merge.push_master_faq_to_google_doc", return_value={"ok": True})
-    @patch("kai.core.sop_sync_merge.pull_google_region")
-    @patch("kai.core.sop_sync_merge.read_local_region")
+    @patch("shadou.core.sop_sync_merge.push_master_faq_to_google_doc", return_value={"ok": True})
+    @patch("shadou.core.sop_sync_merge.pull_google_region")
+    @patch("shadou.core.sop_sync_merge.read_local_region")
     def test_sync_sop_regions_updates_local_and_calls_writeback(self, local_mock, google_mock, writeback_mock):
         local_mock.return_value = (
             "## intent: t\naliases:\n- test drive\nanswer:\nLocal\n"
@@ -76,8 +76,8 @@ class SopSyncMergeTests(unittest.TestCase):
             from pathlib import Path
 
             state_path = Path(td) / "sop_sync_state.json"
-            with patch("kai.core.sop_sync_merge._master_faq_path", return_value=Path(faq_path)), patch(
-                "kai.core.sop_sync_merge._state_path", return_value=state_path
+            with patch("shadou.core.sop_sync_merge._master_faq_path", return_value=Path(faq_path)), patch(
+                "shadou.core.sop_sync_merge._state_path", return_value=state_path
             ):
                 out = sync_sop_regions()
             self.assertTrue(out["ok"])

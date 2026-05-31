@@ -1,9 +1,0 @@
-[Unit]
-Description=Kai platform (engine, Studio, WhatsApp bridge)
-Documentation=file://%h/workspace/kai/studio/deploy/systemd-user/README.md
-After=network-online.target
-Wants=network-online.target
-Wants=kai-engine.service kai-studio-api.service kai-studio-ui.service kai-whatsapp-bridge.service
-
-[Install]
-WantedBy=default.target

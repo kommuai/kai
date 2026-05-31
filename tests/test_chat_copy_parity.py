@@ -1,8 +1,8 @@
-"""Ensure chat_copy.yaml matches legacy kai_service constants."""
+"""Ensure chat_copy.yaml matches legacy shadou_service constants."""
 
 import unittest
 
-from kai.content.copy import get_chat_copy
+from shadou.content.copy import get_chat_copy
 
 # Strings from tests/fixtures/minimal_workspace/workspace.yaml (generic contract)
 _LEGACY = {

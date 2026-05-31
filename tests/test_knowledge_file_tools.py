@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from kai.support_runtime.tools.knowledge_file_tools import (
+from shadou.support_runtime.tools.knowledge_file_tools import (
     extract_frontmatter,
     get_file_outline,
     grep_knowledge,
@@ -40,7 +40,7 @@ def _make_fixture(tmp: Path) -> Path:
 
 def _clear_settings_cache() -> None:
     try:
-        from kai.settings import get_settings
+        from shadou.settings import get_settings
         get_settings.cache_clear()  # type: ignore[attr-defined]
     except Exception:
         pass
@@ -51,10 +51,10 @@ class ListKnowledgeFilesTests(unittest.TestCase):
         _clear_settings_cache()
         self._tmp = Path(tempfile.mkdtemp())
         self._knowledge = _make_fixture(self._tmp)
-        os.environ["KAI_HOME"] = str(self._tmp)
+        os.environ["SHADOU_HOME"] = str(self._tmp)
 
     def tearDown(self):
-        os.environ.pop("KAI_HOME", None)
+        os.environ.pop("SHADOU_HOME", None)
         _clear_settings_cache()
 
     def test_lists_md_files(self):
@@ -85,10 +85,10 @@ class ReadKnowledgeLinesTests(unittest.TestCase):
         _clear_settings_cache()
         self._tmp = Path(tempfile.mkdtemp())
         _make_fixture(self._tmp)
-        os.environ["KAI_HOME"] = str(self._tmp)
+        os.environ["SHADOU_HOME"] = str(self._tmp)
 
     def tearDown(self):
-        os.environ.pop("KAI_HOME", None)
+        os.environ.pop("SHADOU_HOME", None)
         _clear_settings_cache()
 
     def test_reads_valid_range(self):
@@ -119,10 +119,10 @@ class GrepKnowledgeTests(unittest.TestCase):
         _clear_settings_cache()
         self._tmp = Path(tempfile.mkdtemp())
         _make_fixture(self._tmp)
-        os.environ["KAI_HOME"] = str(self._tmp)
+        os.environ["SHADOU_HOME"] = str(self._tmp)
 
     def tearDown(self):
-        os.environ.pop("KAI_HOME", None)
+        os.environ.pop("SHADOU_HOME", None)
         _clear_settings_cache()
 
     def test_finds_known_string(self):
@@ -158,10 +158,10 @@ class GetFileOutlineTests(unittest.TestCase):
         _clear_settings_cache()
         self._tmp = Path(tempfile.mkdtemp())
         _make_fixture(self._tmp)
-        os.environ["KAI_HOME"] = str(self._tmp)
+        os.environ["SHADOU_HOME"] = str(self._tmp)
 
     def tearDown(self):
-        os.environ.pop("KAI_HOME", None)
+        os.environ.pop("SHADOU_HOME", None)
         _clear_settings_cache()
 
     def test_returns_heading_tree(self):
@@ -188,10 +188,10 @@ class ReadKnowledgeSectionTests(unittest.TestCase):
         _clear_settings_cache()
         self._tmp = Path(tempfile.mkdtemp())
         _make_fixture(self._tmp)
-        os.environ["KAI_HOME"] = str(self._tmp)
+        os.environ["SHADOU_HOME"] = str(self._tmp)
 
     def tearDown(self):
-        os.environ.pop("KAI_HOME", None)
+        os.environ.pop("SHADOU_HOME", None)
         _clear_settings_cache()
 
     def test_reads_correct_section(self):
@@ -215,10 +215,10 @@ class ExtractFrontmatterTests(unittest.TestCase):
         _clear_settings_cache()
         self._tmp = Path(tempfile.mkdtemp())
         _make_fixture(self._tmp)
-        os.environ["KAI_HOME"] = str(self._tmp)
+        os.environ["SHADOU_HOME"] = str(self._tmp)
 
     def tearDown(self):
-        os.environ.pop("KAI_HOME", None)
+        os.environ.pop("SHADOU_HOME", None)
         _clear_settings_cache()
 
     def test_extracts_frontmatter(self):

@@ -6,13 +6,13 @@ import pytest
 _MINIMAL = Path(__file__).resolve().parent / "fixtures" / "minimal_workspace"
 
 
-def _apply_kai_home(path: Path) -> None:
-    os.environ["KAI_HOME"] = str(path)
+def _apply_shadou_home(path: Path) -> None:
+    os.environ["SHADOU_HOME"] = str(path)
     os.environ.pop("AGENT_WORKSPACE", None)
-    from kai.settings import reload_settings
-    from kai.support_runtime.tools.catalog import reload_tool_aliases
-    from kai.workspace.manifest import reload_workspace_manifest
-    from kai.workspace.runtime_settings import reload_grounded_tools, reload_workspace_settings_yaml
+    from shadou.settings import reload_settings
+    from shadou.support_runtime.tools.catalog import reload_tool_aliases
+    from shadou.workspace.manifest import reload_workspace_manifest
+    from shadou.workspace.runtime_settings import reload_grounded_tools, reload_workspace_settings_yaml
 
     reload_settings()
     reload_workspace_manifest()
@@ -22,26 +22,27 @@ def _apply_kai_home(path: Path) -> None:
 
 
 def pytest_configure(config):
-    _apply_kai_home(_MINIMAL)
+    _apply_shadou_home(_MINIMAL)
 
 
 @pytest.fixture(autouse=True)
 def _default_minimal_home():
-    _apply_kai_home(_MINIMAL)
+    _apply_shadou_home(_MINIMAL)
     yield
 
 
 @pytest.fixture
-def minimal_kai_home():
-    _apply_kai_home(_MINIMAL)
+def minimal_shadou_home():
+    _apply_shadou_home(_MINIMAL)
     yield _MINIMAL
 
 
 @pytest.fixture
 def kommu_tenant_home():
-    """Optional: point KAI_HOME at sibling kai-tenant-kommu for tenant integration runs."""
-    tenant = Path(__file__).resolve().parents[2] / "kai-tenant-kommu"
+    """Optional: point SHADOU_HOME at sibling tenant dir for integration runs."""
+    ws = Path(__file__).resolve().parents[2]
+    tenant = ws / "shadou-tenant-kommu"
     if not tenant.is_dir():
-        pytest.skip("kai-tenant-kommu not present")
-    _apply_kai_home(tenant)
+        pytest.skip("shadou-tenant-kommu not present")
+    _apply_shadou_home(tenant)
     yield tenant

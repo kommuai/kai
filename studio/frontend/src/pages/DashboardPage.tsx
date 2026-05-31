@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   Plus,
-  Building2,
   ChevronRight,
   Clock,
   Coins,
@@ -12,6 +11,9 @@ import { formatDistanceToNow } from "date-fns";
 import Spinner from "../components/Spinner";
 import UsageDailyChart from "../components/UsageDailyChart";
 import WhatsAppWorkerBanner from "../components/WhatsAppWorkerBanner";
+import LevelBadge from "../components/LevelBadge";
+import AgentSprite from "../components/AgentSprite";
+import ShadouMark from "../components/ShadouMark";
 import {
   tenantsApi,
   usageApi,
@@ -27,21 +29,10 @@ function TenantCard({
   tenant: Tenant;
   workerRow?: WhatsAppWorkerTenantOut;
 }) {
-  const initials = tenant.display_name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
-
-  const colors = [
-    "from-violet-500 to-purple-600",
-    "from-blue-500 to-cyan-600",
-    "from-emerald-500 to-teal-600",
-    "from-orange-500 to-amber-600",
-    "from-pink-500 to-rose-600",
-  ];
-  const colorIdx = tenant.slug.split("").reduce((a, c) => a + c.charCodeAt(0), 0) % colors.length;
+  const level = tenant.training_summary?.current_level ?? 0;
+  const earnedBadges = tenant.training_summary?.earned_badges ?? [];
+  const agentJob = tenant.training_summary?.agent_job ?? "customer_support";
+  const jobLabel = tenant.training_summary?.agent_job_label ?? "Customer Support";
 
   return (
     <Link
@@ -49,10 +40,8 @@ function TenantCard({
       className="card group flex flex-col p-5 hover:shadow-card-lg transition-all duration-200 hover:-translate-y-0.5"
     >
       <div className="flex items-start justify-between mb-4">
-        <div
-          className={`h-12 w-12 rounded-2xl bg-gradient-to-br ${colors[colorIdx]} flex items-center justify-center text-white text-lg font-bold shadow-sm`}
-        >
-          {initials}
+        <div className="rounded-2xl bg-gradient-to-br from-slate-100 to-violet-100 border border-violet-100/80 px-2 pt-3 pb-1 shadow-sm">
+          <AgentSprite level={level} earnedBadges={earnedBadges} agentJob={agentJob} size="md" />
         </div>
         <div className="flex flex-col items-end gap-1">
           <span className="badge-purple">{tenant.slug}</span>
@@ -68,9 +57,20 @@ function TenantCard({
         <h3 className="font-semibold text-gray-900 group-hover:text-brand-700 transition-colors">
           {tenant.display_name}
         </h3>
-        {tenant.description && (
+        <p className="text-[11px] text-gray-400 mt-0.5">{jobLabel}</p>
+        {tenant.training_summary ? (
+          <div className="mt-2">
+            <LevelBadge
+              level={tenant.training_summary.current_level}
+              title={tenant.training_summary.current_level_title}
+              emoji={tenant.training_summary.current_level_emoji}
+              progress={tenant.training_summary.progress_to_next}
+              size="sm"
+            />
+          </div>
+        ) : tenant.description ? (
           <p className="mt-1 text-sm text-gray-500 line-clamp-2">{tenant.description}</p>
-        )}
+        ) : null}
       </div>
 
       <div className="mt-4 pt-4 border-t border-gray-100 flex items-center justify-between text-xs text-gray-400">
@@ -87,8 +87,8 @@ function TenantCard({
 function EmptyState() {
   return (
     <div className="flex flex-col items-center justify-center py-20 text-center">
-      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-3xl bg-brand-50">
-        <Building2 size={36} className="text-brand-500" />
+      <div className="mb-5">
+        <ShadouMark size="2xl" className="mx-auto" />
       </div>
       <h3 className="text-lg font-semibold text-gray-900 mb-2">No agents yet</h3>
       <p className="text-sm text-gray-500 mb-6 max-w-xs">
@@ -242,8 +242,8 @@ export default function DashboardPage() {
           ) : (
             <p className="text-sm text-gray-500">
               No DeepSeek calls recorded yet. Usage appears after AI Assist, onboarding, or engine
-              chat (set <code className="text-xs bg-gray-100 px-1 rounded">KAI_ADMIN_DB_DIR</code> on
-              the Kai engine to include WhatsApp/runtime traffic).
+              chat (set <code className="text-xs bg-gray-100 px-1 rounded">SHADOU_ADMIN_DB_DIR</code> on
+              the Shadou engine to include WhatsApp/runtime traffic).
             </p>
           )}
         </div>

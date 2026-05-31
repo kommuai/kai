@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import unittest
 
-from kai.support_runtime.models import DecisionType, EvidenceItem, RuntimeResult
+from shadou.support_runtime.models import DecisionType, EvidenceItem, RuntimeResult
 
 
 class AbstainDecisionTypeTests(unittest.TestCase):
@@ -31,7 +31,7 @@ class MaybeForceAbstainTests(unittest.TestCase):
         )
 
     def _call(self, result, text="test", lang="EN"):
-        from kai.support_runtime.gateway import _maybe_force_abstain
+        from shadou.support_runtime.gateway import _maybe_force_abstain
         return _maybe_force_abstain(result, text, lang)
 
     def test_low_confidence_no_evidence_forces_abstain(self):
@@ -83,7 +83,7 @@ class MaybeForceAbstainTests(unittest.TestCase):
         self.assertNotEqual(en_out.answer, bm_out.answer)
 
     def test_abstain_threshold_from_runtime_settings(self):
-        from kai.workspace.runtime_settings import get_runtime_settings
+        from shadou.workspace.runtime_settings import get_runtime_settings
         rs = get_runtime_settings()
         # Default threshold must be between 0 and 1
         self.assertGreater(rs.eval_abstain_threshold, 0.0)

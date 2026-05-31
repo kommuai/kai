@@ -14,7 +14,7 @@ import requests
 import yaml
 from fastapi import HTTPException
 
-log = logging.getLogger("kai.ai_assist")
+log = logging.getLogger("shadou.ai_assist")
 
 CONFIG_FILES: dict[str, str] = {
     "workspace": "workspace.yaml",
@@ -27,7 +27,7 @@ _CONFIG_CONTEXT_CHARS = 128_000
 
 PLUGIN_TEMPLATE = '''\
 #!/usr/bin/env python3
-"""<one-line description — deterministic CLI plugin for Kai agent tools."""
+"""<one-line description — deterministic CLI plugin for Shadou agent tools."""
 from __future__ import annotations
 
 import argparse
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 '''
 
 SYSTEM_PROMPT = """
-You are KAI CONFIG ASSISTANT — a friendly, guided assistant helping non-technical users configure their AI support agent inside Kai Studio.
+You are SHADOU CONFIG ASSISTANT — a friendly, guided assistant helping non-technical users configure their AI support agent inside Shadou Studio.
 
 ## Your only purpose
 Help the user configure these resources in their tenant workspace:
@@ -96,9 +96,9 @@ You are NOT a general assistant. Politely refuse anything outside these resource
 - Map agent arg names to CLI flags via `params.arg_aliases` when they differ (e.g. `visit_date` → `date`).
 
 ## How to propose changes
-Reply with ONE JSON block inside a fenced code block tagged `kai-patch`:
+Reply with ONE JSON block inside a fenced code block tagged `shadou-patch`:
 
-```kai-patch
+```shadou-patch
 {
   "patches": [
     {
@@ -138,12 +138,12 @@ ALWAYS preserve YAML / Markdown / Python formatting exactly.
 
 
 BOOTSTRAP_SYSTEM_PROMPT = """
-You are KAI TENANT BOOTSTRAP — you populate a NEW tenant workspace from uploaded business documents and a short questionnaire.
+You are SHADOU TENANT BOOTSTRAP — you populate a NEW tenant workspace from uploaded business documents and a short questionnaire.
 
 ## Output format (required)
-Reply with ONLY one fenced block tagged `kai-patch` (no other prose):
+Reply with ONLY one fenced block tagged `shadou-patch` (no other prose):
 
-```kai-patch
+```shadou-patch
 {
   "patches": [
     { "type": "config_file", "file": "workspace", "content": "..." },
@@ -171,7 +171,7 @@ Reply with ONLY one fenced block tagged `kai-patch` (no other prose):
 
 def make_deepseek_client() -> tuple[str, str, str]:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    from kai.settings import get_settings
+    from shadou.settings import get_settings
 
     s = get_settings()
     api_key = (s.deepseek_api_key or os.getenv("DEEPSEEK_API_KEY") or "").strip()
@@ -212,7 +212,7 @@ def current_plugins(home: Path) -> list[dict[str, str]]:
 
 def current_skills_summary(home: Path) -> str:
     try:
-        from kai_capabilities import get_capabilities
+        from shadou_capabilities import get_capabilities
 
         caps = get_capabilities(home)
         skills = caps.get("skills") or []
@@ -231,7 +231,7 @@ def current_skills_summary(home: Path) -> str:
 def _faq_intent_index(faq_text: str) -> str:
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-        from kai.core.faq_markdown import _split_schema_blocks
+        from shadou.core.faq_markdown import _split_schema_blocks
 
         ids = [name for kind, name, _ in _split_schema_blocks(faq_text) if kind == "intent"]
         if not ids:
@@ -287,7 +287,7 @@ def validate_ai_assist_patches(patches: list[dict[str, Any]]) -> None:
 
 
 def extract_patch(text: str) -> dict[str, Any] | None:
-    m = re.search(r"```kai-patch\s*(\{.*?\})\s*```", text, re.S)
+    m = re.search(r"```shadou-patch\s*(\{.*?\})\s*```", text, re.S)
     if not m:
         return None
     try:
@@ -298,7 +298,7 @@ def extract_patch(text: str) -> dict[str, Any] | None:
 
 def _apply_faq_intent_patch(home: Path, intent_id: str, content: str) -> dict[str, str]:
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-    from kai.core.faq_markdown import upsert_intent_block
+    from shadou.core.faq_markdown import upsert_intent_block
 
     rel = CONFIG_FILES["faq"]
     p = home / rel
@@ -376,7 +376,7 @@ def apply_patch_item(home: Path, patch: dict[str, Any]) -> dict[str, str] | None
         old_content = script_path.read_text(encoding="utf-8", errors="replace") if script_path.is_file() else ""
         script_path.parent.mkdir(parents=True, exist_ok=True)
         sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-        from kai.tools_plugins.contract import validate_plugin_source
+        from shadou.tools_plugins.contract import validate_plugin_source
 
         contract_errors = validate_plugin_source(new_content, plugin_id=plugin_name)
         if contract_errors:
@@ -423,7 +423,7 @@ def preview_patches(home: Path, patches: list[dict[str, Any]]) -> list[dict[str,
             old = current_configs.get("faq", "")
             try:
                 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-                from kai.core.faq_markdown import upsert_intent_block
+                from shadou.core.faq_markdown import upsert_intent_block
 
                 new_content = upsert_intent_block(old, intent_id, content)
             except ValueError:
@@ -531,7 +531,7 @@ def _record_usage_from_response(
         return
     try:
         sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-        from kai.lib.llm_usage_record import record_openai_usage
+        from shadou.lib.llm_usage_record import record_openai_usage
 
         record_openai_usage(
             model=model,

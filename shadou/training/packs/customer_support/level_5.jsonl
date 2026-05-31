@@ -1,0 +1,4 @@
+{"question": "I'm not sure if this is installation, product defect, or compatibility.", "expected_decision": "clarifying_question", "tags": ["sage_routing", "resolvable"], "expected_steps": ["category", "symptom", "model"]}
+{"question": "Route me to the right team for a payment dispute.", "expected_decision": "escalate_human", "tags": ["sage_routing", "must_escalate"]}
+{"question": "What should we add to the FAQ about this new error code?", "expected_decision": "abstain", "tags": ["knowledge_gap"]}
+{"question": "Run warranty lookup for serial ABC123 and tell me coverage.", "expected_decision": "direct_answer", "tags": ["tool_usage"], "expected_tools": ["lookup_warranty"]}

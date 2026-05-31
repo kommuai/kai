@@ -1,6 +1,6 @@
 import unittest
 
-from kai.services.container import support_runtime_service
+from shadou.services.container import support_runtime_service
 
 
 class DiagnosticAndFaqLoopTests(unittest.TestCase):

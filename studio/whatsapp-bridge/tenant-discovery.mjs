@@ -6,7 +6,7 @@ import path from "path";
 import yaml from "js-yaml";
 
 function tenantsRoot() {
-  const env = process.env.KAI_TENANTS_ROOT;
+  const env = process.env.SHADOU_TENANTS_ROOT;
   if (env) return path.resolve(env);
   return path.resolve(process.env.HOME || "/tmp", "workspace");
 }
@@ -32,7 +32,7 @@ export function discoverWhatsAppTenants() {
 
   const out = [];
   for (const name of fs.readdirSync(root)) {
-    if (!name.startsWith("kai-tenant-")) continue;
+    if (!name.startsWith("shadou-tenant-")) continue;
     const home = path.join(root, name);
     if (!fs.statSync(home).isDirectory()) continue;
 
@@ -60,7 +60,7 @@ export function discoverWhatsAppTenants() {
     const credsPath = path.join(authDir, "creds.json");
     if (!fs.existsSync(credsPath) || !credsLookLinked(credsPath)) continue;
 
-    const slug = name.replace(/^kai-tenant-/, "");
+    const slug = name.replace(/^shadou-tenant-/, "");
     out.push({
       key: home,
       slug,

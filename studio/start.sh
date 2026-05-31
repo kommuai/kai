@@ -3,12 +3,12 @@
 set -e
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
-echo "==> Starting Kai Admin UI"
+echo "==> Starting Shadou Admin UI"
 echo "    Backend  →  http://localhost:8080"
 echo "    Frontend →  http://localhost:5173"
 echo ""
 
-# Backend (PYTHONPATH = monorepo root for kai package)
+# Backend (PYTHONPATH = monorepo root for shadou package)
 (
   cd "$ROOT/backend"
   export PYTHONPATH="${ROOT}/..${PYTHONPATH:+:$PYTHONPATH}"

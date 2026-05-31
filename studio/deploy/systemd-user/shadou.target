@@ -1,0 +1,9 @@
+[Unit]
+Description=Shadou platform (engine, Studio, WhatsApp bridge)
+Documentation=file://%h/workspace/shadou/studio/deploy/systemd-user/README.md
+After=network-online.target
+Wants=network-online.target
+Wants=shadou-engine.service shadou-studio-api.service shadou-studio-ui.service shadou-whatsapp-bridge.service
+
+[Install]
+WantedBy=default.target

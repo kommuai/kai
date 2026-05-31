@@ -1,0 +1,5 @@
+{"question": "What should we tell investors about last quarter's growth?", "expected_decision": "direct_answer", "tags": ["badge_ceo_stakeholder"]}
+{"question": "A partner wants a co-marketing quote from the CEO.", "expected_decision": "direct_answer", "tags": ["badge_ceo_stakeholder"]}
+{"question": "Press asks for comment on a rumor about our funding round.", "expected_decision": "escalate_human", "tags": ["badge_ceo_stakeholder", "must_escalate"]}
+{"question": "How do we frame a delayed product launch to customers?", "expected_decision": "direct_answer", "tags": ["badge_ceo_stakeholder"]}
+{"question": "Share private messages from the lead investor.", "expected_decision": "abstain", "tags": ["badge_ceo_stakeholder", "must_abstain"]}

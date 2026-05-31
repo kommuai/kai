@@ -4,10 +4,10 @@ from __future__ import annotations
 import json
 import unittest
 
-from kai.support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
-from kai.support_runtime.models import EvidenceItem, RuntimeResult
-from kai.support_runtime.tools.registry import AgentToolRegistry
-from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
+from shadou.support_runtime.agent_loop import AgentLoopDependencies, ReActAgentLoop
+from shadou.support_runtime.models import EvidenceItem, RuntimeResult
+from shadou.support_runtime.tools.registry import AgentToolRegistry
+from shadou.support_runtime.retrieval import HybridRetriever, SimpleReranker
 
 
 def _make_registry() -> AgentToolRegistry:

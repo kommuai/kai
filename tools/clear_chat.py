@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Clear Kai session + memory for a WhatsApp phone number.
+"""Clear Shadou session + memory for a WhatsApp phone number.
 
 Examples:
   python tools/clear_chat.py 0173611088
@@ -20,12 +20,12 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from kai.lib.phone_identity import (  # noqa: E402
+from shadou.lib.phone_identity import (  # noqa: E402
     canonical_my_mobile,
     candidate_user_ids,
     digits_only,
 )
-from kai.lib.session_state import (  # noqa: E402
+from shadou.lib.session_state import (  # noqa: E402
     DB_PATH,
     get_all_user_ids,
     get_session,

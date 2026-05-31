@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from kai.support_runtime.tech_backlog import infer_possible_solution_from_github, summarize_issue
+from shadou.support_runtime.tech_backlog import infer_possible_solution_from_github, summarize_issue
 
 
 class TechBacklogEnrichmentTests(unittest.TestCase):
@@ -27,7 +27,7 @@ class TechBacklogEnrichmentTests(unittest.TestCase):
         self.assertIn("Category=connectivity", out)
 
     @patch(
-        "kai.support_runtime.tech_backlog.github_repo_agentic_search",
+        "shadou.support_runtime.tech_backlog.github_repo_agentic_search",
         return_value={
             "ok": True,
             "branch": "release_ka2",

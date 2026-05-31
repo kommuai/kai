@@ -48,7 +48,7 @@ export default function DeleteTenantPanel({ tenant, redirectTo = "/dashboard", c
             <div className="min-w-0 flex-1">
               <h3 className="font-semibold text-gray-900 text-sm">Delete agent</h3>
               <p className="text-xs text-gray-500 mt-1">
-                Remove <strong>{tenant.display_name}</strong> from Kai Studio. Workspace files on disk are kept
+                Remove <strong>{tenant.display_name}</strong> from Shadou Studio. Workspace files on disk are kept
                 unless you choose to delete them.
               </p>
             </div>

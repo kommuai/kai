@@ -70,6 +70,13 @@ agent:
   footer_history_threshold: 10
 compile:
   extra_artifacts: false
+training:
+  agent_job: customer_support
+  current_level: 0
+  current_level_title: ""
+  current_level_emoji: ""
+  earned_badges: []
+  last_assessed_at: null
 logging:
   metrics_file: data/turn_metrics.jsonl
 eval:
@@ -79,7 +86,7 @@ eval:
   verifier_min_score: 0.0
   max_corpus_age_days: 30
   contradiction_token_overlap: 0.3
-  # gates checked by: python -m kai.tools.eval_run --eval-file PATH
+  # gates checked by: python -m shadou.tools.eval_run --eval-file PATH
   # gates: {}
 hitl:
   enabled: true
