@@ -65,7 +65,24 @@ Under `kai-tenant-<slug>/`:
 
 ## Inbound path
 
-WhatsApp message → `kai_inbound.py` (`KAI_HOME` = tenant workspace) → `support_runtime` → reply sent via Baileys. Sessions appear in Studio **Inbox** (`data/sessions.db`).
+WhatsApp message → download voice note (if any) → `kai_inbound.py` (`KAI_HOME` = tenant workspace) → STT enrichment → `support_runtime` → reply sent via Baileys. Sessions appear in Studio **Inbox** (`data/sessions.db`).
+
+### Voice messages (STT)
+
+When `channels.media.stt.enabled: true` (default in new tenants), inbound voice notes are transcribed before the support runtime runs. **Default: local [faster-whisper](https://github.com/SYSTRAN/faster-whisper)** — free, runs on this machine (GPU if available). No API key required.
+
+The WhatsApp bridge starts a warm STT sidecar (`python -m kai.media.stt_server`, port `18792`) so the model loads once, not per message.
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `KAI_STT_PROVIDER` | — | Override workspace: `faster_whisper` (free local) or `openai_whisper` (paid API) |
+| `KAI_STT_MODEL` | `small` | Local: `tiny`/`base`/`small`/`medium`. API: `whisper-1` |
+| `KAI_STT_DEVICE` | `auto` | `cuda` or `cpu` for local Whisper |
+| `KAI_STT_COMPUTE_TYPE` | auto | `float16` (GPU) or `int8` (CPU) |
+| `KAI_STT_SERVER_PORT` | `18792` | Local STT sidecar port |
+| `OPENAI_API_KEY` | — | Only if `provider: openai_whisper` |
+
+Images remain blocked until `channels.media.vision.enabled: true` (planned: Alibaba Qwen-VL).
 
 ### Anti-ban (`baileys-antiban`)
 

@@ -1,0 +1,19 @@
+[Unit]
+Description=Kai Studio UI (Vite dev :5173)
+PartOf=kai.target
+After=network-online.target kai-studio-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/workspace/kai/studio/frontend
+EnvironmentFile=-%h/.config/kai/kai-stack.env
+ExecStartPre=/usr/bin/test -f %h/workspace/kai/studio/frontend/node_modules/vite/package.json
+ExecStart=/bin/bash -c 'exec "${NODE_BIN:?Set NODE_BIN in kai-stack.env}" ./node_modules/.bin/vite --host 127.0.0.1 --port 5173'
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=kai.target

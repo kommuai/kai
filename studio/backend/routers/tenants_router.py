@@ -21,6 +21,7 @@ from deps import get_current_user
 from models import Tenant, TenantInvite, TenantMembership, User
 from schemas import (
     CompileResult,
+    DEFAULT_SCOPE_CANNOT_ANSWER,
     FileContent,
     FileContentOut,
     InviteAccept,
@@ -46,6 +47,16 @@ router = APIRouter(prefix="/tenants", tags=["tenants"])
 KAI_TENANTS_ROOT = kai_tenants_root()
 KAI_REPO = kai_repo_root()
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
+
+def _effective_scope_cannot_answer(scope: list[str] | str) -> list[str]:
+    if isinstance(scope, list):
+        cleaned = [str(x).strip() for x in scope if str(x).strip()]
+        if cleaned:
+            return cleaned
+    elif isinstance(scope, str) and scope.strip():
+        return [scope.strip()]
+    return list(DEFAULT_SCOPE_CANNOT_ANSWER)
 
 _EDITABLE_FILES = {
     "workspace": "workspace.yaml",
@@ -147,7 +158,7 @@ def create_tenant(body: TenantCreate, user: User = Depends(get_current_user), db
         bot_name=body.bot_name,
         company_name=body.company_name,
         product_summary=body.product_summary,
-        scope_cannot_answer=body.scope_cannot_answer,
+        scope_cannot_answer=_effective_scope_cannot_answer(body.scope_cannot_answer),
         escalation_rules=body.escalation_rules,
         fallback_behavior=body.fallback_behavior,
     )
@@ -437,7 +448,18 @@ channels:
   frozen:
     idle_hours: 24
   media:
-    blocked_types: [image, video, audio, voice]
+    blocked_types: [image, video]
+    storage_dir: data/media
+    stt:
+      enabled: true
+      provider: faster_whisper
+      model: small
+      min_confidence: 0.5
+      languages: [en, ms]
+    vision:
+      enabled: false
+      provider: dashscope_qwen_vl
+      model: qwen-vl-max
   fallbacks:
     no_signal_en: What do you need help with?
     post_tool_en: Can you share more detail?
@@ -521,13 +543,10 @@ def _default_system_prompt(
 - Warm, helpful, and concise.
 - Ask ONE clear clarifying question if information is missing.""",
         "professional": """## Your personality
-- Professional, structured, and calm.
+- Professional, structured, and calm; polished concierge tone.
 - Use short headings or bullet points when useful.
-- Confirm key details (order number, date, model) before taking action.""",
-        "empathetic": """## Your personality
-- Empathetic and reassuring; acknowledge frustration when appropriate.
-- Keep answers short and actionable.
-- Use gentle language; avoid sounding robotic or blaming the user.""",
+- Confirm key details (order number, date, model) before taking action.
+- Offer next steps and options; avoid casual slang.""",
         "direct": """## Your personality
 - Direct and efficient.
 - Prioritize the fastest path to resolution.
@@ -536,17 +555,14 @@ def _default_system_prompt(
 - Light, upbeat, and friendly (no jokes when user is upset).
 - Keep it short; make the interaction feel human.
 - Still prioritize correctness over humor.""",
-        "premium": """## Your personality
-- Premium concierge tone: confident, polished, and proactive.
-- Offer next steps and options.
-- Avoid casual slang; be crisp and high-trust.""",
     }
-    persona_block = blocks.get(personality, blocks["friendly"])
+    legacy = {"premium": "professional", "empathetic": "friendly"}
+    persona_block = blocks.get(legacy.get(personality, personality), blocks["friendly"])
     bot = (bot_name or "").strip() or "Kai"
     company = (company_name or "").strip() or name
     product = (product_summary or "").strip()
-    cannot_answer_list = scope_cannot_answer if isinstance(scope_cannot_answer, list) else []
-    cannot_answer_text = (scope_cannot_answer or "").strip() if isinstance(scope_cannot_answer, str) else ""
+    cannot_answer_list = _effective_scope_cannot_answer(scope_cannot_answer)
+    cannot_answer_text = ""
     escalation_list = escalation_rules if isinstance(escalation_rules, list) else []
     escalation_text = (escalation_rules or "").strip() if isinstance(escalation_rules, str) else ""
 
@@ -563,7 +579,7 @@ def _default_system_prompt(
     fallback_map = {
         "ask_one_question_then_escalate": "If you are unsure, ask ONE clear clarifying question. If still unsure, escalate to a human.",
         "escalate_if_unsure": "If you are unsure, do not guess. Escalate to a human for verification.",
-        "say_not_confirmed_and_escalate": "If you are unsure, say the information is not confirmed, then escalate to a human for verification.",
+        "say_not_confirmed_and_escalate": "If you are unsure, do not guess. Escalate to a human for verification.",
         "best_effort_hallucination_risk": "Try your best to answer even if it may not be confirmed. State uncertainty clearly and warn there is a hallucination risk. Offer to escalate to a human for verification.",
     }
     fallback = fallback_map.get(fb, fallback_map["escalate_if_unsure"])

@@ -1,38 +1,52 @@
 #!/usr/bin/env bash
-# Install user systemd unit for Kai WhatsApp bridge + worker.
+# Install user systemd units for the full Kai stack (engine, Studio, WhatsApp).
 set -eu
 
-UNIT_NAME=kai-whatsapp-bridge.service
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-UNIT_SRC="${SCRIPT_DIR}/${UNIT_NAME}"
 USER_UNIT_DIR="${HOME}/.config/systemd/user"
 ENV_DIR="${HOME}/.config/kai"
-ENV_FILE="${ENV_DIR}/whatsapp-bridge.env"
-ENV_EXAMPLE="${SCRIPT_DIR}/whatsapp-bridge.env.example"
-BRIDGE_DIR="${HOME}/workspace/kai/studio/whatsapp-bridge"
+STACK_ENV="${ENV_DIR}/kai-stack.env"
+STACK_EXAMPLE="${SCRIPT_DIR}/kai-stack.env.example"
+BRIDGE_ENV="${ENV_DIR}/whatsapp-bridge.env"
+BRIDGE_EXAMPLE="${SCRIPT_DIR}/whatsapp-bridge.env.example"
+KAI_REPO="${KAI_REPO:-${HOME}/workspace/kai}"
+BRIDGE_DIR="${KAI_REPO}/studio/whatsapp-bridge"
+FRONTEND_DIR="${KAI_REPO}/studio/frontend"
 
 START_AFTER=0
+STOP_MANUAL=0
 for arg in "$@"; do
   case "$arg" in
     --start) START_AFTER=1 ;;
+    --stop-manual) STOP_MANUAL=1 ;;
   esac
 done
 
 mkdir -p "${USER_UNIT_DIR}" "${ENV_DIR}"
 
-sed "s|%h|${HOME}|g" "${UNIT_SRC}" > "${USER_UNIT_DIR}/${UNIT_NAME}"
+install_unit() {
+  local name="$1"
+  sed "s|%h|${HOME}|g" "${SCRIPT_DIR}/${name}" > "${USER_UNIT_DIR}/${name}"
+  echo "  installed ${name}"
+}
 
-if [[ ! -f "${ENV_FILE}" ]]; then
-  sed "s|%h|${HOME}|g" "${ENV_EXAMPLE}" > "${ENV_FILE}"
-  echo "Created ${ENV_FILE} — review paths and API keys."
+echo "==> Installing systemd units"
+for u in kai.target kai-engine.service kai-studio-api.service kai-studio-ui.service kai-whatsapp-bridge.service; do
+  install_unit "${u}"
+done
+
+if [[ ! -f "${STACK_ENV}" ]]; then
+  sed "s|%h|${HOME}|g" "${STACK_EXAMPLE}" > "${STACK_ENV}"
+  echo "Created ${STACK_ENV}"
 else
-  echo "Keeping existing ${ENV_FILE}"
+  echo "Keeping existing ${STACK_ENV}"
 fi
 
-if [[ ! -d "${BRIDGE_DIR}" ]]; then
-  echo "ERROR: Bridge directory not found: ${BRIDGE_DIR}" >&2
-  echo "Adjust paths in ${ENV_FILE} or clone Kai to ~/workspace/kai." >&2
-  exit 1
+if [[ ! -f "${BRIDGE_ENV}" ]]; then
+  sed "s|%h|${HOME}|g" "${BRIDGE_EXAMPLE}" > "${BRIDGE_ENV}"
+  echo "Created ${BRIDGE_ENV}"
+else
+  echo "Keeping existing ${BRIDGE_ENV}"
 fi
 
 NODE_BIN=""
@@ -51,65 +65,92 @@ for candidate in \
   fi
 done
 if [[ -z "${NODE_BIN}" ]]; then
-  echo "ERROR: Node.js 20+ required for Baileys. Install via nvm or set NODE_BIN in ${ENV_FILE}." >&2
+  echo "ERROR: Node.js 20+ required. Set NODE_BIN in ${STACK_ENV}." >&2
   exit 1
 fi
 
-KAI_REPO="${KAI_REPO:-${HOME}/workspace/kai}"
 KAI_PYTHON=""
 for py in \
   "${HOME}/miniconda3/bin/python3" \
   "${HOME}/.pyenv/shims/python3" \
   "/usr/bin/python3"; do
-  if [[ -x "${py}" ]] && PYTHONPATH="${KAI_REPO:-${HOME}/workspace/kai}" "${py}" -c "import kai" 2>/dev/null; then
+  if [[ -x "${py}" ]] && PYTHONPATH="${KAI_REPO}" "${py}" -c "import kai" 2>/dev/null; then
     KAI_PYTHON="${py}"
     break
   fi
 done
 if [[ -z "${KAI_PYTHON}" ]]; then
-  echo "ERROR: No Python with kai package found. Set KAI_PYTHON in ${ENV_FILE}." >&2
+  echo "ERROR: No Python with kai package. Set KAI_PYTHON in ${STACK_ENV}." >&2
   exit 1
 fi
 
-for var in "NODE_BIN=${NODE_BIN}" "KAI_PYTHON=${KAI_PYTHON}"; do
-  key="${var%%=*}"
-  if grep -q "^${key}=" "${ENV_FILE}" 2>/dev/null; then
-    sed -i "s|^${key}=.*|${var}|" "${ENV_FILE}"
+set_env_var() {
+  local file="$1"
+  local var="$2"
+  local val="$3"
+  if grep -q "^${var}=" "${file}" 2>/dev/null; then
+    sed -i "s|^${var}=.*|${var}=${val}|" "${file}"
   else
-    echo "${var}" >> "${ENV_FILE}"
+    echo "${var}=${val}" >> "${file}"
   fi
+}
+
+for file in "${STACK_ENV}" "${BRIDGE_ENV}"; do
+  set_env_var "${file}" "NODE_BIN" "${NODE_BIN}"
+  set_env_var "${file}" "KAI_PYTHON" "${KAI_PYTHON}"
+  set_env_var "${file}" "KAI_REPO" "${KAI_REPO}"
+  set_env_var "${file}" "KAI_TENANTS_ROOT" "${KAI_TENANTS_ROOT:-${HOME}/workspace}"
 done
+
 echo "Using NODE_BIN=${NODE_BIN} ($(${NODE_BIN} -v))"
 echo "Using KAI_PYTHON=${KAI_PYTHON} ($(${KAI_PYTHON} --version))"
 
-echo "==> npm install in whatsapp-bridge"
+echo "==> npm install (whatsapp-bridge)"
 (cd "${BRIDGE_DIR}" && npm install)
 
-systemctl --user daemon-reload
-systemctl --user enable "${UNIT_NAME}"
+echo "==> npm install (studio frontend)"
+(cd "${FRONTEND_DIR}" && npm install)
 
-if ! loginctl show-user "$(whoami)" -p Linger 2>/dev/null | grep -q 'yes'; then
+systemctl --user daemon-reload
+
+# Prefer single target over standalone bridge unit
+systemctl --user disable kai-whatsapp-bridge.service 2>/dev/null || true
+systemctl --user enable kai.target
+
+if ! loginctl show-user "$(whoami)" -p Linger 2>/dev/null | grep -q 'Linger=yes'; then
   echo ""
-  echo "Tip: enable user lingering so the bridge survives logout:"
+  echo "WARNING: user lingering is off — services may not start at boot until you log in."
   echo "  sudo loginctl enable-linger $(whoami)"
 fi
 
 echo ""
-echo "Installed ${UNIT_NAME}"
-echo "  systemctl --user start ${UNIT_NAME}"
-echo "  systemctl --user status ${UNIT_NAME}"
-echo "  journalctl --user -u ${UNIT_NAME} -f"
-echo "  curl -s http://127.0.0.1:18791/health | python3 -m json.tool"
+echo "Enabled kai.target (starts on boot when lingering is on)"
+echo "  systemctl --user start kai.target"
+echo "  systemctl --user status kai.target"
 
-# Stop stray manual bridge on the same port so systemd can bind.
-if ss -tln 2>/dev/null | grep -q ':18791 '; then
-  echo "Stopping existing process on port 18791 (if any)…"
-  fuser -k 18791/tcp 2>/dev/null || true
-  sleep 1
+free_port() {
+  local port="$1"
+  if ss -tln 2>/dev/null | grep -q ":${port} "; then
+    echo "Freeing port ${port}…"
+    fuser -k "${port}/tcp" 2>/dev/null || true
+    sleep 1
+  fi
+}
+
+if [[ "${STOP_MANUAL}" -eq 1 ]] || [[ "${START_AFTER}" -eq 1 ]]; then
+  for p in 6090 8080 5173 18791; do
+    free_port "${p}"
+  done
 fi
 
 if [[ "${START_AFTER}" -eq 1 ]]; then
-  systemctl --user start "${UNIT_NAME}"
-  sleep 2
-  systemctl --user --no-pager status "${UNIT_NAME}" || true
+  systemctl --user start kai.target
+  sleep 4
+  systemctl --user --no-pager status kai.target || true
+  echo ""
+  echo "Health checks:"
+  curl -sf http://127.0.0.1:6090/health 2>/dev/null && echo "  engine :6090 OK" || echo "  engine :6090 —"
+  curl -sf http://127.0.0.1:8080/health 2>/dev/null && echo "  studio :8080 OK" || echo "  studio :8080 —"
+  curl -sf -o /dev/null http://127.0.0.1:5173/ 2>/dev/null && echo "  ui     :5173 OK" || echo "  ui     :5173 —"
+  curl -sf http://127.0.0.1:18791/health 2>/dev/null | head -c 80 && echo " … bridge OK" || echo "  bridge :18791 —"
 fi

@@ -4,6 +4,7 @@
 import { spawn } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
+import { sttServerEnv } from "./stt-server.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,19 +23,27 @@ function pythonBin() {
 }
 
 /**
- * @param {{ home: string, userId: string, text: string, contact?: { pushName?: string, phone?: string }, timeoutMs?: number }} opts
+ * @param {{ home: string, userId: string, text: string, contact?: { pushName?: string, phone?: string }, media?: object, timeoutMs?: number }} opts
  */
-export function runKaiInbound({ home, userId, text, contact, timeoutMs = 120000 }) {
+export function runKaiInbound({ home, userId, text, contact, media, timeoutMs = 120000 }) {
   return new Promise((resolve, reject) => {
     const script = inboundScript();
     const env = {
       ...process.env,
       KAI_HOME: home,
       PYTHONPATH: [kaiRepoRoot(), process.env.PYTHONPATH].filter(Boolean).join(path.delimiter),
+      ...sttServerEnv(),
     };
-    const args = [script, home, userId, text];
+    const payload = {};
     if (contact && (contact.pushName || contact.phone)) {
-      args.push(JSON.stringify(contact));
+      payload.contact = contact;
+    }
+    if (media && typeof media === "object") {
+      payload.media = media;
+    }
+    const args = [script, home, userId, text];
+    if (Object.keys(payload).length) {
+      args.push(JSON.stringify(payload));
     }
 
     const proc = spawn(pythonBin(), args, {

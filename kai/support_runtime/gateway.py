@@ -12,6 +12,7 @@ from kai.support_runtime.faq_grounding import apply_grounding_footnote_if_needed
 from kai.support_runtime.agent_loop import _looks_like_chitchat
 from kai.support_runtime.metrics import record_turn_metrics
 from kai.support_runtime.models import RuntimeResult
+from kai.support_runtime.hitl import maybe_record_hitl_ticket
 from kai.support_runtime.verifier import verify_result
 from kai.workspace.runtime_settings import get_runtime_settings
 
@@ -106,6 +107,7 @@ def run_support_turn(
     result = support_runtime_service.execute(text=text, lang=lang, user_id=user_id)
     result = verify_result(result)
     result = _maybe_force_abstain(result, text, lang)
+    maybe_record_hitl_ticket(user_id=user_id, user_question=text, result=result)
 
     if result.decision == "escalate_human":
         from kai.lib.session_state import freeze

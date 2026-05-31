@@ -57,7 +57,9 @@ class ChannelConfig:
         return lower in {k.lower() for k in self.resume_keywords}
 
     def is_blocked_media_type(self, msg_type: str) -> bool:
-        return (msg_type or "").strip().lower() in {t.lower() for t in self.blocked_media_types}
+        from kai.media.config import get_media_config
+
+        return get_media_config().is_modality_blocked(msg_type)
 
 
 def _load_yaml() -> dict[str, Any]:

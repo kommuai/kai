@@ -166,3 +166,31 @@ export function messageType(msg) {
     return undefined;
   }
 }
+
+/**
+ * Kai modality for inbound media (voice, audio, image, video).
+ * @returns {string | null}
+ */
+export function resolveInboundMediaModality(msg) {
+  if (!msg?.message) return null;
+  const type = getContentType(msg.message);
+  if (!type) return null;
+  const content = extractMessageContent(msg.message);
+  if (!content || typeof content !== "object") return null;
+  if (type === "audioMessage") {
+    return content.audioMessage?.ptt ? "voice" : "audio";
+  }
+  if (type === "imageMessage") return "image";
+  if (type === "videoMessage") return "video";
+  return null;
+}
+
+/** @returns {string} */
+export function mimetypeFromWAMessage(msg) {
+  const type = messageType(msg);
+  if (!type || !msg?.message) return "";
+  const content = extractMessageContent(msg.message);
+  if (!content || typeof content !== "object") return "";
+  const inner = content[type];
+  return inner?.mimetype || "";
+}

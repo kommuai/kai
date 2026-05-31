@@ -256,6 +256,47 @@ export interface ReplyOut {
   channel_detail?: string | null;
 }
 
+export interface HitlTicket {
+  ticket_id: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  user_question: string;
+  bot_answer: string;
+  confidence: number | null;
+  decision: string | null;
+  fallback_reason: string | null;
+  verification_flagged: boolean;
+  impact_reason: string | null;
+  status: string;
+  operator_reply: string | null;
+  replied_at: string | null;
+  kb_patch_status: string;
+  kb_patch_preview?: AiAssistPatch[] | null;
+}
+
+export interface HitlReplyOut {
+  ok: boolean;
+  ticket: HitlTicket;
+  channel_delivered?: boolean;
+  channel_detail?: string | null;
+}
+
+export interface HitlKbProposeOut {
+  ok: boolean;
+  ticket: HitlTicket;
+  patches: AiAssistPatch[];
+  summary: string;
+}
+
+export interface HitlKbApplyOut {
+  ok: boolean;
+  ticket: HitlTicket;
+  applied: AiAssistPatch[];
+  summary: string;
+  compile?: Record<string, unknown> | null;
+}
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 export interface OAuthProviders {
@@ -622,6 +663,29 @@ export const inboxApi = {
         channel_detail?: string | null;
       }>(`/tenants/${tenantId}/inbox/conversations/${encSeg(userId)}/handover-bot`)
       .then((r) => r.data),
+};
+
+export const hitlApi = {
+  tickets: (tenantId: string, params?: { queue?: "open" | "archived"; limit?: number }) =>
+    api.get<{ tickets: HitlTicket[]; total: number }>(`/tenants/${tenantId}/hitl/tickets`, { params }).then((r) => r.data),
+
+  ticket: (tenantId: string, ticketId: string) =>
+    api.get<HitlTicket>(`/tenants/${tenantId}/hitl/tickets/${ticketId}`).then((r) => r.data),
+
+  reply: (tenantId: string, ticketId: string, text: string) =>
+    api.post<HitlReplyOut>(`/tenants/${tenantId}/hitl/tickets/${ticketId}/reply`, { text }).then((r) => r.data),
+
+  proposeKnowledge: (tenantId: string, ticketId: string) =>
+    api.post<HitlKbProposeOut>(`/tenants/${tenantId}/hitl/tickets/${ticketId}/propose-knowledge`).then((r) => r.data),
+
+  applyKnowledge: (tenantId: string, ticketId: string) =>
+    api.post<HitlKbApplyOut>(`/tenants/${tenantId}/hitl/tickets/${ticketId}/apply-knowledge`).then((r) => r.data),
+
+  rejectKnowledge: (tenantId: string, ticketId: string) =>
+    api.post<HitlTicket>(`/tenants/${tenantId}/hitl/tickets/${ticketId}/reject-knowledge`).then((r) => r.data),
+
+  outOfScope: (tenantId: string, ticketId: string) =>
+    api.post<HitlTicket>(`/tenants/${tenantId}/hitl/tickets/${ticketId}/out-of-scope`).then((r) => r.data),
 };
 
 export const contactsApi = {

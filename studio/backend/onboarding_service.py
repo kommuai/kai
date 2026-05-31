@@ -18,6 +18,7 @@ from ai_assist_core import (
     extract_patch,
 )
 from kai_paths import kai_tenants_root
+from schemas import DEFAULT_SCOPE_CANNOT_ANSWER
 
 ONBOARDING_ROOT = kai_tenants_root() / ".studio-onboarding"
 MAX_FILES = 20
@@ -218,7 +219,7 @@ def _format_questionnaire(q: dict[str, Any]) -> str:
         f"Product summary: {q.get('product_summary', '') or q.get('description', '')}",
         f"AI agent name: {q.get('bot_name', '')}",
         f"Personality: {q.get('personality', 'friendly')}",
-        f"Scope must NOT answer: {', '.join(q.get('scope_cannot_answer') or [])}",
+        f"Scope must NOT answer: {', '.join(q.get('scope_cannot_answer') or DEFAULT_SCOPE_CANNOT_ANSWER)}",
         f"Escalation rules: {', '.join(q.get('escalation_rules') or [])}",
         f"Fallback behavior: {q.get('fallback_behavior', '')}",
     ]

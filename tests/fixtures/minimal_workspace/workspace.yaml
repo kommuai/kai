@@ -29,7 +29,18 @@ channels:
   frozen:
     idle_hours: 24
   media:
-    blocked_types: [image, video, audio, voice]
+    blocked_types: [image, video]
+    storage_dir: data/media
+    stt:
+      enabled: true
+      provider: faster_whisper
+      model: small
+      min_confidence: 0.5
+      languages: [en, ms]
+    vision:
+      enabled: false
+      provider: dashscope_qwen_vl
+      model: qwen-vl-max
   fallbacks:
     no_signal_en: What do you need help with?
     post_tool_en: Can you share more detail about your question?

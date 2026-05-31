@@ -1,5 +1,8 @@
 # Kai — single dependency lockfile (runtime, integrations, dev/CI)
 
+# --- Media (local Whisper STT) ---
+faster-whisper>=1.0.0
+
 # --- Core (chat API + workspace-driven ReAct) ---
 fastapi==0.111.0
 uvicorn[standard]==0.30.1

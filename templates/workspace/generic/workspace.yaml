@@ -29,7 +29,29 @@ channels:
   frozen:
     idle_hours: 24
   media:
-    blocked_types: [image, video, audio, voice]
+    blocked_types: [image, video]
+    storage_dir: data/media
+    max_bytes: 10485760
+    stt:
+      enabled: true
+      provider: faster_whisper
+      model: small
+      min_confidence: 0.5
+      languages: [en, ms]
+    vision:
+      enabled: false
+      provider: dashscope_qwen_vl
+      model: qwen-vl-max
+      min_confidence: 0.7
+    enrich:
+      voice_template_en: "[Voice message]: {transcript}"
+      voice_template_bm: "[Mesej suara]: {transcript}"
+      voice_fallback_en: I couldn't make out your voice message. Please type your question.
+      voice_fallback_bm: Saya tidak dapat dengar mesej suara anda. Sila taip soalan anda.
+      image_template_en: "[Image]: {extracted}"
+      image_template_bm: "[Imej]: {extracted}"
+      image_fallback_en: I couldn't read that image clearly. Please describe the issue in text.
+      image_fallback_bm: Saya tidak dapat baca imej itu dengan jelas. Sila terangkan isu anda.
   fallbacks:
     no_signal_en: What do you need help with?
     post_tool_en: Can you share more detail about your question?
@@ -59,6 +81,23 @@ eval:
   contradiction_token_overlap: 0.3
   # gates checked by: python -m kai.tools.eval_run --eval-file PATH
   # gates: {}
+hitl:
+  enabled: true
+  confidence_threshold: 0.6
+  flag_verification_fail: true
+  flag_abstain: true
+  flag_escalate: true
+  impact_keywords:
+  - refund
+  - payment
+  - warranty
+  - price
+  - pricing
+  - contract
+  - policy
+  - security
+  - cancel
+  - legal
 copy:
   abstain_en: "I don't have enough information to answer that reliably. Type LA for a live agent."
   abstain_bm: "Saya tidak mempunyai maklumat yang cukup. Taip LA untuk ejen."

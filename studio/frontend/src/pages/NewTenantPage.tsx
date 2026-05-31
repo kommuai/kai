@@ -6,8 +6,6 @@ import {
   Building2,
   CheckCircle2,
   FileUp,
-  HeartHandshake,
-  ShieldCheck,
   Smile,
   Sparkles,
   Zap,
@@ -76,17 +74,15 @@ export default function NewTenantPage() {
   const qc = useQueryClient();
 
   const [personality, setPersonality] = useState<
-    "friendly" | "professional" | "empathetic" | "direct" | "playful" | "premium"
+    "friendly" | "professional" | "direct" | "playful"
   >("friendly");
   const [botName, setBotName] = useState("");
   const [companyName, setCompanyName] = useState("");
   const [productSummary, setProductSummary] = useState("");
-  const [scopeCannotAnswer, setScopeCannotAnswer] = useState<string[]>([]);
   const [escalationRules, setEscalationRules] = useState<string[]>([]);
   const [fallbackBehavior, setFallbackBehavior] = useState<
     | "ask_one_question_then_escalate"
     | "escalate_if_unsure"
-    | "say_not_confirmed_and_escalate"
     | "best_effort_hallucination_risk"
   >("escalate_if_unsure");
 
@@ -121,13 +117,7 @@ export default function NewTenantPage() {
       id: "professional" as const,
       label: "Professional",
       icon: Briefcase,
-      tip: "Structured, calm, confirms key details.",
-    },
-    {
-      id: "empathetic" as const,
-      label: "Empathetic",
-      icon: HeartHandshake,
-      tip: "Reassuring tone, acknowledges frustration.",
+      tip: "Polished and structured; confirms details and offers clear next steps.",
     },
     {
       id: "direct" as const,
@@ -141,17 +131,6 @@ export default function NewTenantPage() {
       icon: Sparkles,
       tip: "Light and upbeat (avoids jokes when user is upset).",
     },
-    {
-      id: "premium" as const,
-      label: "Premium",
-      icon: ShieldCheck,
-      tip: "Concierge tone: polished and proactive options.",
-    },
-  ];
-
-  const CANNOT_ANSWER_OPTIONS = [
-    "Unrelated general knowledge",
-    "Anything not in knowledge base",
   ];
 
   const ESCALATION_OPTIONS = [
@@ -168,7 +147,6 @@ export default function NewTenantPage() {
     bot_name: botName,
     company_name: companyName || displayName,
     product_summary: productSummary,
-    scope_cannot_answer: scopeCannotAnswer,
     escalation_rules: escalationRules,
     fallback_behavior: fallbackBehavior,
   });
@@ -183,7 +161,6 @@ export default function NewTenantPage() {
         bot_name: botName,
         company_name: companyName || displayName,
         product_summary: productSummary,
-        scope_cannot_answer: scopeCannotAnswer,
         escalation_rules: escalationRules,
         fallback_behavior: fallbackBehavior,
         onboarding_session_id: onboardingSessionRef.current ?? onboardingSessionId,
@@ -566,29 +543,6 @@ export default function NewTenantPage() {
           </div>
 
           <div>
-            <label className="label">Scope — what the AI support agent MUST NOT answer</label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {CANNOT_ANSWER_OPTIONS.map((opt) => {
-                const checked = scopeCannotAnswer.includes(opt);
-                return (
-                  <label key={opt} className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
-                    <input
-                      type="checkbox"
-                      className="mt-1"
-                      checked={checked}
-                      onChange={(e) => {
-                        const on = e.target.checked;
-                        setScopeCannotAnswer((prev) => (on ? [...prev, opt] : prev.filter((x) => x !== opt)));
-                      }}
-                    />
-                    <span className="leading-snug">{opt}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-
-          <div>
             <label className="label">Escalation rules (handover to human)</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {ESCALATION_OPTIONS.map((opt) => {
@@ -631,18 +585,6 @@ export default function NewTenantPage() {
                   type="radio"
                   name="fallback_behavior"
                   className="mt-1"
-                  checked={fallbackBehavior === "say_not_confirmed_and_escalate"}
-                  onChange={() => setFallbackBehavior("say_not_confirmed_and_escalate")}
-                />
-                <span className="leading-snug">
-                  Say “not confirmed” then escalate
-                </span>
-              </label>
-              <label className="flex items-start gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700">
-                <input
-                  type="radio"
-                  name="fallback_behavior"
-                  className="mt-1"
                   checked={fallbackBehavior === "ask_one_question_then_escalate"}
                   onChange={() => setFallbackBehavior("ask_one_question_then_escalate")}
                 />
@@ -669,7 +611,7 @@ export default function NewTenantPage() {
             <label className="label">AI agent personality</label>
             <p className="text-xs text-gray-400">Hover an icon to learn more</p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {PERSONALITIES.map((p) => {
               const Icon = p.icon;
               const active = personality === p.id;

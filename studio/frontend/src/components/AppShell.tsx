@@ -11,6 +11,7 @@ import {
   Inbox,
   Users,
   SlidersHorizontal,
+  ClipboardCheck,
 } from "lucide-react";
 import clsx from "clsx";
 import Logo from "./Logo";
@@ -128,6 +129,10 @@ export default function AppShell() {
       <NavLink to={`/t/${tenantSlug}/inbox`} className={navCls}>
         <Inbox size={17} />
         Inbox
+      </NavLink>
+      <NavLink to={`/t/${tenantSlug}/review`} className={navCls}>
+        <ClipboardCheck size={17} />
+        Review
       </NavLink>
       <NavLink to={`/t/${tenantSlug}/configuration`} end className={navCls}>
         <SlidersHorizontal size={17} />

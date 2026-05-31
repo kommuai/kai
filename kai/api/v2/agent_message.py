@@ -66,6 +66,57 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
 
     ch = get_channel_config()
     msg_type = (data.get("type") or data.get("message_type") or "").strip().lower()
+    user_id = data.get("phone_number", "unknown")
+    lang = resolve_lang(user_id=user_id, explicit=data.get("lang"))
+    text = data.get("content", "").strip()
+    media_path = str(data.get("media_path") or "").strip()
+
+    if msg_type in ("voice", "audio") and media_path:
+        from kai.media.enrich import enrich_inbound_media
+
+        start = time.time()
+        try:
+            enriched = enrich_inbound_media(
+                {
+                    "modality": msg_type,
+                    "path": media_path,
+                    "msg_id": str(data.get("msg_id") or uuid4()),
+                    "mimetype": str(data.get("mimetype") or ""),
+                    "caption": text,
+                },
+                lang=lang,
+            )
+            if enriched.skipped_runtime:
+                payload = {
+                    "type": "reply",
+                    "message": enriched.text,
+                    "next_state": "bot",
+                }
+                return _merge_trace(
+                    payload,
+                    trace_id=str(uuid4()),
+                    mode=get_route_mode(),
+                    capability_used="media_stt",
+                    start=start,
+                    fallback_reason=enriched.decision or "stt_failed",
+                )
+            text = enriched.text
+        except Exception as exc:
+            log.warning("media enrich failed: %s", exc)
+            payload = {
+                "type": "reply",
+                "message": ch.media_guard_en if lang == "EN" else ch.media_guard_bm,
+                "next_state": "bot",
+            }
+            return _merge_trace(
+                payload,
+                trace_id=str(uuid4()),
+                mode=get_route_mode(),
+                capability_used="media_capability_guard",
+                start=start,
+                fallback_reason="media_enrich_failed",
+            )
+
     if msg_type and ch.is_blocked_media_type(msg_type):
         start = time.time()
         lang_media = resolve_lang(user_id=str(data.get("phone_number") or "unknown"))
@@ -82,7 +133,7 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
             start=start,
             fallback_reason="media_not_supported_text_only",
         )
-    if data.get("media_url") and ch.blocked_media_types:
+    if (data.get("media_url") or media_path) and msg_type and ch.is_blocked_media_type(msg_type):
         start = time.time()
         lang_media = resolve_lang(user_id=str(data.get("phone_number") or "unknown"))
         payload = {
@@ -98,13 +149,10 @@ def _process_agent_message_data(data: dict, *, x_admin_token: str | None = None)
             start=start,
             fallback_reason="media_not_supported_text_only",
         )
-    text = data.get("content", "").strip()
-    user_id = data.get("phone_number", "unknown")
 
     start = time.time()
     mode = get_route_mode()
     trace_id = str(uuid4())
-    lang = resolve_lang(user_id=user_id, explicit=data.get("lang"))
 
     if not text:
         return _merge_trace({"ok": True}, trace_id=trace_id, mode=mode, capability_used="empty", start=start)

@@ -12,16 +12,19 @@ import makeWASocket, {
 import { discoverWhatsAppTenants } from "./tenant-discovery.mjs";
 import { runKaiInbound } from "./inbound-kai.mjs";
 import { persistContactMeta } from "./contact-persist.mjs";
+import { cleanupMediaTemp, downloadInboundMedia } from "./media-download.mjs";
 import {
   contactMetaFromMessage,
   extractTextFromWAMessage,
   resolveInboundDm,
+  resolveInboundMediaModality,
   resolveOutboundChatJid,
   resolveReplyChatJid,
   userIdFromContactJid,
 } from "./message-text.mjs";
 import { humanizedWhatsAppSend, guardedWhatsAppSend } from "./human-reply.mjs";
 import { createTenantGuard } from "./tenant-guard.mjs";
+import { ensureSttServer, sttServerEnv, stopSttServer } from "./stt-server.mjs";
 
 const log = pino({ level: process.env.LOG_LEVEL || "info" });
 const SCAN_MS = Number(process.env.WHATSAPP_WORKER_SCAN_MS || 15000);
@@ -126,16 +129,20 @@ async function enqueueInbound(chainKey, fn) {
   return next;
 }
 
-async function handleInboundMessage(entry, chatJid, userId, text, msgId, contact = {}) {
+async function handleInboundMessage(entry, chatJid, userId, text, msgId, contact = {}, media = null) {
   const chainKey = `${entry.slug}:${userId}`;
 
   await enqueueInbound(chainKey, async () => {
-    log.info({ slug: entry.slug, userId, chatJid, msgId, len: text.length }, "inbound WhatsApp");
+    log.info(
+      { slug: entry.slug, userId, chatJid, msgId, len: text.length, media: media?.modality || null },
+      "inbound WhatsApp",
+    );
     const result = await runKaiInbound({
       home: entry.home,
       userId,
       text: text || "",
       contact,
+      media,
     });
 
     if (!result.ok) {
@@ -342,13 +349,39 @@ async function runWorkerSocket(entry) {
       if (contact.pushName || contact.phone) {
         persistContactMeta(entry.home, dm.userId, contact);
       }
+
+      const modality = resolveInboundMediaModality(msg);
+      let media = null;
+      let inboundText = text;
+      let mediaTmpDir = null;
+
+      if (modality === "voice" || modality === "audio") {
+        try {
+          await ensureSttServer(log);
+          const downloaded = await downloadInboundMedia(entry.sock, msg, modality);
+          mediaTmpDir = downloaded.tmpDir;
+          media = {
+            modality,
+            path: downloaded.path,
+            msg_id: msgId,
+            mimetype: downloaded.mimetype,
+            caption: text,
+          };
+          inboundText = "";
+        } catch (e) {
+          log.error({ err: e, slug: entry.slug, userId: dm.userId, modality }, "voice media download failed");
+        }
+      }
+
       try {
-        await handleInboundMessage(entry, dm.chatJid, dm.userId, text, msgId, contact);
+        await handleInboundMessage(entry, dm.chatJid, dm.userId, inboundText, msgId, contact, media);
       } catch (e) {
         log.error(
           { err: e, slug: entry.slug, chatJid: dm.chatJid, userId: dm.userId },
           "handle inbound failed",
         );
+      } finally {
+        cleanupMediaTemp(mediaTmpDir);
       }
     }
   });
@@ -529,6 +562,7 @@ export function startWorkerManager() {
     return;
   }
   log.info({ scanMs: SCAN_MS }, "starting WhatsApp worker manager");
+  ensureSttServer(log).catch((e) => log.error({ err: e }, "STT server start failed"));
   syncTenants();
   scanTimer = setInterval(syncTenants, SCAN_MS);
 }
@@ -536,6 +570,7 @@ export function startWorkerManager() {
 export function stopWorkerManager() {
   if (scanTimer) clearInterval(scanTimer);
   scanTimer = null;
+  stopSttServer();
   for (const key of [...tenants.keys()]) {
     stopTenant(key);
   }

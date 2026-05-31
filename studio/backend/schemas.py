@@ -6,6 +6,11 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, EmailStr, field_validator
 
+DEFAULT_SCOPE_CANNOT_ANSWER = [
+    "Unrelated general knowledge",
+    "Anything not in knowledge base",
+]
+
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -82,14 +87,9 @@ class TenantCreate(BaseModel):
     @classmethod
     def personality_valid(cls, v: Optional[str]) -> str:
         vv = (v or "friendly").strip().lower()
-        allowed = {
-            "friendly",
-            "professional",
-            "empathetic",
-            "direct",
-            "playful",
-            "premium",
-        }
+        legacy = {"premium": "professional", "empathetic": "friendly"}
+        vv = legacy.get(vv, vv)
+        allowed = {"friendly", "professional", "direct", "playful"}
         if vv not in allowed:
             raise ValueError(f"Personality must be one of: {', '.join(sorted(allowed))}")
         return vv
@@ -126,10 +126,11 @@ class TenantCreate(BaseModel):
     @classmethod
     def fallback_behavior_valid(cls, v: Optional[str]) -> str:
         vv = (v or "escalate_if_unsure").strip().lower()
+        if vv == "say_not_confirmed_and_escalate":
+            return "escalate_if_unsure"
         allowed = {
             "ask_one_question_then_escalate",
             "escalate_if_unsure",
-            "say_not_confirmed_and_escalate",
             "best_effort_hallucination_risk",
         }
         if vv not in allowed:
@@ -414,3 +415,63 @@ class DeepSeekUsageSummaryOut(BaseModel):
     tenants: list[DeepSeekTenantUsageOut]
     by_source: list[DeepSeekSourceUsageOut]
     daily: list[DeepSeekDailyUsageOut]
+
+
+# ── HITL review ───────────────────────────────────────────────────────────────
+
+class HitlTicketOut(BaseModel):
+    ticket_id: str
+    created_at: str
+    updated_at: str
+    user_id: str
+    user_question: str
+    bot_answer: str
+    confidence: float | None = None
+    decision: str | None = None
+    fallback_reason: str | None = None
+    verification_flagged: bool = False
+    impact_reason: str | None = None
+    status: str
+    operator_reply: str | None = None
+    replied_at: str | None = None
+    kb_patch_status: str = "none"
+    kb_patch_preview: list[dict[str, Any]] | None = None
+
+
+class HitlTicketListOut(BaseModel):
+    tickets: list[HitlTicketOut]
+    total: int
+
+
+class HitlReplyCreate(BaseModel):
+    text: str
+
+    @field_validator("text")
+    @classmethod
+    def text_nonempty(cls, v: str) -> str:
+        s = (v or "").strip()
+        if not s:
+            raise ValueError("Reply text is required")
+        return s
+
+
+class HitlReplyOut(BaseModel):
+    ok: bool
+    ticket: HitlTicketOut
+    channel_delivered: bool = False
+    channel_detail: str | None = None
+
+
+class HitlKbProposeOut(BaseModel):
+    ok: bool
+    ticket: HitlTicketOut
+    patches: list[dict[str, Any]]
+    summary: str = ""
+
+
+class HitlKbApplyOut(BaseModel):
+    ok: bool
+    ticket: HitlTicketOut
+    applied: list[dict[str, Any]]
+    summary: str = ""
+    compile: dict[str, Any] | None = None

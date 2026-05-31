@@ -11,6 +11,7 @@ class ChannelConfigTests(unittest.TestCase):
         self.assertTrue(ch.is_live_agent_keyword("LA"))
         self.assertTrue(ch.is_resume_keyword("resume"))
         self.assertTrue(ch.is_blocked_media_type("image"))
+        self.assertFalse(ch.is_blocked_media_type("voice"))
 
     def test_resume_keyword_case_insensitive(self):
         ch = get_channel_config()
