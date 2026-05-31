@@ -8,6 +8,8 @@ const log = pino({ level: process.env.LOG_LEVEL || "info" });
 
 export const HUMAN_REPLY_ENABLED = process.env.WHATSAPP_REPLY_HUMANIZE !== "0";
 const MAX_TYPING_MS = Number(process.env.WA_ANTIBAN_TYPING_MAX_MS || 10000);
+/** Hard cap on total inbound bot reply wait (typing + antiban delay). */
+const MAX_INBOUND_DELAY_MS = Number(process.env.WHATSAPP_INBOUND_MAX_DELAY_MS || 45000);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -62,18 +64,33 @@ export async function humanizedWhatsAppSend({ entry, chatJid, text, chainKey, se
     return false;
   }
 
+  const rawDelayMs = decision.delayMs;
+  const totalDelayMs = Math.min(rawDelayMs, MAX_INBOUND_DELAY_MS);
+  if (rawDelayMs > MAX_INBOUND_DELAY_MS) {
+    log.warn(
+      {
+        slug: entry.slug,
+        chatJid: deliverJid,
+        rawDelayMs,
+        cappedDelayMs: totalDelayMs,
+      },
+      "inbound antiban delay capped",
+    );
+  }
+
   const choreo = antiban.presence;
   let typingPlan = choreo.computeTypingPlan(text.length);
-  const typingBudgetMs = Math.min(decision.delayMs, MAX_TYPING_MS);
+  const typingBudgetMs = Math.min(totalDelayMs, MAX_TYPING_MS);
   typingPlan = capTypingPlan(typingPlan, typingBudgetMs);
   const typingMs = planTotalMs(typingPlan);
-  const extraDelayMs = Math.max(0, decision.delayMs - typingMs);
+  const extraDelayMs = Math.max(0, totalDelayMs - typingMs);
 
   log.info(
     {
       slug: entry.slug,
       chatJid: deliverJid,
-      gaussianDelayMs: decision.delayMs,
+      gaussianDelayMs: rawDelayMs,
+      totalDelayMs,
       typingMs,
       extraDelayMs,
     },

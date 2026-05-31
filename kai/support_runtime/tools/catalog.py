@@ -136,6 +136,64 @@ def builtin_catalog() -> dict[str, BuiltinToolSpec]:
             description="Mark case for human escalation",
             schema=_schema_object(props={"reason": {"type": "string"}}, required=["reason"]),
         ),
+        # ------------------------------------------------------------------ #
+        # Knowledge file tools (read-only, scoped to knowledge/)
+        # Enabled per-tenant via workspace.yaml tools_profile.
+        # ------------------------------------------------------------------ #
+        "list_knowledge_files": BuiltinToolSpec(
+            builtin_id="list_knowledge_files",
+            handler_name="list_knowledge_files",
+            description="List files in the tenant knowledge directory (glob pattern supported).",
+            schema=_schema_object(props={"glob": {"type": "string", "description": "Glob pattern, default **/*.md"}}),
+        ),
+        "read_knowledge_lines": BuiltinToolSpec(
+            builtin_id="read_knowledge_lines",
+            handler_name="read_knowledge_lines",
+            description="Read a line range from a knowledge file (1-indexed, max 500 lines).",
+            schema=_schema_object(
+                props={
+                    "path": {"type": "string"},
+                    "start": {"type": "integer", "description": "First line (1-indexed)"},
+                    "end": {"type": "integer", "description": "Last line (inclusive)"},
+                },
+                required=["path"],
+            ),
+        ),
+        "grep_knowledge": BuiltinToolSpec(
+            builtin_id="grep_knowledge",
+            handler_name="grep_knowledge",
+            description="Search for a literal string or regex across knowledge files.",
+            schema=_schema_object(
+                props={
+                    "pattern": {"type": "string"},
+                    "glob": {"type": "string"},
+                    "literal": {"type": "boolean", "description": "True = literal match (default), False = regex"},
+                    "max_hits": {"type": "integer"},
+                },
+                required=["pattern"],
+            ),
+        ),
+        "get_file_outline": BuiltinToolSpec(
+            builtin_id="get_file_outline",
+            handler_name="get_file_outline",
+            description="Return the Markdown heading tree for a knowledge file.",
+            schema=_schema_object(props={"path": {"type": "string"}}, required=["path"]),
+        ),
+        "read_knowledge_section": BuiltinToolSpec(
+            builtin_id="read_knowledge_section",
+            handler_name="read_knowledge_section",
+            description="Return the text under a specific Markdown heading in a knowledge file.",
+            schema=_schema_object(
+                props={"path": {"type": "string"}, "heading": {"type": "string"}},
+                required=["path", "heading"],
+            ),
+        ),
+        "extract_frontmatter": BuiltinToolSpec(
+            builtin_id="extract_frontmatter",
+            handler_name="extract_frontmatter",
+            description="Extract YAML front matter from a knowledge file.",
+            schema=_schema_object(props={"path": {"type": "string"}}, required=["path"]),
+        ),
     }
 
 

@@ -51,6 +51,7 @@ Under `kai-tenant-<slug>/`:
 | `WHATSAPP_REPLY_DELAY_MIN_MS` | `2000` — rate-limiter / gaussian delay floor |
 | `WHATSAPP_REPLY_DELAY_MAX_MS` | `60000` — rate-limiter / gaussian delay ceiling |
 | `WA_ANTIBAN_TYPING_MAX_MS` | `10000` — cap WPM typing simulation duration per reply |
+| `WHATSAPP_INBOUND_MAX_DELAY_MS` | `45000` — hard cap on total inbound bot reply wait (typing + antiban delay) |
 | `WHATSAPP_STUDIO_ANTIBAN_DELAY` | `0` — Studio manual sends skip antiban delay (still respect pause/timelock) |
 | `WA_ANTIBAN_AUTO_PAUSE_AT` | `high` — auto-pause all outbound when health risk reaches this level |
 | `WA_ANTIBAN_TIMEZONE` | `Asia/Kuala_Lumpur` — circadian typing rhythm |

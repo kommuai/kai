@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
-DecisionType = Literal["direct_answer", "clarifying_question", "tool_use", "escalate_human"]
+DecisionType = Literal["direct_answer", "clarifying_question", "tool_use", "escalate_human", "abstain"]
 
 
 @dataclass
@@ -12,6 +12,18 @@ class RetrievalItem:
     text: str
     score: float
     metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class EvidenceItem:
+    """One piece of evidence collected during a ReAct step."""
+
+    tool: str
+    source_id: str
+    snippet: str = ""
+    score: float = 0.0
+    # supported | weak | conflicting
+    support_status: str = "supported"
 
 
 @dataclass
@@ -25,3 +37,4 @@ class RuntimeResult:
     capability_used: str = ""
     fallback_reason: str = ""
     metadata: dict[str, Any] = field(default_factory=dict)
+    evidence_ledger: list[EvidenceItem] = field(default_factory=list)

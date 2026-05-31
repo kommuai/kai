@@ -8,6 +8,15 @@ from kai.settings import Settings, get_settings
 from kai.workspace.manifest import load_workspace_data, load_workspace_manifest
 
 
+_DEFAULT_ABSTAIN_THRESHOLD = 0.4
+_DEFAULT_ABSTAIN_COPY_EN = (
+    "I don't have enough information to answer that reliably. Type LA for a live agent."
+)
+_DEFAULT_ABSTAIN_COPY_BM = (
+    "Saya tidak mempunyai maklumat yang cukup untuk menjawab itu. Taip LA untuk ejen."
+)
+
+
 @dataclass(frozen=True)
 class RuntimeSettings:
     """Effective non-secret config: env Settings with workspace.yaml overrides."""
@@ -22,6 +31,9 @@ class RuntimeSettings:
     footer_history_threshold: int
     whatsapp_max_reply_chars: int
     compile_extra_artifacts: bool
+    eval_abstain_threshold: float = _DEFAULT_ABSTAIN_THRESHOLD
+    eval_abstain_copy_en: str = _DEFAULT_ABSTAIN_COPY_EN
+    eval_abstain_copy_bm: str = _DEFAULT_ABSTAIN_COPY_BM
 
     @classmethod
     def from_sources(cls, settings: Settings, workspace_yaml: dict[str, Any]) -> RuntimeSettings:
@@ -30,9 +42,17 @@ class RuntimeSettings:
         compile_block = workspace_yaml.get("compile") if isinstance(workspace_yaml.get("compile"), dict) else {}
         channels = workspace_yaml.get("channels") if isinstance(workspace_yaml.get("channels"), dict) else {}
         whatsapp = channels.get("whatsapp") if isinstance(channels.get("whatsapp"), dict) else {}
+        copy_block = workspace_yaml.get("copy") if isinstance(workspace_yaml.get("copy"), dict) else {}
+        eval_block = workspace_yaml.get("eval") if isinstance(workspace_yaml.get("eval"), dict) else {}
 
         manifest = load_workspace_manifest()
         tz = str(session.get("timezone") or manifest.timezone or settings.tz_region)
+
+        raw_threshold = eval_block.get("abstain_threshold")
+        try:
+            abstain_threshold = float(raw_threshold) if raw_threshold is not None else _DEFAULT_ABSTAIN_THRESHOLD
+        except (TypeError, ValueError):
+            abstain_threshold = _DEFAULT_ABSTAIN_THRESHOLD
 
         return cls(
             timezone=tz,
@@ -51,6 +71,9 @@ class RuntimeSettings:
                 if "extra_artifacts" in compile_block
                 else settings.kai_compile_extra_artifacts
             ),
+            eval_abstain_threshold=abstain_threshold,
+            eval_abstain_copy_en=str(copy_block.get("abstain_en") or _DEFAULT_ABSTAIN_COPY_EN),
+            eval_abstain_copy_bm=str(copy_block.get("abstain_bm") or _DEFAULT_ABSTAIN_COPY_BM),
         )
 
 

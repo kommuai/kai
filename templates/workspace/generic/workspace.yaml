@@ -48,6 +48,20 @@ agent:
   footer_history_threshold: 10
 compile:
   extra_artifacts: false
+logging:
+  metrics_file: data/turn_metrics.jsonl
+eval:
+  abstain_threshold: 0.4
+  verifier_mode: rules       # rules | llm
+  verifier_on_fail: flag     # flag | abstain
+  verifier_min_score: 0.0
+  max_corpus_age_days: 30
+  contradiction_token_overlap: 0.3
+  # gates checked by: python -m kai.tools.eval_run --eval-file PATH
+  # gates: {}
+copy:
+  abstain_en: "I don't have enough information to answer that reliably. Type LA for a live agent."
+  abstain_bm: "Saya tidak mempunyai maklumat yang cukup. Taip LA untuk ejen."
 faq_learn:
   use_queue: true
   legacy_append: false

@@ -205,11 +205,43 @@ def compile_canonical_knowledge() -> dict[str, int]:
         for item in chunks:
             fh.write(json.dumps(item, ensure_ascii=True) + "\n")
 
+    dynamic_count = sum(1 for c in chunks if str(c.get("source_id", "")).startswith("dynamic:"))
+    _write_corpus_map(compiled_dir, intent_rows=intent_rows, dynamic_count=dynamic_count, total_chunks=len(chunks))
+
     if get_settings().kai_compile_extra_artifacts:
         _write_extra_artifacts(compiled_dir, parsed, intent_rows=intent_rows)
 
     return {
         "intents": intent_count,
         "chunks": len(chunks),
-        "dynamic_chunks": sum(1 for c in chunks if str(c.get("source_id", "")).startswith("dynamic:")),
+        "dynamic_chunks": dynamic_count,
     }
+
+
+def _write_corpus_map(
+    compiled_dir: "Path",
+    *,
+    intent_rows: list[dict],
+    dynamic_count: int,
+    total_chunks: int,
+) -> None:
+    """Write corpus_map.json — deterministic index of compiled knowledge."""
+    intents = [
+        {
+            "intent_id": row["intent_id"],
+            "title": row["aliases"][0] if row.get("aliases") else row["intent_id"].replace("_", " "),
+            "aliases": row.get("aliases") or [],
+            "chunk_count": 1,
+        }
+        for row in intent_rows
+    ]
+    corpus_map = {
+        "schema_version": 1,
+        "compiled_at": str(date.today()),
+        "source": "master_faq",
+        "intents": intents,
+        "dynamic_item_count": dynamic_count,
+        "total_chunks": total_chunks,
+    }
+    map_path = compiled_dir / "corpus_map.json"
+    map_path.write_text(json.dumps(corpus_map, indent=2, ensure_ascii=True), encoding="utf-8")

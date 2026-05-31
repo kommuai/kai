@@ -8,9 +8,12 @@ from typing import Any
 from kai.content.channels import get_channel_config
 from kai.lib.lang import resolve_lang
 from kai.services.container import kai_service, support_runtime_service
-from kai.support_runtime.faq_grounding import apply_grounding_footnote_if_needed
+from kai.support_runtime.faq_grounding import apply_grounding_footnote_if_needed, is_answer_faq_grounded
 from kai.support_runtime.agent_loop import _looks_like_chitchat
+from kai.support_runtime.metrics import record_turn_metrics
 from kai.support_runtime.models import RuntimeResult
+from kai.support_runtime.verifier import verify_result
+from kai.workspace.runtime_settings import get_runtime_settings
 
 
 @dataclass
@@ -41,6 +44,31 @@ class SupportTurnOutcome:
             "escalate_needed": self.kind == "handover",
             "skip_send": not (self.message or "").strip(),
         }
+
+
+def _maybe_force_abstain(result: RuntimeResult, text: str, lang: str) -> RuntimeResult:
+    """Force decision to abstain when confidence is below threshold and evidence is absent."""
+    if result.decision != "direct_answer":
+        return result
+    rs = get_runtime_settings()
+    if result.confidence >= rs.eval_abstain_threshold:
+        return result
+    observations = ((result.metadata or {}).get("evidence") or {}).get("observations") or []
+    if is_answer_faq_grounded(
+        answer=result.answer,
+        user_text=text,
+        source_ids=result.source_ids,
+        observations=observations,
+    ):
+        return result
+    copy = rs.eval_abstain_copy_bm if lang == "BM" else rs.eval_abstain_copy_en
+    from dataclasses import replace
+    return replace(
+        result,
+        decision="abstain",
+        answer=copy,
+        fallback_reason="low_confidence_no_evidence",
+    )
 
 
 def run_support_turn(
@@ -76,6 +104,8 @@ def run_support_turn(
             return SupportTurnOutcome(kind=ptype, message=msg, next_state=nstate, pre_router=pre)
 
     result = support_runtime_service.execute(text=text, lang=lang, user_id=user_id)
+    result = verify_result(result)
+    result = _maybe_force_abstain(result, text, lang)
 
     if result.decision == "escalate_human":
         from kai.lib.session_state import freeze
@@ -83,6 +113,11 @@ def run_support_turn(
         freeze(user_id, True)
         msg = kai_service.finalize_reply(user_id, result.answer, lang, suppress=True)
         return SupportTurnOutcome(kind="handover", message=msg, runtime=result, next_state="human")
+
+    if result.decision == "abstain":
+        record_turn_metrics(result)
+        msg = kai_service.finalize_reply(user_id, result.answer, lang, suppress=True)
+        return SupportTurnOutcome(kind="reply", message=msg, runtime=result, next_state="bot")
 
     answer_text = result.answer or ""
     if apply_grounding and result.decision == "direct_answer":
@@ -100,4 +135,5 @@ def run_support_turn(
 
     suppress_footer = result.decision in ("direct_answer", "clarifying_question")
     msg = kai_service.finalize_reply(user_id, answer_text, lang, suppress=suppress_footer)
+    record_turn_metrics(result)
     return SupportTurnOutcome(kind="reply", message=msg, runtime=result, next_state="bot")

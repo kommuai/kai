@@ -18,7 +18,7 @@ from kai.content.channels import get_channel_config
 from kai.workspace.runtime_settings import get_runtime_settings
 from kai.support_runtime.guardrails import safety_gate
 from kai.tools_plugins.contract import tool_failure_observation_message
-from kai.support_runtime.models import RuntimeResult
+from kai.support_runtime.models import EvidenceItem, RuntimeResult
 
 log = logging.getLogger("kai.agent_loop")
 
@@ -156,6 +156,7 @@ class ReActAgentLoop:
         source_ids: list[str] = []
         tool_trace: list[dict[str, Any]] = []
         observations: list[dict[str, Any]] = []
+        evidence_ledger: list[EvidenceItem] = []
         answer = ""
         decision = "clarifying_question"
         confidence = 0.5
@@ -211,6 +212,21 @@ class ReActAgentLoop:
                 tool_trace.append({"step": step + 1, "tool": tool_name, "ok": tool_ok})
                 if tool_ok:
                     source_ids.append(f"tool:{tool_name}")
+                    ev_source_id = str(result.get("source_id") or f"tool:{tool_name}")
+                    ev_score = 0.0
+                    ev_snippet = ""
+                    best = result.get("best_canonical")
+                    if isinstance(best, dict):
+                        ev_source_id = str(best.get("source_id") or ev_source_id)
+                        ev_score = float(best.get("score") or 0.0)
+                        ev_snippet = str(best.get("canonical_answer") or "")[:200]
+                    evidence_ledger.append(EvidenceItem(
+                        tool=tool_name,
+                        source_id=ev_source_id,
+                        snippet=ev_snippet,
+                        score=ev_score,
+                        support_status="supported",
+                    ))
 
                 result_summary = json.dumps(result, ensure_ascii=False, default=str)
                 max_tool_chars = 80_000 if tool_name in _LARGE_RESULT_TOOLS else 2000
@@ -232,7 +248,7 @@ class ReActAgentLoop:
                 last_parsed = parsed
                 answer = str(parsed.get("answer", "")).strip()
                 decision = str(parsed.get("decision", "direct_answer")).strip()
-                if decision not in ("direct_answer", "clarifying_question", "escalate_human"):
+                if decision not in ("direct_answer", "clarifying_question", "escalate_human", "abstain"):
                     decision = "direct_answer"
                 confidence = float(parsed.get("confidence", 0.85) or 0.85)
                 for sid in parsed.get("source_ids") or []:
@@ -296,5 +312,6 @@ class ReActAgentLoop:
                 capability_used="react_agent_loop",
                 fallback_reason=fallback_reason,
                 metadata=extra_meta,
+                evidence_ledger=evidence_ledger,
             )
         }

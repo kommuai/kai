@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "compiled_at": "2026-05-31",
+  "source": "master_faq",
+  "intents": [
+    {
+      "intent_id": "greeting",
+      "title": "hello",
+      "aliases": [
+        "hello",
+        "hi"
+      ],
+      "chunk_count": 1
+    },
+    {
+      "intent_id": "hours",
+      "title": "office hours",
+      "aliases": [
+        "office hours",
+        "when are you open"
+      ],
+      "chunk_count": 1
+    }
+  ],
+  "dynamic_item_count": 0,
+  "total_chunks": 2
+}

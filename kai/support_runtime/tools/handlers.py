@@ -11,6 +11,14 @@ import requests
 from kai.support_runtime.canonical_faq import extract_answer_from_chunk, pick_best_canonical
 from kai.support_runtime.retrieval import HybridRetriever, SimpleReranker
 from kai.support_runtime.tools.catalog import resolve_builtin_id
+from kai.support_runtime.tools.knowledge_file_tools import (
+    extract_frontmatter,
+    get_file_outline,
+    grep_knowledge,
+    list_knowledge_files,
+    read_knowledge_lines,
+    read_knowledge_section,
+)
 from kai.support_runtime.tools.site_search import match_vehicle_catalog, support_site_corpus
 
 
@@ -231,6 +239,38 @@ class ToolHandlers:
 
     def escalate_to_human(self, reason: str) -> dict[str, Any]:
         return {"ok": True, "escalate": True, "reason": reason}
+
+    # ------------------------------------------------------------------ #
+    # Knowledge file tools — delegate to module functions
+    # ------------------------------------------------------------------ #
+
+    def list_knowledge_files(self, glob: str = "**/*.md") -> dict[str, Any]:
+        p = self._params("list_knowledge_files")
+        return list_knowledge_files(glob=glob, extra_roots=p.get("extra_roots"))
+
+    def read_knowledge_lines(self, path: str, start: int = 1, end: int = 50) -> dict[str, Any]:
+        p = self._params("read_knowledge_lines")
+        return read_knowledge_lines(path=path, start=start, end=end, extra_roots=p.get("extra_roots"))
+
+    def grep_knowledge(
+        self, pattern: str, glob: str = "**/*.md", literal: bool = True, max_hits: int = 20
+    ) -> dict[str, Any]:
+        p = self._params("grep_knowledge")
+        return grep_knowledge(
+            pattern=pattern, glob=glob, literal=literal, max_hits=max_hits, extra_roots=p.get("extra_roots")
+        )
+
+    def get_file_outline(self, path: str) -> dict[str, Any]:
+        p = self._params("get_file_outline")
+        return get_file_outline(path=path, extra_roots=p.get("extra_roots"))
+
+    def read_knowledge_section(self, path: str, heading: str) -> dict[str, Any]:
+        p = self._params("read_knowledge_section")
+        return read_knowledge_section(path=path, heading=heading, extra_roots=p.get("extra_roots"))
+
+    def extract_frontmatter(self, path: str) -> dict[str, Any]:
+        p = self._params("extract_frontmatter")
+        return extract_frontmatter(path=path, extra_roots=p.get("extra_roots"))
 
 
 def _extract_json_object(text: str) -> dict[str, Any]:

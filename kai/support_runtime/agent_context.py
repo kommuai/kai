@@ -16,6 +16,8 @@ from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
+import json
+
 from kai.content.faq import load_master_faq_text, master_faq_system_block
 from kai.content.loader import manifest_relative_path, read_text_file
 from kai.settings import get_settings
@@ -53,11 +55,29 @@ def load_system_prompt_body() -> str:
     return read_text_file(rel).strip()
 
 
+def _corpus_map_summary() -> str:
+    """One-line summary from compiled/corpus_map.json, or empty string if not found."""
+    try:
+        compiled_dir = get_settings().kai_home / load_workspace_manifest().paths.knowledge_compiled_dir
+        map_path = compiled_dir / "corpus_map.json"
+        if not map_path.is_file():
+            return ""
+        data = json.loads(map_path.read_text(encoding="utf-8"))
+        total = data.get("total_chunks", 0)
+        compiled_at = data.get("compiled_at", "")
+        date_part = f", compiled {compiled_at}" if compiled_at else ""
+        return f"Knowledge base: {total} chunks{date_part}."
+    except Exception:  # noqa: BLE001
+        return ""
+
+
 def workspace_settings_block() -> str:
     manifest = load_workspace_manifest()
     runtime = get_runtime_settings()
     inject = manifest.knowledge.inject_mode or "retrieval_first"
     now = datetime.now(ZoneInfo(runtime.timezone or "UTC"))
+    kb_summary = _corpus_map_summary()
+    kb_line = f"\n- {kb_summary}" if kb_summary else ""
     return (
         "## Workspace settings\n"
         f"- Tenant: `{manifest.tenant_id}` ({manifest.display_name})\n"
@@ -67,6 +87,7 @@ def workspace_settings_block() -> str:
         f"- Now (scheduling): `{now.strftime('%Y-%m-%d %H:%M')}` `{now.strftime('%A')}`\n"
         f"- Today's date for `visit_date`: `{now.strftime('%Y-%m-%d')}`\n"
         "- Interpret **today**, **tomorrow**, **tonight** from this section.\n"
+        f"{kb_line}"
     )
 
 
